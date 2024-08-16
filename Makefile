@@ -8,7 +8,7 @@ install_all:
 
 .PHONY: setup_husky
 setup_husky:
-	npm run prepare
+	npm run husky
 
 .PHONY: clean
 clean:
@@ -18,10 +18,6 @@ clean:
 lint:
 	npm run lint
 
-.PHONY: gas
-gas:
-	npm run gas
-
 .PHONY: format
 format:
 	npm run format
@@ -30,16 +26,8 @@ format:
 format_check:
 	npm run format:check
 
-.PHONY: format_contract
-format_contract:
-	npm run format:contract
-
-.PHONY: test_contract
-test_contract:
-	npm run test:contract
-
 .PHONY: before_commit
-before_commit: lint gas format_contract	format_check	test_contract
+before_commit: lint
 
 .PHONY: start_frontend
 start_frontend:
@@ -48,14 +36,6 @@ start_frontend:
 .PHONY: start
 start:
 	npx concurrently "make start_frontend"
-
-.PHONY: build_backend
-build_backend:
-	cd backend && forge build
-
-.PHONY: export_pdf
-export_pdf:
-	npx marp pitch_deck.md --pdf --allow-local-files --html
 
 .PHONY: help
 help:
@@ -68,9 +48,6 @@ help:
 	@echo "  setup_husky     Setup Husky"
 	@echo "  clean           Clean the project"
 	@echo "  lint            Run linter"
-	@echo "  gas             Run gas reporter"
-	@echo "  format_contract Format contract"
-	@echo "  test_contract   Test contract"
 	@echo "  before_commit   Run checks before commit"
 	@echo "  start_frontend  Start frontend"
 	@echo "  start           Start frontend"
