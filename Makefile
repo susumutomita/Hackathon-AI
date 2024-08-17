@@ -18,6 +18,10 @@ clean:
 lint:
 	npm run lint
 
+.PHONY: lint_text
+lint_text:
+	npm run lint:text
+
 .PHONY: format
 format:
 	npm run format
@@ -27,7 +31,7 @@ format_check:
 	npm run format:check
 
 .PHONY: before_commit
-before_commit: lint
+before_commit: lint_text
 
 .PHONY: start_frontend
 start_frontend:
