@@ -1,9 +1,9 @@
 [![ci](https://github.com/susumutomita/Hackathon-AI/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/susumutomita/Hackathon-AI/actions/workflows/ci.yml)
-![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/susumutomita/HackathonAI)
-![GitHub top language](https://img.shields.io/github/languages/top/susumutomita/HackathonAI)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/susumutomita/HackathonAI)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/susumutomita/HackathonAI)
-![GitHub repo size](https://img.shields.io/github/repo-size/susumutomita/HackathonAI)
+![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/susumutomita/Hackathon-AI)
+![GitHub top language](https://img.shields.io/github/languages/top/susumutomita/Hackathon-AI)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/susumutomita/Hackathon-AI)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/susumutomita/Hackathon-AI)
+![GitHub repo size](https://img.shields.io/github/repo-size/susumutomita/Hackathon-AI)
 
 # Hackathon AI - Hackathon Success Support Tool
 
