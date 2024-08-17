@@ -1,10 +1,10 @@
-name: textlint
+name: ci
 on:
   push:
   workflow_dispatch:
 
 jobs:
-  textlint:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,3 +20,9 @@ jobs:
       - name: Run textlint
         run: |
           make lint_text
+      - name: Run lint
+        run: |
+          make lint
+      - name: Format check
+        run: |
+          make format_check
