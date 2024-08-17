@@ -1,3 +1,9 @@
+[![ci](https://github.com/susumutomita/Hackathon-AI/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/susumutomita/Hackathon-AI/actions/workflows/ci.yml)
+![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/susumutomita/HackathonAI)
+![GitHub top language](https://img.shields.io/github/languages/top/susumutomita/HackathonAI)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/susumutomita/HackathonAI)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/susumutomita/HackathonAI)
+![GitHub repo size](https://img.shields.io/github/repo-size/susumutomita/HackathonAI)
 
 # Hackathon AI - Hackathon Success Support Tool
 
@@ -89,6 +95,7 @@ graph TB
 ## Development Environment
 
 - **TypeScript**: Used as the main programming language.
+- **Next.js**: This makes the platform easy to use and navigate.
 - **React**: Used to create UI components.
 - **TensorFlow.js**: Used for training and running AI models.
 
