@@ -18,6 +18,10 @@ clean:
 lint:
 	npm run lint
 
+.PHONY: lint_text
+lint_text:
+	npm run lint:text
+
 .PHONY: format
 format:
 	npm run format
@@ -27,15 +31,19 @@ format_check:
 	npm run format:check
 
 .PHONY: before_commit
-before_commit: lint
-
-.PHONY: start_frontend
-start_frontend:
-	cd frontend && npm run dev
+before_commit: lint_text lint	format_check
 
 .PHONY: start
 start:
-	npx concurrently "make start_frontend"
+	npm start
+
+.PHONY: dev
+dev:
+	npm run dev
+
+.PHONY: build
+build:
+	npm run build
 
 .PHONY: help
 help:
@@ -43,13 +51,14 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@echo "  install         Install npm packages"
-	@echo "  install_all     Run npm install-all"
-	@echo "  export_pdf			Export pitch deck to PDF"
-	@echo "  setup_husky     Setup Husky"
 	@echo "  clean           Clean the project"
+	@echo "  setup_husky     Setup Husky"
 	@echo "  lint            Run linter"
+	@echo "  lint_text       Run textlint"
+	@echo "  format          Format code"
+	@echo "  format_check    Check code formatting"
 	@echo "  before_commit   Run checks before commit"
-	@echo "  start_frontend  Start frontend"
-	@echo "  start           Start frontend"
-	@echo "  build_backend   Build backend contracts with Forge"
+	@echo "  dev             Start development server"
+	@echo "  build           Build the project"
+	@echo "  start           Start app"
 	@echo "  help            Show this help message"
