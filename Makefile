@@ -1,6 +1,6 @@
 .PHONY: install
 install:
-	npm run install-all
+	npm install
 
 .PHONY: setup_husky
 setup_husky:
