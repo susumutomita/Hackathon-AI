@@ -15,8 +15,6 @@
     "lint:text": "npx textlint '**/*.md'",
     "lint-staged": "lint-staged",
     "husky": "husky install",
-    "dev": "npm run dev --prefix app",
-    "build": "npm run build --prefix app",
     "start": "npm run start --prefix app",
     "lint": "npm run lint --prefix app"
   },
