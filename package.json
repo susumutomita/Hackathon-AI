@@ -2,10 +2,6 @@
   "name": "HackathonAI",
   "version": "1.0.0",
   "description": "HackathonAI is a project that aims to provide a platform for hackathon participants to collaborate and share their ideas. The platform will use AI to help participants find teammates, brainstorm ideas, and develop their projects. The goal is to create a supportive and inclusive environment for hackathon participants to learn and grow together.",
-  "main": "index.js",
-  "workspaces": [
-    "app"
-  ],
   "scripts": {
     "clean": "npx rimraf node_modules out",
     "test": "echo \"Error: no test specified\" && exit 1",
