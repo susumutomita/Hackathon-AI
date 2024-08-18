@@ -16,6 +16,8 @@
     "lint-staged": "lint-staged",
     "husky": "husky install",
     "start": "npm run start --prefix app",
+    "build": "npm run build --prefix app",
+    "dev": "npm run dev --prefix app",
     "lint": "npm run lint --prefix app"
   },
   "keywords": [],
