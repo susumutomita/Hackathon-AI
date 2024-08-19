@@ -62,7 +62,10 @@ export function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export function Spinner() {
   return (
-    <div className="absolute right-0 top-0 bottom-0 flex items-center justify-center">
+    <div
+      className="absolute right-0 top-0 bottom-0 flex items-center justify-center"
+      aria-busy="true"
+    >
       <svg
         className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700"
         xmlns="http://www.w3.org/2000/svg"
