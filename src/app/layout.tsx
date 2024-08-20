@@ -3,9 +3,9 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata = {
-  title: "Next.js App Router + NextAuth + Tailwind CSS",
+  title: "Hackathon AI",
   description:
-    "A user admin dashboard configured with Next.js, Postgres, NextAuth, Tailwind CSS, TypeScript, and Prettier.",
+    "Hackathon AI is a platform for developers to find out the idea from previous hackathon",
 };
 
 export default function RootLayout({
