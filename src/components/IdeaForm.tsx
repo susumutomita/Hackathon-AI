@@ -2,10 +2,11 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { searchIdeas } from "@/lib/searchIdeas";
+import { Project } from "@/types";
 
 export default function IdeaForm() {
   const [idea, setIdea] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<Project[]>([]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

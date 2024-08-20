@@ -1,9 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { fetchFinalists } from "@/lib/fetchFinalists";
+import { Project } from "@/types";
 
 export default function FinalistList() {
-  const [finalists, setFinalists] = useState([]);
+  // useState に型を明示的に指定
+  const [finalists, setFinalists] = useState<Project[]>([]);
 
   useEffect(() => {
     const loadFinalists = async () => {

@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
 import cheerio from "cheerio";
 import fs from "fs";
+import { Project } from "@/types";
 
 async function crawlEthGlobalShowcase() {
   // Launch Puppeteer browser
@@ -23,13 +24,15 @@ async function crawlEthGlobalShowcase() {
   const $ = cheerio.load(content);
 
   // Extract the finalist projects
-  const projects = [];
+  const projects: Project[] = [];
   $(".project-card").each((index, element) => {
     const isFinalist = $(element).find(".badge-finalist").length > 0;
     if (isFinalist) {
       const title = $(element).find(".project-title").text().trim();
       const link = $(element).find("a").attr("href");
-      projects.push({ title, link });
+      if (link) {
+        projects.push({ title, link });
+      }
     }
   });
 
