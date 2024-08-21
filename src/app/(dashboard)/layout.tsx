@@ -27,9 +27,9 @@ import {
 } from "@/components/ui/tooltip";
 import { Analytics } from "@vercel/analytics/react";
 import { VercelLogo } from "@/components/icons";
-import Providers from "./providers";
-import { NavItem } from "./nav-item";
-import { SearchInput } from "./search";
+import Providers from "@/app/(dashboard)/providers";
+import { NavItem } from "@/app/(dashboard)/nav-item";
+import { SearchInput } from "@/app/(dashboard)/search";
 
 export default function DashboardLayout({
   children,
