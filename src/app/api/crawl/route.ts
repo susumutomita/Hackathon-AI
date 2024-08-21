@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { crawlEthGlobalShowcase } from "./crawler";
+import { crawlEthGlobalShowcase } from "@/lib/crawler";
 
 export async function GET(request: NextRequest) {
+  const prompt = `
+  Extract the following information from the provided HTML content:
+  1. List of projects with the following details:
+     - Project Title
+     - Project Description
+     - Prize information (Is the project a finalist?)
+     - GitHub Link
+     - Demo Link
+  `;
+
   try {
-    const projects = await crawlEthGlobalShowcase();
+    const projects = await crawlEthGlobalShowcase(prompt);
     return NextResponse.json(
       { message: "Crawling completed successfully", projects },
       {
@@ -17,7 +27,10 @@ export async function GET(request: NextRequest) {
     );
   } catch (error: any) {
     return NextResponse.json(
-      { error: "Crawling failed", details: error.message },
+      {
+        error: "Crawling failed",
+        details: error.message || "An unknown error occurred",
+      },
       {
         status: 500,
         headers: {
