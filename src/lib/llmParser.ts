@@ -1,28 +1,23 @@
 import ollama from "ollama";
+import logger from "@/lib/logger";
 
 export async function parseHtmlWithLLM(
   html: string,
   prompt: string,
 ): Promise<any> {
-  console.log("Parsing HTML with LLM...");
-  const fullPrompt = `
-  ${prompt}
-
-  Here is the HTML content:
-  ${html}
-  `;
+  logger.info("Parsing HTML with LLM...");
 
   try {
     const response = await ollama.chat({
       model: "llama3.1",
-      messages: [{ role: "user", content: fullPrompt }],
+      messages: [{ role: "user", content: prompt }],
     });
 
-    console.log("LLM response:", response);
+    logger.info("LLM response received:", { response });
 
     return JSON.parse(response.message.content.trim());
   } catch (error) {
-    console.error("Failed to parse LLM response:", error);
+    logger.error("Failed to parse LLM response:", error);
     return null;
   }
 }

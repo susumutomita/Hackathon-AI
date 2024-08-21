@@ -1,5 +1,6 @@
 import axios from "axios";
-import { parseHtmlWithLLM } from "./llmParser";
+import { parseHtmlWithLLM } from "@/lib/llmParser";
+import logger from "@/lib/logger";
 
 export async function crawlEthGlobalShowcase(prompt: string) {
   try {
@@ -9,14 +10,14 @@ export async function crawlEthGlobalShowcase(prompt: string) {
     const projects = await parseHtmlWithLLM(showcaseHtml, prompt);
 
     if (projects) {
-      console.log("Parsed projects:", projects);
+      logger.info("Parsed projects:", { projects }); // ログをinfoレベルで記録
     } else {
-      console.error("Failed to parse projects from HTML.");
+      logger.error("Failed to parse projects from HTML."); // ログをerrorレベルで記録
     }
 
     return projects || [];
   } catch (error) {
-    console.error("Error during crawling and parsing:", error);
+    logger.error("Error during crawling and parsing:", error); // エラーログを記録
     return [];
   }
 }
