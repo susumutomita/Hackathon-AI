@@ -4,7 +4,6 @@ import { fetchFinalists } from "@/lib/fetchFinalists";
 import { Project } from "@/types";
 
 export default function FinalistList() {
-  // useState に型を明示的に指定
   const [finalists, setFinalists] = useState<Project[]>([]);
 
   useEffect(() => {
