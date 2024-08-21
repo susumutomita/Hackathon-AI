@@ -33,6 +33,10 @@ before_commit: lint_text lint	format_check	build
 start:
 	npm start
 
+.PHONY: test
+test:
+	npm run test
+
 .PHONY: dev
 dev:
 	npm run dev
@@ -57,4 +61,5 @@ help:
 	@echo "  dev             Start development server"
 	@echo "  build           Build the project"
 	@echo "  start           Start app"
+	@echo "  test            Run tests"
 	@echo "  help            Show this help message"
