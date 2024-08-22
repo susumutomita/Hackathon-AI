@@ -13,12 +13,14 @@ import {
 export default function IdeaForm() {
   const [idea, setIdea] = useState("");
   const [results, setResults] = useState<any[]>([]);
+  const [improvedIdea, setImprovedIdea] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
+    setImprovedIdea(null);
 
     try {
       const response = await fetch("/api/search-ideas", {
@@ -35,8 +37,25 @@ export default function IdeaForm() {
 
       const data = await response.json();
       setResults(data.projects);
+
+      if (data.projects.length > 0) {
+        const improveResponse = await fetch("/api/improve-idea", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ idea, similarProjects: data.projects }),
+        });
+
+        if (!improveResponse.ok) {
+          throw new Error("Failed to improve the idea");
+        }
+
+        const improveData = await improveResponse.json();
+        setImprovedIdea(improveData.improvedIdea);
+      }
     } catch (error: any) {
-      console.error("Error during search:", error);
+      console.error("Error during search or improvement:", error);
     } finally {
       setLoading(false);
     }
@@ -61,7 +80,7 @@ export default function IdeaForm() {
           className="w-full sm:w-auto self-center sm:self-start"
           disabled={loading}
         >
-          {loading ? "Searching..." : "Submit"}
+          {loading ? "Processing..." : "Submit"}
         </Button>
       </form>
       <div className="mt-4">
@@ -112,6 +131,12 @@ export default function IdeaForm() {
           !loading && <p>No matching ideas found.</p>
         )}
       </div>
+      {improvedIdea && (
+        <div className="mt-6">
+          <h2 className="text-xl font-bold mb-4">Improved Idea</h2>
+          <p>{improvedIdea}</p>
+        </div>
+      )}
     </div>
   );
 }
