@@ -1,21 +1,16 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 import logger from "@/lib/logger";
+import { ProjectDetails } from "@/types";
 
 const finalistImageUrl =
   "https://ethglobal.b-cdn.net/organizations/xdat5/square-logo/default.png";
 const baseUrl = "https://ethglobal.com/showcase/page";
-const eventFilter = "brussels,superhack2024,starkhack";
+const eventFilter = "brussels,superhack2024";
 
-async function extractProjectDetails(html: string): Promise<any[]> {
+async function extractProjectDetails(html: string): Promise<ProjectDetails[]> {
   const $ = cheerio.load(html);
-  const projects: Array<{
-    title: string;
-    description: string;
-    prize: boolean;
-    link: string;
-    hackathon: string;
-  }> = [];
+  const projects: ProjectDetails[] = [];
 
   $(".block.border-2.border-black.rounded.overflow-hidden.relative").each(
     (index, element) => {
@@ -40,8 +35,8 @@ async function extractProjectDetails(html: string): Promise<any[]> {
   return projects;
 }
 
-export async function crawlEthGlobalShowcase(prompt: string) {
-  const allProjects: any[] = [];
+export async function crawlEthGlobalShowcase() {
+  const allProjects: ProjectDetails[] = [];
   let page = 1;
 
   try {
