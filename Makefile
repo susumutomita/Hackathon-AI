@@ -27,7 +27,7 @@ format_check:
 	npm run format:check
 
 .PHONY: before_commit
-before_commit: lint_text lint	format_check
+before_commit: lint_text lint	format_check	build
 
 .PHONY: start
 start:

@@ -1,6 +1,5 @@
 import React from "react";
 import IdeaForm from "@/components/IdeaForm";
-import FinalistList from "@/components/FinalistList";
 
 export default function DashboardPage() {
   return (
