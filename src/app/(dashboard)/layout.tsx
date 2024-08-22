@@ -64,7 +64,7 @@ function NavLinks() {
       <NavItem href="/" label="Dashboard">
         <Home className="h-5 w-5" />
       </NavItem>
-      <NavItem href="/debug" label="Debug">
+      <NavItem href="/list" label="Finalist">
         <LineChart className="h-5 w-5" />
       </NavItem>
     </>
