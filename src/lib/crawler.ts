@@ -1,16 +1,16 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 import logger from "@/lib/logger";
-import { ProjectDetails } from "@/types";
+import { Project } from "@/types";
 
 const finalistImageUrl =
   "https://ethglobal.b-cdn.net/organizations/xdat5/square-logo/default.png";
 const baseUrl = "https://ethglobal.com/showcase/page";
-const eventFilter = "brussels,superhack2024";
+const eventFilter = "brussels";
 
-async function extractProjectDetails(html: string): Promise<ProjectDetails[]> {
+async function extractProjectDetails(html: string): Promise<Project[]> {
   const $ = cheerio.load(html);
-  const projects: ProjectDetails[] = [];
+  const projects: Project[] = [];
 
   $(".block.border-2.border-black.rounded.overflow-hidden.relative").each(
     (index, element) => {
@@ -30,20 +30,45 @@ async function extractProjectDetails(html: string): Promise<ProjectDetails[]> {
       }
     },
   );
-  console.log("Extracted project details:", JSON.stringify(projects, null, 2));
+
+  logger.info("Extracted project details:", JSON.stringify(projects, null, 2));
 
   return projects;
 }
 
+async function fetchProjectDetailPage(url: string): Promise<Partial<Project>> {
+  try {
+    logger.info(`Fetching details from ${url}...`);
+    const response = await axios.get(url);
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    const sourceCode = $('a:contains("Source Code")').attr("href") || "";
+    const projectDescription = $('h3:contains("Project Description")')
+      .next("div.text-black-500")
+      .text()
+      .trim();
+    const howItsMade = $('h3:contains("How it\'s Made")')
+      .next("div.text-black-500")
+      .text()
+      .trim();
+
+    return { sourceCode, projectDescription, howItsMade };
+  } catch (error) {
+    logger.error(`Failed to fetch details from ${url}:`, error);
+    return {};
+  }
+}
+
 export async function crawlEthGlobalShowcase(prompt: string) {
-  const allProjects: ProjectDetails[] = [];
+  const allProjects: Project[] = [];
   let page = 1;
 
   try {
     while (true) {
-      console.log(`Crawling page ${page}...`);
+      logger.info(`Crawling page ${page}...`);
       const url = `${baseUrl}/${page}?events=${eventFilter}`;
-      console.log("Crawling URL:", url);
+      logger.info("Crawling URL:", url);
       const response = await axios.get(url);
       const showcaseHtml = response.data;
 
@@ -54,17 +79,24 @@ export async function crawlEthGlobalShowcase(prompt: string) {
 
       const projectDetails = await extractProjectDetails(showcaseHtml);
 
+      for (const project of projectDetails) {
+        const projectDetailPageUrl = `https://ethglobal.com${project.link}`;
+        const additionalDetails =
+          await fetchProjectDetailPage(projectDetailPageUrl);
+        Object.assign(project, additionalDetails);
+      }
+
       allProjects.push(...projectDetails);
       page++;
     }
 
-    console.log(
-      "Successfully crawled all pages and extracted finalist project details:",
+    logger.info(
+      "Crawling completed successfully. Finalist project details extracted:",
       JSON.stringify(allProjects, null, 2),
     );
     return allProjects;
   } catch (error) {
-    logger.error("Error during crawling and parsing:", error);
+    logger.error("Error occurred during crawling and parsing:", error);
     return [];
   }
 }

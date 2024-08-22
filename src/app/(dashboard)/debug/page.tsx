@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/types";
+
 export default function DebugPage() {
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
-
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleCrawl = async () => {
@@ -53,6 +53,31 @@ export default function DebugPage() {
                 </a>
                 <p>{project.description}</p>
                 <p className="text-gray-500">Hackathon: {project.hackathon}</p>
+                {project.sourceCode && (
+                  <p className="text-gray-500">
+                    <strong>Source Code: </strong>
+                    <a
+                      href={project.sourceCode}
+                      className="text-blue-600 underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {project.sourceCode}
+                    </a>
+                  </p>
+                )}
+                {project.projectDescription && (
+                  <p className="text-gray-500">
+                    <strong>Project Description: </strong>
+                    {project.projectDescription}
+                  </p>
+                )}
+                {project.howItsMade && (
+                  <p className="text-gray-500">
+                    <strong>How it Made: </strong>
+                    {project.howItsMade}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
