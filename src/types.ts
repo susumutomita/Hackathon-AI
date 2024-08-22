@@ -5,6 +5,6 @@ export type Project = {
   link?: string;
   hackathon?: string;
   sourceCode?: string;
-  projectDescription?: string;
+  projectDescription?: string | "";
   howItsMade?: string;
 };

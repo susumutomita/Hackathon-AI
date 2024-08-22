@@ -45,6 +45,10 @@ dev:
 build:
 	npm run build
 
+.PHONY: crawl
+crawl:
+	node crawl.ts
+
 .PHONY: help
 help:
 	@echo "Usage: make [target]"
@@ -62,4 +66,5 @@ help:
 	@echo "  build           Build the project"
 	@echo "  start           Start app"
 	@echo "  test            Run tests"
+	@echo "  crawl           Run crawler"
 	@echo "  help            Show this help message"
