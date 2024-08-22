@@ -2,6 +2,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import logger from "@/lib/logger";
+import { Project } from "@/types";
 
 export class QdrantHandler {
   private client: QdrantClient;
@@ -63,7 +64,7 @@ export class QdrantHandler {
     }
   }
 
-  private async createEmbedding(text: string): Promise<number[]> {
+  public async createEmbedding(text: string): Promise<number[]> {
     const url = "https://api-atlas.nomic.ai/v1/embedding/text";
     const headers = {
       Authorization: `Bearer ${process.env.NOMIC_API_KEY}`,
@@ -84,6 +85,26 @@ export class QdrantHandler {
     } catch (error) {
       logger.error("Error during embedding creation: ", error);
       throw new Error("Error during embedding creation");
+    }
+  }
+  public async searchSimilarProjects(embedding: number[]): Promise<Project[]> {
+    try {
+      const response = await this.client.search("eth_global_showcase", {
+        vector: embedding,
+        limit: 5,
+      });
+
+      console.log("Full response object:", JSON.stringify(response, null, 2));
+      return response.map((item: any) => ({
+        title: item.payload.title,
+        description: item.payload.projectDescription,
+        link: item.payload.link,
+        howItsMade: item.payload.howItsMade,
+        sourceCode: item.payload.sourceCode,
+      }));
+    } catch (error) {
+      logger.error("Failed to search for similar projects:", error);
+      return [];
     }
   }
 }
