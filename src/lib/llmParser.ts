@@ -2,15 +2,20 @@ import ollama from "ollama";
 import logger from "@/lib/logger";
 
 export async function parseHtmlWithLLM(
-  html: string,
+  cleanedData: string,
   prompt: string,
 ): Promise<any> {
-  logger.info("Parsing HTML with LLM...");
-
+  logger.info("Parsing cleaned data with LLM...");
+  logger.info(cleanedData);
   try {
     const response = await ollama.chat({
       model: "llama3.1",
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        {
+          role: "user",
+          content: `${prompt} Here is the cleaned data: ${cleanedData}`,
+        },
+      ],
     });
 
     logger.info("LLM response received:", { response });
