@@ -9,24 +9,25 @@
 
 ## Overview
 
-**Hackathon AI** is an AI-driven tool designed to help hackathon participants maximize their chances of success by leveraging data from past hackathons. Developed using TypeScript and Electron, this cross-platform desktop application allows users to analyze past hackathon data and gain insights to optimize their project strategies.
+**Hackathon AI** is an AI-driven tool designed to help participants maximize their chances of success in hackathons by leveraging data from past events. Developed using TypeScript and Next.js, this web-based application provides insights to optimize project strategies by analyzing historical hackathon data.
 
 ## Key Features
 
 - **Analysis of Past Hackathon Data**: Analyze trends from finalist projects and requirements from prize-winning projects to identify key success factors.
-- **Similar Project Search**: Support for checking the novelty of ideas and estimating the likelihood of success.
-- **Trend Analysis and Prediction**: Predict technological trends and identify the categories of projects most likely to succeed.
+- **Search for Similar Projects**: Check the novelty of ideas and estimate the likelihood of success.
+- **Idea Refinement Using LLM**: Utilize a Language Learning Model (LLM) to refine and improve ideas based on similar past projects.
+- **Trend Analysis and Prediction**: Predict technological trends and identify project categories most likely to succeed.
 - **Strategic Guidelines**: Provide guidelines for optimizing presentations, team building, and analyzing judging criteria.
 
 ## System Architecture
 
-This project is built on TypeScript and Electron. The following is an overview of the system architecture.
+This project is built using TypeScript and Next.js . Below is an overview of the system architecture.
 
 ### System Context Diagram
 
 ```mermaid
 graph TB
-    A[Hackathon Participant] --> |Input Data| B[Hackathon AI]
+    A[Hackathon Participant] --> |Input Idea| B[Hackathon AI]
     B --> |Analysis Results| A
     B --> |Data Retrieval/Update| C[Database Server]
     B --> |External API Calls| D[API Services]
@@ -48,10 +49,8 @@ graph TB
 ### Architecture Overview
 
 - **Hackathon Participant**: The user who utilizes Hackathon AI to gain insights based on past data.
-- **Hackathon AI**: The desktop application that integrates data analysis, AI models, vector databases, and guideline generation modules.
+- **Hackathon AI**: A web application integrating data analysis, AI models, a vector database, and guideline generation modules.
 - **Database Server**: Manages and stores data from past hackathons and projects.
-- **API Services**: Supports API calls for external data and analysis resources.
-- **Cloud Data Sources**: Provides real-time trends and the latest data.
 
 ## Installation and Setup
 
@@ -59,6 +58,7 @@ graph TB
 
 - Node.js (version 14.x or above)
 - npm or yarn
+- Ollama (for running the LLM locally)
 
 ### Installation Steps
 
@@ -71,13 +71,13 @@ graph TB
 2. Install dependencies:
 
     ```bash
-    make install_all
+    make install
     ```
 
 3. Start the application in development mode:
 
     ```bash
-    make start
+    make dev
     ```
 
 4. To create a production build:
@@ -86,18 +86,28 @@ graph TB
     make build
     ```
 
+### Manual Execution of the Crawler
+
+To manually run the crawler after setting up your development environment or starting the server, use the following command:
+
+```bash
+curl http://localhost:3000/api/crawl
+```
+
 ## Usage
 
-1. After launching the application, provide the necessary data inputs via the UI.
-2. The application will display analysis results and guidelines based on past hackathon data.
-3. Use the provided guidelines and strategic recommendations to support your project's progress.
+1. After launching the application, input your idea through the user interface.
+2. Hackathon AI will search for similar projects and display the results.
+3. Based on these results, the LLM will provide improvement suggestions for your idea in Japanese.
+4. Use these suggestions to further refine your project and enhance your chances of success in the hackathon.
 
 ## Development Environment
 
-- **TypeScript**: Used as the main programming language.
-- **Next.js**: This makes the platform easy to use and navigate.
+- **TypeScript**: Used as the primary programming language.
+- **Next.js**: Provides an easy-to-use platform for building the web application.
 - **React**: Used to create UI components.
-- **TensorFlow.js**: Used for training and running AI models.
+- **Qdrant**: A vector database used for searching similar projects.
+- **Ollama**: A local LLM tool used to analyze ideas and generate improvement suggestions.
 
 ## License
 
