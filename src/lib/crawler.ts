@@ -35,7 +35,7 @@ async function extractProjectDetails(html: string): Promise<ProjectDetails[]> {
   return projects;
 }
 
-export async function crawlEthGlobalShowcase() {
+export async function crawlEthGlobalShowcase(prompt: string) {
   const allProjects: ProjectDetails[] = [];
   let page = 1;
 
