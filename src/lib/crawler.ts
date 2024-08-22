@@ -31,7 +31,10 @@ async function extractProjectDetails(html: string): Promise<Project[]> {
     },
   );
 
-  logger.info("Extracted project details:", JSON.stringify(projects, null, 2));
+  logger.info(
+    "Extracted project details: %s",
+    JSON.stringify(projects, null, 2),
+  );
 
   return projects;
 }
@@ -91,7 +94,7 @@ export async function crawlEthGlobalShowcase(prompt: string) {
     }
 
     logger.info(
-      "Crawling completed successfully. Finalist project details extracted:",
+      "Crawling completed successfully. Finalist project details extracted:%s",
       JSON.stringify(allProjects, null, 2),
     );
     return allProjects;
