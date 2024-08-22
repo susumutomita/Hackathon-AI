@@ -85,7 +85,7 @@ export default function FinalistList() {
             </TableBody>
           </Table>
         ) : (
-          !loading && <p>No projects found.</p>
+          !loading
         )}
       </div>
     </div>
