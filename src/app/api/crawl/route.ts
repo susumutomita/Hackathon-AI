@@ -6,10 +6,8 @@ export async function GET(request: NextRequest) {
   Extract the following information from the provided HTML content:
   1. List of projects with the following details:
      - Project Title
-     - Project Description
+     - Project Link
      - Prize information (Is the project a finalist?)
-     - GitHub Link
-     - Demo Link
   `;
 
   try {

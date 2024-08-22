@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-
+import { Project } from "@/types";
 export default function DebugPage() {
   const [loading, setLoading] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]); // プロジェクトデータを保存するためのステート
+  const [projects, setProjects] = useState<Project[]>([]);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleCrawl = async () => {
@@ -17,7 +18,12 @@ export default function DebugPage() {
         throw new Error("Failed to fetch crawling data");
       }
       const data = await response.json();
-      setProjects(data.projects); // APIからのプロジェクトデータをステートに保存
+
+      const filteredProjects = data.projects.filter(
+        (project: Project) => project.prize,
+      );
+
+      setProjects(filteredProjects);
     } catch (error: any) {
       setErrorMessage(error.message);
     } finally {
@@ -46,6 +52,7 @@ export default function DebugPage() {
                   {project.title}
                 </a>
                 <p>{project.description}</p>
+                <p className="text-gray-500">Hackathon: {project.hackathon}</p>
               </li>
             ))}
           </ul>
