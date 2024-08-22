@@ -27,7 +27,7 @@ format_check:
 	npm run format:check
 
 .PHONY: before_commit
-before_commit: lint_text lint	format_check
+before_commit: lint_text lint	format_check	build
 
 .PHONY: start
 start:
@@ -44,10 +44,6 @@ dev:
 .PHONY: build
 build:
 	npm run build
-
-.PHONY: crawl
-crawl:
-	node crawl.ts
 
 .PHONY: help
 help:
@@ -66,5 +62,4 @@ help:
 	@echo "  build           Build the project"
 	@echo "  start           Start app"
 	@echo "  test            Run tests"
-	@echo "  crawl           Run crawler"
 	@echo "  help            Show this help message"
