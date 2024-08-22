@@ -11,6 +11,7 @@ export default function DashboardPage() {
         <IdeaForm />
       </div>
       <div>
+        <h2 className="text-xl font-bold mb-4">Finalist Projects</h2>
         <FinalistList />
       </div>
     </div>
