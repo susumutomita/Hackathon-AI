@@ -24,21 +24,27 @@ export default function IdeaForm() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 sm:w-3/4 lg:w-1/2"
+      >
         <textarea
           ref={textareaRef}
           value={idea}
           onChange={(e) => setIdea(e.target.value)}
           placeholder="Enter your idea"
-          className="input resize-none overflow-hidden w-full max-w-lg sm:max-w-full sm:w-3/4 lg:w-1/2"
+          className="input resize-none overflow-hidden w-full"
           rows={10}
         />
+        <Button
+          type="submit"
+          className="w-full sm:w-auto self-center sm:self-start"
+        >
+          Submit
+        </Button>
       </form>
-      <Button type="submit" className="w-full sm:w-auto">
-        Submit
-      </Button>
       <div className="mt-4">
-        {results.length > 0 ? (
+        {results !== null && results.length > 0 ? (
           <ul>
             {results.map((result, index) => (
               <li key={index} className="border-b py-2">
@@ -47,7 +53,7 @@ export default function IdeaForm() {
             ))}
           </ul>
         ) : (
-          <p>No matching ideas found.</p>
+          results !== null && <p>No matching ideas found.</p>
         )}
       </div>
     </div>
