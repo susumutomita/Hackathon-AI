@@ -70,20 +70,26 @@ export default function IdeaForm() {
         >
           Hackathon AI
         </a>
+        <p className="mt-2 text-gray-600">
+          Hackathon AI helps you enhance your project ideas by leveraging data
+          from past hackathon projects. Analyze similar projects and receive
+          improvement suggestions to increase your chances of success in
+          hackathons.
+        </p>
       </div>
 
       {/* Main Content Wrapper */}
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Submit Your Idea Section */}
-        <div className="flex-1">
+        <div className="flex-1 h-full">
           <h2 className="text-xl font-bold mb-4">Submit Your Idea</h2>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 h-full">
             <TextareaAutosize
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               placeholder="Enter your idea"
-              className="input resize-none overflow-auto w-full p-2 border rounded"
-              minRows={5}
+              className="input resize-none overflow-auto w-full p-2 border rounded h-full"
+              minRows={10}
             />
             <Button
               type="submit"
@@ -96,14 +102,14 @@ export default function IdeaForm() {
         </div>
 
         {/* Improved Idea Section */}
-        <div className="flex-1">
+        <div className="flex-1 h-full">
           <h2 className="text-xl font-bold mb-4">Improved Idea</h2>
           <TextareaAutosize
             value={improvedIdea}
             onChange={(e) => setImprovedIdea(e.target.value)}
             placeholder="Your improved idea will appear here..."
-            className="input resize-none overflow-auto w-full p-2 border rounded"
-            minRows={5}
+            className="input resize-none overflow-auto w-full p-2 border rounded h-full"
+            minRows={10}
           />
         </div>
       </div>
