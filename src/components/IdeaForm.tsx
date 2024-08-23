@@ -13,14 +13,13 @@ import {
 export default function IdeaForm() {
   const [idea, setIdea] = useState("");
   const [results, setResults] = useState<any[]>([]);
-  const [improvedIdea, setImprovedIdea] = useState<string | null>(null);
+  const [improvedIdea, setImprovedIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    setImprovedIdea(null);
 
     try {
       const response = await fetch("/api/search-ideas", {
@@ -38,52 +37,83 @@ export default function IdeaForm() {
       const data = await response.json();
       setResults(data.projects);
 
-      if (data.projects.length > 0) {
-        const improveResponse = await fetch("/api/improve-idea", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ idea, similarProjects: data.projects }),
-        });
+      const improvedResponse = await fetch("/api/improve-idea", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ idea, similarProjects: data.projects }),
+      });
 
-        if (!improveResponse.ok) {
-          throw new Error("Failed to improve the idea");
-        }
-
-        const improveData = await improveResponse.json();
-        setImprovedIdea(improveData.improvedIdea);
+      if (!improvedResponse.ok) {
+        throw new Error("Failed to generate improved idea");
       }
+
+      const improvedData = await improvedResponse.json();
+      setImprovedIdea(improvedData.improvedIdea);
     } catch (error: any) {
-      console.error("Error during search or improvement:", error);
+      console.error("Error during search:", error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-4 sm:w-3/4 lg:w-1/2"
-      >
-        <textarea
-          ref={textareaRef}
-          value={idea}
-          onChange={(e) => setIdea(e.target.value)}
-          placeholder="Enter your idea"
-          className="input resize-none overflow-hidden w-full"
-          rows={10}
-        />
-        <Button
-          type="submit"
-          className="w-full sm:w-auto self-center sm:self-start"
-          disabled={loading}
+    <div className="container mx-auto px-4">
+      {/* Header with Link */}
+      <div className="text-center my-6">
+        <a
+          href="https://github.com/susumutomita/Hackathon-AI"
+          className="text-2xl font-bold text-blue-600 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
         >
-          {loading ? "Processing..." : "Submit"}
-        </Button>
-      </form>
-      <div className="mt-4">
+          Hackathon AI
+        </a>
+      </div>
+
+      {/* Main Content Wrapper */}
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Submit Your Idea Section */}
+        <div className="flex-1">
+          <h2 className="text-xl font-bold mb-4">Submit Your Idea</h2>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <textarea
+              ref={textareaRef}
+              value={idea}
+              onChange={(e) => setIdea(e.target.value)}
+              placeholder="Enter your idea"
+              className="input resize-y overflow-auto w-full h-40"
+              rows={10}
+            />
+            <Button
+              type="submit"
+              className="w-full sm:w-auto self-center sm:self-start"
+              disabled={loading}
+            >
+              {loading ? "Searching..." : "Submit"}
+            </Button>
+          </form>
+        </div>
+
+        {/* Improved Idea Section */}
+        <div className="flex-1">
+          <h2 className="text-xl font-bold mb-4">Improved Idea</h2>
+          <textarea
+            value={improvedIdea}
+            onChange={(e) => setImprovedIdea(e.target.value)}
+            placeholder="Your improved idea will appear here..."
+            className="input resize-y overflow-auto w-full h-40"
+            rows={10}
+          />
+        </div>
+      </div>
+
+      {/* Similar Projects Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">
+          Past Finalist Projects with Similar Ideas
+        </h2>
         {results.length > 0 ? (
           <Table>
             <TableHeader>
@@ -131,12 +161,6 @@ export default function IdeaForm() {
           !loading && <p>No matching ideas found.</p>
         )}
       </div>
-      {improvedIdea && (
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-4">Improved Idea</h2>
-          <p>{improvedIdea}</p>
-        </div>
-      )}
     </div>
   );
 }
