@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -9,13 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import TextareaAutosize from "react-textarea-autosize";
 
 export default function IdeaForm() {
   const [idea, setIdea] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [improvedIdea, setImprovedIdea] = useState("");
   const [loading, setLoading] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -78,13 +78,12 @@ export default function IdeaForm() {
         <div className="flex-1">
           <h2 className="text-xl font-bold mb-4">Submit Your Idea</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <textarea
-              ref={textareaRef}
+            <TextareaAutosize
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               placeholder="Enter your idea"
-              className="input resize-y overflow-auto w-full h-40"
-              rows={10}
+              className="input resize-none overflow-auto w-full p-2 border rounded"
+              minRows={5}
             />
             <Button
               type="submit"
@@ -99,12 +98,12 @@ export default function IdeaForm() {
         {/* Improved Idea Section */}
         <div className="flex-1">
           <h2 className="text-xl font-bold mb-4">Improved Idea</h2>
-          <textarea
+          <TextareaAutosize
             value={improvedIdea}
             onChange={(e) => setImprovedIdea(e.target.value)}
             placeholder="Your improved idea will appear here..."
-            className="input resize-y overflow-auto w-full h-40"
-            rows={10}
+            className="input resize-none overflow-auto w-full p-2 border rounded"
+            minRows={5}
           />
         </div>
       </div>
