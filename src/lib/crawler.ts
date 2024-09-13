@@ -88,7 +88,6 @@ export async function crawlEthGlobalShowcase() {
     while (true) {
       logger.info(`Crawling page ${page}...`);
       const url = `${baseUrl}?events=${eventFilter}&page=${page}`;
-      console.log(url);
       logger.info(`Fetching page from ${url}...`);
       const response = await axios.get(url);
       const showcaseHtml = response.data;
