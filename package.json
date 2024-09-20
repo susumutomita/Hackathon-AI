@@ -32,7 +32,7 @@
     "clsx": "^2.1.1",
     "groq-sdk": "^0.5.0",
     "lucide-react": "^0.429.0",
-    "next": "14.2.6",
+    "next": "14.2.13",
     "ollama": "^0.5.8",
     "react": "^18",
     "react-dom": "^18",
