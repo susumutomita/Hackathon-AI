@@ -1,4 +1,9 @@
 {
+  "agents": false,
+  "bangkok": false,
+  "sanfrancisco2024": false,
+  "singapore2024": false,
+  "ethonline2024": false,
   "superhack2024": false,
   "brussels": false,
   "starkhack": false,
