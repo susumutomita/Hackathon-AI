@@ -19,7 +19,7 @@ function getEventFilters(): string {
 
 const finalistImageUrl =
   "https://ethglobal.b-cdn.net/organizations/xdat5/square-logo/default.png";
-const baseUrl = "https://ethglobal.com/showcase/page";
+const baseUrl = "https://ethglobal.com/showcase/";
 const eventFilter = getEventFilters();
 logger.info(`Event filter: ${eventFilter}`);
 
@@ -87,7 +87,8 @@ export async function crawlEthGlobalShowcase() {
   try {
     while (true) {
       logger.info(`Crawling page ${page}...`);
-      const url = `${baseUrl}/${page}?events=${eventFilter}`;
+      const url = `${baseUrl}?events=${eventFilter}&page=${page}`;
+      logger.info(`Fetching page from ${url}...`);
       const response = await axios.get(url);
       const showcaseHtml = response.data;
 
