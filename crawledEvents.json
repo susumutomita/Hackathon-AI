@@ -1,5 +1,8 @@
 {
   "taipei": false,
+  "trifecta-agents": false,
+  "trifecta-tee": false,
+  "trifecta-zk": false,
   "agents": false,
   "bangkok": false,
   "sanfrancisco2024": false,
