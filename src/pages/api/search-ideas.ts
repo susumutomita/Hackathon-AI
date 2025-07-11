@@ -26,9 +26,24 @@ export default async function handler(
       projects: similarProjects,
     });
   } catch (error: any) {
-    res.status(500).json({
-      message: "Search failed",
-      error: error.message || "An unknown error occurred",
-    });
+    console.error("Search API error:", error);
+
+    // Check if it's a specific authentication error
+    if (
+      error.message?.includes("403") ||
+      error.message?.includes("authentication failed")
+    ) {
+      res.status(403).json({
+        message: "Authentication failed",
+        error: error.message,
+        suggestion:
+          "Please check that your NOMIC_API_KEY environment variable is set correctly and the API key is valid.",
+      });
+    } else {
+      res.status(500).json({
+        message: "Search failed",
+        error: error.message || "An unknown error occurred",
+      });
+    }
   }
 }
