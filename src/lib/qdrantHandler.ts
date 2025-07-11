@@ -99,9 +99,7 @@ export class QdrantHandler {
         const apiKey = process.env.NOMIC_API_KEY;
 
         // Debug log to check if API key is loaded
-        logger.info(
-          `Nomic API Key present: ${!!apiKey}, Key prefix: ${apiKey?.substring(0, 8)}...`,
-        );
+        logger.info("Nomic API Key present:", !!apiKey);
 
         const headers = {
           Authorization: `Bearer ${apiKey}`,
