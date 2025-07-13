@@ -3,6 +3,7 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import logger from "@/lib/logger";
 import { Project } from "@/types";
+import ollama from "ollama";
 
 export class QdrantHandler {
   private client: QdrantClient;
@@ -65,26 +66,90 @@ export class QdrantHandler {
   }
 
   public async createEmbedding(text: string): Promise<number[]> {
-    const url = "https://api-atlas.nomic.ai/v1/embedding/text";
-    const headers = {
-      Authorization: `Bearer ${process.env.NOMIC_API_KEY}`,
-      "Content-Type": "application/json",
-    };
-    const data = {
-      model: "nomic-embed-text-v1",
-      texts: [text],
-    };
+    const isProduction = process.env.NEXT_PUBLIC_ENVIRONMENT === "production";
+
     try {
-      const response = await axios.post(url, data, { headers, timeout: 10000 });
-      if (response.status === 200) {
-        return response.data.embeddings[0];
+      if (!isProduction) {
+        // Use Ollama for local embeddings in development
+        logger.info("Using Ollama for local embeddings");
+
+        // First, check if Ollama is running and the model is available
+        try {
+          const response = await ollama.embed({
+            model: "nomic-embed-text",
+            input: text,
+          });
+          logger.info("Ollama embedding created successfully");
+          return response.embeddings[0];
+        } catch (ollamaError: any) {
+          // If Ollama fails, provide helpful error message
+          if (
+            ollamaError.message?.includes("connection refused") ||
+            ollamaError.code === "ECONNREFUSED"
+          ) {
+            throw new Error(
+              "Ollama is not running. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull nomic-embed-text'",
+            );
+          }
+          throw new Error(`Ollama embedding failed: ${ollamaError.message}`);
+        }
       } else {
-        logger.error("Failed to create embedding: ", response.data);
-        throw new Error("Failed to create embedding");
+        // Use Nomic API in production
+        const url = "https://api-atlas.nomic.ai/v1/embedding/text";
+        const apiKey = process.env.NOMIC_API_KEY;
+
+        // Debug log to check if API key is loaded
+        logger.info("Nomic API Key present:", !!apiKey);
+
+        const headers = {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        };
+        const data = {
+          model: "nomic-embed-text-v1",
+          texts: [text],
+        };
+
+        const response = await axios.post(url, data, {
+          headers,
+          timeout: 10000,
+        });
+        if (response.status === 200) {
+          return response.data.embeddings[0];
+        } else {
+          logger.error("Failed to create embedding: ", response.data);
+          throw new Error("Failed to create embedding");
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Error during embedding creation: ", error);
-      throw new Error("Error during embedding creation");
+
+      // Check if it's an axios error with response
+      if (error.response) {
+        const status = error.response.status;
+        const errorMessage =
+          error.response.data?.error ||
+          error.response.data?.message ||
+          "Unknown error";
+
+        if (status === 403) {
+          throw new Error(
+            `Nomic API authentication failed (403): ${errorMessage}. Please check your NOMIC_API_KEY.`,
+          );
+        } else if (status === 401) {
+          throw new Error(
+            `Nomic API unauthorized (401): ${errorMessage}. API key may be invalid.`,
+          );
+        } else if (status === 429) {
+          throw new Error(
+            `Nomic API rate limit exceeded (429): ${errorMessage}`,
+          );
+        } else {
+          throw new Error(`Nomic API error (${status}): ${errorMessage}`);
+        }
+      }
+
+      throw new Error(`Error during embedding creation: ${error.message}`);
     }
   }
   public async searchSimilarProjects(embedding: number[]): Promise<Project[]> {
