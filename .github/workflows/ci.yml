@@ -26,3 +26,6 @@ jobs:
       - name: Format check
         run: |
           make format_check
+      - name: Run test
+        run: |
+          make test
