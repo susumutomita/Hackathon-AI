@@ -12,7 +12,7 @@ install:
 setup_husky:
 	npm run husky
 
-before_commit: lint_text lint format_check build
+before_commit: lint_text lint format_check build test
 
 start:
 	npm start
