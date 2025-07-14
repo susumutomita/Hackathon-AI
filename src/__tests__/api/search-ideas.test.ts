@@ -138,6 +138,9 @@ describe("/api/search-ideas", () => {
     expect(responseData.message).toBe("Authentication failed");
     expect(responseData.error).toBe("403: authentication failed");
     expect(responseData.suggestion).toContain("NOMIC_API_KEY");
+
+    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle generic authentication errors", async () => {
@@ -153,6 +156,9 @@ describe("/api/search-ideas", () => {
     const responseData = JSON.parse((res as any)._getData());
     expect(responseData.message).toBe("Authentication failed");
     expect(responseData.error).toBe("authentication failed - invalid key");
+
+    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle general errors and return 500", async () => {
@@ -169,6 +175,9 @@ describe("/api/search-ideas", () => {
       message: "Search failed",
       error: "Network timeout",
     });
+
+    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle unknown errors", async () => {
@@ -184,6 +193,9 @@ describe("/api/search-ideas", () => {
       message: "Search failed",
       error: "An unknown error occurred",
     });
+
+    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle errors during embedding search", async () => {
@@ -222,7 +234,7 @@ describe("/api/search-ideas", () => {
   it("should work with complex idea descriptions", async () => {
     const complexIdea =
       "A decentralized autonomous organization (DAO) that manages cross-chain liquidity pools using automated market makers (AMMs) with dynamic fee structures based on volatility and liquidity depth metrics.";
-    const mockEmbedding = Array.from({ length: 384 }, (_, i) => Math.random());
+    const mockEmbedding = Array.from({ length: 384 }, (_, i) => i * 0.001);
     const mockResults = [
       { id: 1, title: "Balancer", description: "Multi-token AMM", score: 0.85 },
       { id: 2, title: "Curve", description: "Stable coin AMM", score: 0.82 },
