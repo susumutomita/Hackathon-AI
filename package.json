@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "npx rimraf node_modules out",
     "test": "npx jest",
-    "format": "prettier --write '**/**/*.{ts,tsx,css}'",
+    "format": "prettier --write '**/**/*.{ts,tsx,js,jsx,css}'",
     "format_check": "prettier --check '**/**/*.{ts,tsx,js,jsx,css}'",
     "lint_text": "npx textlint '**/*.md'",
     "lint-staged": "lint-staged",
@@ -47,7 +47,6 @@
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^22",
-    "@types/node-mocks-http": "^1.8.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
