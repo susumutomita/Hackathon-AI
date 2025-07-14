@@ -50,7 +50,7 @@ describe("/api/crawl", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset environment variable
-    delete process.env.NEXT_PUBLIC_ENVIRONMENT;
+    process.env.NEXT_PUBLIC_ENVIRONMENT = undefined;
   });
 
   afterEach(() => {
