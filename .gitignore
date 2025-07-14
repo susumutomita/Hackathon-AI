@@ -131,3 +131,12 @@ dist
 
 .DS_Store
 .env
+
+# TypeScript build output in src directory
+src/**/*.d.ts
+src/**/*.d.ts.map
+src/**/*.js
+src/**/*.js.map
+# Exclude test setup files
+!src/**/*.test.js
+!jest.setup.js

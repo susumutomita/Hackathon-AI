@@ -8,12 +8,15 @@
     "format": "prettier --write '**/**/*.{ts,tsx,js,jsx,css}'",
     "format_check": "prettier --check '**/**/*.{ts,tsx,js,jsx,css}'",
     "lint_text": "npx textlint '**/*.md'",
+    "lint_text_fix": "npx textlint '**/*.md' --fix",
     "lint-staged": "lint-staged",
     "husky": "husky install",
     "start": "next start",
     "build": "next build",
     "dev": "next dev",
-    "lint": "next lint"
+    "lint": "next lint",
+    "mcp:build": "cd mcp-server && npm run build",
+    "mcp:install": "cd mcp-server && npm install"
   },
   "keywords": [],
   "author": "Susumu Tomita <oyter880@gmail.com> (https://susumutomita.netlify.app/)",
@@ -60,6 +63,7 @@
     "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.1",
     "textlint": "^14.0.5",
+    "@textlint-ja/textlint-rule-preset-ai-writing": "^1.5.0",
     "textlint-rule-ja-no-abusage": "^3.0.0",
     "textlint-rule-ja-no-inappropriate-words": "^2.0.0",
     "textlint-rule-no-double-negative-ja": "^2.0.1",
@@ -70,5 +74,21 @@
     "textlint-rule-spellcheck-tech-word": "^5.0.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5"
+  },
+  "workspaces": [
+    "mcp-server"
+  ],
+  "mcpServers": {
+    "hackathon-database": {
+      "command": "node",
+      "args": [
+        "mcp-server/dist/index.js"
+      ],
+      "env": {
+        "QD_URL": "${QD_URL}",
+        "QD_API_KEY": "${QD_API_KEY}",
+        "NOMIC_API_KEY": "${NOMIC_API_KEY}"
+      }
+    }
   }
 }

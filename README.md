@@ -13,11 +13,11 @@
 
 ## Key Features
 
-- **Analysis of Past Hackathon Data**: Analyze trends from finalist projects and requirements from prize-winning projects to identify key success factors.
-- **Search for Similar Projects**: Check the novelty of ideas and estimate the likelihood of success.
-- **Idea Refinement Using LLM**: Utilize a Language Learning Model (LLM) to refine and improve ideas based on similar past projects.
-- **Trend Analysis and Prediction**: Predict technological trends and identify project categories most likely to succeed.
-- **Strategic Guidelines**: Provide guidelines for optimizing presentations, team building, and analyzing judging criteria.
+- Analysis of Past Hackathon Data: Analyze trends from finalist projects and requirements from prize-winning projects to identify key success factors.
+- Search for Similar Projects: Check the novelty of ideas and estimate the likelihood of success.
+- Idea Refinement Using LLM: Utilize a Language Learning Model (LLM) to refine and improve ideas based on similar past projects.
+- Trend Analysis and Prediction: Predict technological trends and identify project categories most likely to succeed.
+- Strategic Guidelines: Provide guidelines for optimizing presentations, team building, and analyzing judging criteria.
 
 ## System Architecture
 
@@ -48,9 +48,9 @@ graph TB
 
 ### Architecture Overview
 
-- **Hackathon Participant**: The user who utilizes Hackathon AI to gain insights based on past data.
-- **Hackathon AI**: A web application integrating data analysis, AI models, a vector database, and guideline generation modules.
-- **Database Server**: Manages and stores data from past hackathons and projects.
+- Hackathon Participant: The user who utilizes Hackathon AI to gain insights based on past data.
+- Hackathon AI: A web application integrating data analysis, AI models, a vector database, and guideline generation modules.
+- Database Server: Manages and stores data from past hackathons and projects.
 
 ## Installation and Setup
 
@@ -103,11 +103,11 @@ curl http://localhost:3000/api/crawl
 
 ## Development Environment
 
-- **TypeScript**: Used as the primary programming language.
-- **Next.js**: Provides an easy-to-use platform for building the web application.
-- **React**: Used to create UI components.
-- **Qdrant**: A vector database used for searching similar projects.
-- **Ollama**: A local LLM tool used to analyze ideas and generate improvement suggestions.
+- TypeScript: Used as the primary programming language.
+- Next.js: Provides an easy-to-use platform for building the web application.
+- React: Used to create UI components.
+- Qdrant: A vector database used for searching similar projects.
+- Ollama: A local LLM tool used to analyze ideas and generate improvement suggestions.
 
 ## License
 

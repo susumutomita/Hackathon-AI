@@ -152,11 +152,14 @@ export class QdrantHandler {
       throw new Error(`Error during embedding creation: ${error.message}`);
     }
   }
-  public async searchSimilarProjects(embedding: number[]): Promise<Project[]> {
+  public async searchSimilarProjects(
+    embedding: number[],
+    limit: number = 5,
+  ): Promise<Project[]> {
     try {
       const response = await this.client.search("eth_global_showcase", {
         vector: embedding,
-        limit: 5,
+        limit,
       });
 
       console.log("Full response object:", JSON.stringify(response, null, 2));
