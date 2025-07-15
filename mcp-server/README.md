@@ -16,7 +16,15 @@ The following environment variables must be set:
 
 - `QD_URL`: Qdrant server URL
 - `QD_API_KEY`: Qdrant API key for authentication
-- `NOMIC_API_KEY`: Nomic API key for generating embeddings
+- `NOMIC_API_KEY`: Nomic API key for generating embeddings (production only)
+- `NEXT_PUBLIC_ENVIRONMENT`: Set to "production" to use Nomic API, otherwise uses Ollama
+
+### Embedding Models
+
+- Development: Uses Ollama with `nomic-embed-text` model
+  - Make sure Ollama is running: `ollama serve`
+  - Pull the model if needed: `ollama pull nomic-embed-text`
+- Production: Uses Nomic API (requires NOMIC_API_KEY)
 
 ### Building
 
@@ -91,8 +99,31 @@ To use this MCP server with Claude Code or other MCP-compatible applications, ad
 
 ## Development
 
+### Running the MCP Server
+
 For development with hot reloading:
 
 ```bash
 npm run dev
 ```
+
+### Testing Search Functionality
+
+Test the search functionality with custom queries:
+
+```bash
+# Search with default limit (5 results)
+npm run test:search "NFT marketplace"
+
+# Search with custom limit
+npm run test:search "DeFi lending platform" 10
+
+# Search in Japanese
+npm run test:search "分散型金融" 3
+```
+
+The test script:
+- Accepts search query as the first argument
+- Optionally accepts result limit as the second argument
+- Shows embedding creation and search results
+- Provides detailed error messages for troubleshooting
