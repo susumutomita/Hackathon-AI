@@ -94,10 +94,32 @@ npm run mcp:build
 
 ### ローカルでのテスト
 
+MCP サーバーの開発モード。
+
 ```bash
 cd mcp-server
 npm run dev
 ```
+
+検索機能のテスト。
+
+```bash
+# 基本的な検索（デフォルト5件）
+npm run test:search "NFTマーケットプレイス"
+
+# 結果数を指定して検索
+npm run test:search "DeFi プロトコル" 10
+
+# 英語での検索
+npm run test:search "blockchain gaming" 3
+```
+
+テストスクリプトの特徴。
+
+- コマンドライン引数で検索クエリを指定
+- 結果数の上限を任意で指定可能
+- Ollama を使用した埋め込みベクトル生成
+- エラー時の詳細なメッセージ表示
 
 ### 新しいツールの追加
 
