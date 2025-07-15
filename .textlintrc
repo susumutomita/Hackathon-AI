@@ -13,6 +13,7 @@
     },
     "ja-no-abusage": true,
     "ja-no-inappropriate-words": true,
+    "@textlint-ja/preset-ai-writing": true,
     "no-double-negative-ja": true,
     "no-dropping-the-ra": true,
     "spellcheck-tech-word": true,
