@@ -205,7 +205,10 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
               environment_variables: [
                 "QD_URL - Qdrant server URL",
                 "QD_API_KEY - Qdrant API key",
-                "NOMIC_API_KEY - Nomic API key for embeddings",
+                "EMBEDDING_PROVIDER - Embedding provider ('ollama' or 'nomic', default: 'nomic')",
+                "NOMIC_API_KEY - Nomic API key for embeddings (required when EMBEDDING_PROVIDER='nomic')",
+                "OLLAMA_MODEL - Ollama model name for embeddings (default: 'nomic-embed-text')",
+                "OLLAMA_URL - Ollama server URL (default: 'http://localhost:11434')",
               ],
             },
             null,

@@ -16,15 +16,26 @@ The following environment variables must be set:
 
 - `QD_URL`: Qdrant server URL
 - `QD_API_KEY`: Qdrant API key for authentication
-- `NOMIC_API_KEY`: Nomic API key for generating embeddings (production only)
-- `NEXT_PUBLIC_ENVIRONMENT`: Set to "production" to use Nomic API, otherwise uses Ollama
+- `EMBEDDING_PROVIDER`: Embedding provider to use (`ollama` or `nomic`, default: `nomic`)
+- `NOMIC_API_KEY`: Nomic API key for generating embeddings (required when EMBEDDING_PROVIDER=`nomic`)
+- `OLLAMA_MODEL`: Ollama model name for embeddings (default: `nomic-embed-text`)
+- `OLLAMA_URL`: Ollama server URL (default: `http://localhost:11434`)
 
 ### Embedding Models
 
-- Development: Uses Ollama with `nomic-embed-text` model
-  - Make sure Ollama is running: `ollama serve`
-  - Pull the model if needed: `ollama pull nomic-embed-text`
-- Production: Uses Nomic API (requires NOMIC_API_KEY)
+The server supports two embedding providers:
+
+#### 1. Ollama (Local LLM)
+- Set `EMBEDDING_PROVIDER=ollama`
+- Make sure Ollama is running: `ollama serve`
+- Pull the model if needed: `ollama pull nomic-embed-text` (or your preferred model)
+- Configure with:
+  - `OLLAMA_MODEL`: Model name (default: `nomic-embed-text`)
+  - `OLLAMA_URL`: Server URL (default: `http://localhost:11434`)
+
+#### 2. Nomic API (Cloud)
+- Set `EMBEDDING_PROVIDER=nomic` (default)
+- Requires `NOMIC_API_KEY` environment variable
 
 ### Building
 
@@ -90,7 +101,28 @@ To use this MCP server with Claude Code or other MCP-compatible applications, ad
       "env": {
         "QD_URL": "${QD_URL}",
         "QD_API_KEY": "${QD_API_KEY}",
+        "EMBEDDING_PROVIDER": "nomic",
         "NOMIC_API_KEY": "${NOMIC_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+For using Ollama (local LLM):
+
+```json
+{
+  "mcpServers": {
+    "hackathon-database": {
+      "command": "node",
+      "args": ["/path/to/mcp-server/dist/index.js"],
+      "env": {
+        "QD_URL": "${QD_URL}",
+        "QD_API_KEY": "${QD_API_KEY}",
+        "EMBEDDING_PROVIDER": "ollama",
+        "OLLAMA_MODEL": "nomic-embed-text",
+        "OLLAMA_URL": "http://localhost:11434"
       }
     }
   }
