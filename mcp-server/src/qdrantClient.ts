@@ -20,19 +20,24 @@ export class QdrantHandler {
   }
 
   public async createEmbedding(text: string): Promise<number[]> {
-    const isProduction = process.env.NEXT_PUBLIC_ENVIRONMENT === "production";
+    const embeddingProvider = process.env.EMBEDDING_PROVIDER || "nomic";
 
     try {
-      if (!isProduction) {
-        // Use Ollama for local embeddings in development
-        console.log("Using Ollama for local embeddings");
+      if (embeddingProvider === "ollama") {
+        // Use Ollama for embeddings
+        console.log("Using Ollama for embeddings");
+
+        const ollamaModel = process.env.OLLAMA_MODEL || "nomic-embed-text";
+        const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
 
         try {
           const response = await ollama.embed({
-            model: "nomic-embed-text",
+            model: ollamaModel,
             input: text,
           });
-          console.log("Ollama embedding created successfully");
+          console.log(
+            `Ollama embedding created successfully with model: ${ollamaModel}`,
+          );
           return response.embeddings[0];
         } catch (ollamaError: any) {
           if (
@@ -40,13 +45,13 @@ export class QdrantHandler {
             ollamaError.code === "ECONNREFUSED"
           ) {
             throw new Error(
-              "Ollama is not running. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull nomic-embed-text'",
+              `Ollama is not running at ${ollamaUrl}. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull ${ollamaModel}'`,
             );
           }
           throw new Error(`Ollama embedding failed: ${ollamaError.message}`);
         }
       } else {
-        // Use Nomic API in production
+        // Use Nomic API
         const url = "https://api-atlas.nomic.ai/v1/embedding/text";
         const apiKey = process.env.NOMIC_API_KEY;
 
