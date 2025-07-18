@@ -26,6 +26,7 @@ The following environment variables must be set:
 The server supports two embedding providers:
 
 #### 1. Ollama (Local LLM)
+
 - Set `EMBEDDING_PROVIDER=ollama`
 - Make sure Ollama is running: `ollama serve`
 - Pull the model if needed: `ollama pull nomic-embed-text` (or your preferred model)
@@ -34,6 +35,7 @@ The server supports two embedding providers:
   - `OLLAMA_URL`: Server URL (default: `http://localhost:11434`)
 
 #### 2. Nomic API (Cloud)
+
 - Set `EMBEDDING_PROVIDER=nomic` (default)
 - Requires `NOMIC_API_KEY` environment variable
 
@@ -60,11 +62,12 @@ npm start
 
 Search for similar hackathon projects using semantic search.
 
-**Parameters:**
+Parameters.
+
 - `query` (string, required): Search query for finding similar hackathon projects
 - `limit` (number, optional): Maximum number of results to return (default: 10)
 
-**Example:**
+Example.
 ```json
 {
   "name": "search_projects",
@@ -79,7 +82,8 @@ Search for similar hackathon projects using semantic search.
 
 Get a specific hackathon project by ID (coming soon).
 
-**Parameters:**
+Parameters.
+
 - `projectId` (string, required): The ID of the project to retrieve
 
 ## Resources
@@ -155,6 +159,7 @@ npm run test:search "分散型金融" 3
 ```
 
 The test script:
+
 - Accepts search query as the first argument
 - Optionally accepts result limit as the second argument
 - Shows embedding creation and search results
