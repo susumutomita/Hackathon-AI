@@ -11,6 +11,53 @@ export interface Project {
   sourceCode?: string;
 }
 
+// Error type interfaces
+interface OllamaError {
+  message?: string;
+  code?: string;
+}
+
+interface HttpError {
+  response?: {
+    status: number;
+    statusText?: string;
+    data?: {
+      error?: string;
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
+interface GeneralError {
+  message?: string;
+  [key: string]: unknown;
+}
+
+// Type guard functions
+function isHttpError(error: unknown): error is HttpError {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "response" in error &&
+    error.response !== null &&
+    typeof error.response === "object" &&
+    "status" in error.response
+  );
+}
+
+function isOllamaError(error: unknown): error is OllamaError {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    ("message" in error || "code" in error)
+  );
+}
+
+function isGeneralError(error: unknown): error is GeneralError {
+  return error !== null && typeof error === "object";
+}
+
 export class QdrantHandler {
   private client: QdrantClient;
 
@@ -33,9 +80,9 @@ export class QdrantHandler {
     }
   }
 
-  private formatError(error: any, context: string = "Embedding"): string {
+  private formatError(error: unknown, context: string = "Embedding"): string {
     // Handle HTTP errors
-    if (error.response) {
+    if (isHttpError(error) && error.response) {
       const status = error.response.status;
       const errorMessage =
         error.response.data?.error ||
@@ -45,7 +92,7 @@ export class QdrantHandler {
     }
 
     // Handle Ollama-specific errors
-    if (context === "Ollama") {
+    if (context === "Ollama" && isOllamaError(error)) {
       const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
       const ollamaModel = process.env.OLLAMA_MODEL || "nomic-embed-text";
 
@@ -59,15 +106,23 @@ export class QdrantHandler {
     }
 
     // Handle configuration errors
-    if (error.message?.includes("environment variable")) {
+    if (
+      isGeneralError(error) &&
+      error.message?.includes("environment variable")
+    ) {
       return `${context} failed: Configuration error - ${error.message}`;
     }
 
     // Handle general errors
-    return `${context} failed: ${error.message || "Unknown error"}`;
+    if (isGeneralError(error)) {
+      return `${context} failed: ${error.message || "Unknown error"}`;
+    }
+
+    // Fallback for unknown error types
+    return `${context} failed: Unknown error`;
   }
 
-  private handleOllamaError(error: any): never {
+  private handleOllamaError(error: unknown): never {
     throw new Error(this.formatError(error, "Ollama"));
   }
 
@@ -90,7 +145,7 @@ export class QdrantHandler {
             `Ollama embedding created successfully with model: ${ollamaModel}`,
           );
           return response.embeddings[0];
-        } catch (ollamaError: any) {
+        } catch (ollamaError: unknown) {
           this.handleOllamaError(ollamaError);
         }
       } else {
@@ -128,9 +183,9 @@ export class QdrantHandler {
           throw new Error(this.formatError(error, "Embedding"));
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Re-throw if already formatted
-      if (error.message?.includes("failed:")) {
+      if (error instanceof Error && error.message?.includes("failed:")) {
         throw error;
       }
       // Format and throw with appropriate context
