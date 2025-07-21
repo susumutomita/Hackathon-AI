@@ -1,3 +1,25 @@
+/**
+ * QdrantHandler - Secure Error Handling Guidelines
+ *
+ * Security Principles:
+ * 1. NEVER expose API keys in error messages
+ * 2. Sanitize all error messages in production environment
+ * 3. Remove sensitive information: URLs, model names, service details
+ * 4. Provide generic error messages to end users in production
+ * 5. Log detailed errors server-side only (not in client responses)
+ *
+ * Environment-specific behavior:
+ * - Development (NODE_ENV !== 'production'): Show detailed errors for debugging
+ * - Production (NODE_ENV === 'production'): Show sanitized, generic errors
+ *
+ * Sensitive information that must be protected:
+ * - API keys (NOMIC_API_KEY, QD_API_KEY)
+ * - Internal service URLs
+ * - Model names and versions
+ * - File system paths
+ * - Internal service names
+ */
+
 import { QdrantClient } from "@qdrant/js-client-rest";
 import axios from "axios";
 import ollama from "ollama";
@@ -67,6 +89,43 @@ export class QdrantHandler {
     this.client = new QdrantClient({ url, apiKey });
   }
 
+  /**
+   * Check if running in production environment
+   */
+  private isProduction(): boolean {
+    return process.env.NODE_ENV === "production";
+  }
+
+  /**
+   * Sanitize error messages for production environment
+   * Removes sensitive information like URLs, API endpoints, and model details
+   */
+  private sanitizeErrorMessage(message: string): string {
+    if (!this.isProduction()) {
+      return message;
+    }
+
+    // Remove URLs
+    let sanitized = message.replace(/https?:\/\/[^\s]+/g, "[URL_REDACTED]");
+
+    // Remove localhost references
+    sanitized = sanitized.replace(/localhost:\d+/g, "[LOCAL_SERVICE]");
+
+    // Remove model names
+    sanitized = sanitized.replace(/nomic-embed-text(-v\d+)?/g, "[MODEL]");
+
+    // Remove specific service names
+    sanitized = sanitized.replace(/Ollama|Nomic|Qdrant/gi, "[SERVICE]");
+
+    // Remove file paths
+    sanitized = sanitized.replace(/\/[\w\/.-]+/g, "[PATH]");
+
+    // Ensure no API keys are exposed (generic pattern)
+    sanitized = sanitized.replace(/[A-Za-z0-9_-]{20,}/g, "[REDACTED]");
+
+    return sanitized;
+  }
+
   private formatHttpError(status: number, errorMessage: string): string {
     switch (status) {
       case StatusCodes.FORBIDDEN:
@@ -88,21 +147,27 @@ export class QdrantHandler {
         error.response.data?.error ||
         error.response.data?.message ||
         "Unknown error";
-      return `${context} failed: ${this.formatHttpError(status, errorMessage)}`;
+      const httpError = `${context} failed: ${this.formatHttpError(status, errorMessage)}`;
+      return this.sanitizeErrorMessage(httpError);
     }
 
     // Handle Ollama-specific errors
     if (context === "Ollama" && isOllamaError(error)) {
-      const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
-      const ollamaModel = process.env.OLLAMA_MODEL || "nomic-embed-text";
-
       if (
         error.message?.includes("connection refused") ||
         error.code === "ECONNREFUSED"
       ) {
+        // In production, provide generic message
+        if (this.isProduction()) {
+          return `${context} failed: Service is not available. Please contact support.`;
+        }
+        // In development, provide detailed instructions
+        const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+        const ollamaModel = process.env.OLLAMA_MODEL || "nomic-embed-text";
         return `${context} failed: Ollama is not running at ${ollamaUrl}. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull ${ollamaModel}'`;
       }
-      return `${context} failed: ${error.message || "Unknown Ollama error"}`;
+      const errorMsg = `${context} failed: ${error.message || "Unknown Ollama error"}`;
+      return this.sanitizeErrorMessage(errorMsg);
     }
 
     // Handle configuration errors
@@ -110,16 +175,26 @@ export class QdrantHandler {
       isGeneralError(error) &&
       error.message?.includes("environment variable")
     ) {
-      return `${context} failed: Configuration error - ${error.message}`;
+      // Never expose which environment variable is missing in production
+      if (this.isProduction()) {
+        return `${context} failed: Configuration error. Please contact support.`;
+      }
+      // In development, show the actual missing variable (but ensure no API key values)
+      const configError = error.message.replace(
+        /[A-Za-z0-9_-]{20,}/g,
+        "[REDACTED]",
+      );
+      return `${context} failed: Configuration error - ${configError}`;
     }
 
     // Handle general errors
     if (isGeneralError(error)) {
-      return `${context} failed: ${error.message || "Unknown error"}`;
+      const errorMsg = `${context} failed: ${error.message || "Unknown error"}`;
+      return this.sanitizeErrorMessage(errorMsg);
     }
 
     // Fallback for unknown error types
-    return `${context} failed: Unknown error`;
+    return `${context} failed: ${this.isProduction() ? "An error occurred" : "Unknown error"}`;
   }
 
   private handleOllamaError(error: unknown): never {
