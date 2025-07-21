@@ -33,20 +33,42 @@ export class QdrantHandler {
     }
   }
 
-  private handleOllamaError(
-    error: any,
-    ollamaUrl: string,
-    ollamaModel: string,
-  ): never {
-    if (
-      error.message?.includes("connection refused") ||
-      error.code === "ECONNREFUSED"
-    ) {
-      throw new Error(
-        `Ollama is not running at ${ollamaUrl}. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull ${ollamaModel}'`,
-      );
+  private formatError(error: any, context: string = "Embedding"): string {
+    // Handle HTTP errors
+    if (error.response) {
+      const status = error.response.status;
+      const errorMessage =
+        error.response.data?.error ||
+        error.response.data?.message ||
+        "Unknown error";
+      return `${context} failed: ${this.formatHttpError(status, errorMessage)}`;
     }
-    throw new Error(`Ollama embedding failed: ${error.message}`);
+
+    // Handle Ollama-specific errors
+    if (context === "Ollama") {
+      const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+      const ollamaModel = process.env.OLLAMA_MODEL || "nomic-embed-text";
+
+      if (
+        error.message?.includes("connection refused") ||
+        error.code === "ECONNREFUSED"
+      ) {
+        return `${context} failed: Ollama is not running at ${ollamaUrl}. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull ${ollamaModel}'`;
+      }
+      return `${context} failed: ${error.message || "Unknown Ollama error"}`;
+    }
+
+    // Handle configuration errors
+    if (error.message?.includes("environment variable")) {
+      return `${context} failed: Configuration error - ${error.message}`;
+    }
+
+    // Handle general errors
+    return `${context} failed: ${error.message || "Unknown error"}`;
+  }
+
+  private handleOllamaError(error: any): never {
+    throw new Error(this.formatError(error, "Ollama"));
   }
 
   public async createEmbedding(text: string): Promise<number[]> {
@@ -58,7 +80,6 @@ export class QdrantHandler {
         console.log("Using Ollama for embeddings");
 
         const ollamaModel = process.env.OLLAMA_MODEL || "nomic-embed-text";
-        const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
 
         try {
           const response = await ollama.embed({
@@ -70,7 +91,7 @@ export class QdrantHandler {
           );
           return response.embeddings[0];
         } catch (ollamaError: any) {
-          this.handleOllamaError(ollamaError, ollamaUrl, ollamaModel);
+          this.handleOllamaError(ollamaError);
         }
       } else {
         // Use Nomic API
@@ -98,20 +119,24 @@ export class QdrantHandler {
         if (response.status === StatusCodes.OK) {
           return response.data.embeddings[0];
         } else {
-          throw new Error(`Failed to create embedding: ${response.status}`);
+          const error = {
+            response: {
+              status: response.status,
+              data: { message: `Unexpected status code: ${response.status}` },
+            },
+          };
+          throw new Error(this.formatError(error, "Embedding"));
         }
       }
     } catch (error: any) {
-      if (error.response) {
-        const status = error.response.status;
-        const errorMessage =
-          error.response.data?.error ||
-          error.response.data?.message ||
-          "Unknown error";
-
-        throw new Error(this.formatHttpError(status, errorMessage));
+      // Re-throw if already formatted
+      if (error.message?.includes("failed:")) {
+        throw error;
       }
-      throw error;
+      // Format and throw with appropriate context
+      const context =
+        process.env.EMBEDDING_PROVIDER === "ollama" ? "Ollama" : "Embedding";
+      throw new Error(this.formatError(error, context));
     }
   }
 
