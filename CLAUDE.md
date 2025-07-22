@@ -131,7 +131,7 @@ This project implements Kiro-style Spec-Driven Development for Claude Code using
 /steering-custom        # Create custom steering for specialized contexts
 ```
 
-**Note**: For new features or empty projects, steering is recommended but not required. You can proceed directly to spec-requirements if needed.
+Note: For new features or empty projects, steering is recommended but not required. You can proceed directly to spec-requirements if needed.
 
 ### Phase 1: Specification Creation
 ```
@@ -148,37 +148,37 @@ This project implements Kiro-style Spec-Driven Development for Claude Code using
 
 ## Spec-Driven Development Workflow
 
-Kiro's spec-driven development follows a strict **3-phase approval workflow**:
+Kiro's spec-driven development follows a strict 3-phase approval workflow:
 
 ### Phase 1: Requirements Generation & Approval
-1. **Generate**: `/spec-requirements [feature-name]` - Generate requirements document
-2. **Review**: Human reviews `requirements.md` and edits if needed
-3. **Approve**: Manually update `spec.json` to set `"requirements": true`
+1. Generate: `/spec-requirements [feature-name]` - Generate requirements document
+2. Review: Human reviews `requirements.md` and edits if needed
+3. Approve: Manually update `spec.json` to set `"requirements": true`
 
 ### Phase 2: Design Generation & Approval
-1. **Generate**: `/spec-design [feature-name]` - Generate technical design (requires requirements approval)
-2. **Review**: Human reviews `design.md` and edits if needed
-3. **Approve**: Manually update `spec.json` to set `"design": true`
+1. Generate: `/spec-design [feature-name]` - Generate technical design (requires requirements approval)
+2. Review: Human reviews `design.md` and edits if needed
+3. Approve: Manually update `spec.json` to set `"design": true`
 
 ### Phase 3: Tasks Generation & Approval
-1. **Generate**: `/spec-tasks [feature-name]` - Generate implementation tasks (requires design approval)
-2. **Review**: Human reviews `tasks.md` and edits if needed
-3. **Approve**: Manually update `spec.json` to set `"tasks": true`
+1. Generate: `/spec-tasks [feature-name]` - Generate implementation tasks (requires design approval)
+2. Review: Human reviews `tasks.md` and edits if needed
+3. Approve: Manually update `spec.json` to set `"tasks": true`
 
 ### Implementation
 Only after all three phases are approved can implementation begin.
 
-**Key Principle**: Each phase requires explicit human approval before proceeding to the next phase, ensuring quality and accuracy throughout the development process.
+Key Principle: Each phase requires explicit human approval before proceeding to the next phase, ensuring quality and accuracy throughout the development process.
 
 ## Development Rules
 
-1. **Consider steering**: Run `/steering-init` before major development (optional for new features)
-2. **Follow the 3-phase approval workflow**: Requirements → Design → Tasks → Implementation
-3. **Manual approval required**: Each phase must be explicitly approved by human review
-4. **No skipping phases**: Design requires approved requirements; Tasks require approved design
-5. **Update task status**: Mark tasks as completed when working on them
-6. **Keep steering current**: Run `/steering-update` after significant changes
-7. **Check spec compliance**: Use `/spec-status` to verify alignment
+1. Consider steering: Run `/steering-init` before major development (optional for new features)
+2. Follow the 3-phase approval workflow: Requirements → Design → Tasks → Implementation
+3. Manual approval required: Each phase must be explicitly approved by human review
+4. No skipping phases: Design requires approved requirements; Tasks require approved design
+5. Update task status: Mark tasks as completed when working on them
+6. Keep steering current: Run `/steering-update` after significant changes
+7. Check spec compliance: Use `/spec-status` to verify alignment
 
 ## Automation
 
@@ -191,10 +191,10 @@ This project uses Claude Code hooks to:
 ### Task Progress Tracking
 
 When working on implementation:
-1. **Manual tracking**: Update tasks.md checkboxes manually as you complete tasks
-2. **Progress monitoring**: Use `/spec-status` to view current completion status
-3. **TodoWrite integration**: Use TodoWrite tool to track active work items
-4. **Status visibility**: Checkbox parsing shows completion percentage
+1. Manual tracking: Update tasks.md checkboxes manually as you complete tasks
+2. Progress monitoring: Use `/spec-status` to view current completion status
+3. TodoWrite integration: Use TodoWrite tool to track active work items
+4. Status visibility: Checkbox parsing shows completion percentage
 
 ## Getting Started
 
@@ -223,5 +223,5 @@ Create specialized steering documents for:
 
 ### Inclusion Modes
 - Always Included - Loaded in every interaction (default)
-- Conditional - Loaded for specific file patterns (e.g., `"*.test.js"`)
+- Conditional - Loaded for specific file patterns (e.g., `".test.js"`)
 - Manual - Loaded on-demand with `#filename` reference
