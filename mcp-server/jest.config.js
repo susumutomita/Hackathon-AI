@@ -29,6 +29,10 @@ export default {
   ],
   // Note: Coverage thresholds are lower than ideal due to Jest's ESM module mocking limitations
   // Consider using Vitest or refactoring to use dependency injection for better testability
+  //
+  // Related to Issue #235: Mock-based testing is limited with Jest + ESM
+  // Current approach uses actual HTTP requests with invalid credentials for error testing
+  // See src/__tests__/qdrantHandler.extended.test.ts for extended error scenario tests
   coverageThreshold: {
     global: {
       branches: 30,
