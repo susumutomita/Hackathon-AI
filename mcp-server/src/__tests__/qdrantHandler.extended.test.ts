@@ -16,7 +16,10 @@ import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import { QdrantHandler } from "../qdrantClient";
 import { ERROR_MESSAGES } from "../testConstants/errorMessages";
 
-describe("QdrantHandler Extended Error Tests", () => {
+// Skip these tests in CI environment as they make real HTTP requests
+const describeIfNotCI = process.env.CI ? describe.skip : describe;
+
+describeIfNotCI("QdrantHandler Extended Error Tests", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {

@@ -152,17 +152,23 @@ describe("QdrantHandler Integration Tests", () => {
     // These tests demonstrate proper error message checking patterns
     // In a real test environment, axios would need to be mocked to simulate specific HTTP errors
 
-    it("should handle authentication errors with proper error messages", async () => {
-      process.env.EMBEDDING_PROVIDER = "nomic";
-      process.env.NOMIC_API_KEY = "invalid-key";
+    // Skip in CI environment as it makes real HTTP requests
+    const itIfNotCI = process.env.CI ? it.skip : it;
 
-      const handler = new QdrantHandler();
+    itIfNotCI(
+      "should handle authentication errors with proper error messages",
+      async () => {
+        process.env.EMBEDDING_PROVIDER = "nomic";
+        process.env.NOMIC_API_KEY = "invalid-key";
 
-      // The actual error depends on the API response, but we check for error structure
-      await expect(handler.createEmbedding("test")).rejects.toThrow(
-        /Embedding failed: \d{3}: /,
-      );
-    });
+        const handler = new QdrantHandler();
+
+        // The actual error depends on the API response, but we check for error structure
+        await expect(handler.createEmbedding("test")).rejects.toThrow(
+          /Embedding failed: \d{3}: /,
+        );
+      },
+    );
 
     it.skip("should handle 429 rate limit error", async () => {
       process.env.EMBEDDING_PROVIDER = "nomic";

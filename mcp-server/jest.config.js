@@ -3,6 +3,7 @@ export default {
   preset: "ts-jest",
   testEnvironment: "node",
   extensionsToTreatAsEsm: [".ts"],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   globals: {
     "ts-jest": {
       useESM: true,
