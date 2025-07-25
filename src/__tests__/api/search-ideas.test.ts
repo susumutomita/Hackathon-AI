@@ -2,13 +2,20 @@ import { NextApiRequest, NextApiResponse } from "next";
 import handler from "@/pages/api/search-ideas";
 import { QdrantHandler } from "@/lib/qdrantHandler";
 
-// Mock the QdrantHandler module
-jest.mock("@/lib/qdrantHandler", () => ({
-  QdrantHandler: jest.fn().mockImplementation(() => ({
-    createEmbedding: jest.fn(),
-    searchSimilarProjects: jest.fn(),
-  })),
-}));
+// Mock the QdrantHandler module to prevent actual API calls
+jest.mock("@/lib/qdrantHandler", () => {
+  const mockCreateEmbedding = jest.fn();
+  const mockSearchSimilarProjects = jest.fn();
+
+  return {
+    QdrantHandler: jest.fn().mockImplementation(() => ({
+      createEmbedding: mockCreateEmbedding,
+      searchSimilarProjects: mockSearchSimilarProjects,
+    })),
+    __mockCreateEmbedding: mockCreateEmbedding,
+    __mockSearchSimilarProjects: mockSearchSimilarProjects,
+  };
+});
 
 const MockedQdrantHandler = QdrantHandler as jest.MockedClass<
   typeof QdrantHandler
