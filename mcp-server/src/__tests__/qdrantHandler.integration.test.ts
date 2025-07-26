@@ -3,7 +3,7 @@
  * Tests the error handling methods with real error scenarios
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { QdrantHandler } from "../qdrantClient";
 import { ERROR_MESSAGES } from "../testConstants/errorMessages";
 

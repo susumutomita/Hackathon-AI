@@ -1,6 +1,8 @@
-// jest.setup.js
+import { config } from "dotenv";
+import { vi } from "vitest";
+
 // Load test environment variables
-require("dotenv").config({ path: ".env.test" });
+config({ path: ".env.test" });
 
 // Mock environment variables for tests
 process.env.NEXT_PUBLIC_ENVIRONMENT = "test";
@@ -15,8 +17,8 @@ process.env.EMBEDDING_PROVIDER = "ollama"; // Use Ollama to avoid Nomic API call
 global.console = {
   ...console,
   // Keep error and warn for debugging
-  error: jest.fn(console.error),
-  warn: jest.fn(console.warn),
+  error: vi.fn(console.error),
+  warn: vi.fn(console.warn),
   // Silence log output during tests
-  log: jest.fn(),
+  log: vi.fn(),
 };

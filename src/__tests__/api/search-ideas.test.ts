@@ -1,14 +1,15 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { NextApiRequest, NextApiResponse } from "next";
 import handler from "@/pages/api/search-ideas";
 import { QdrantHandler } from "@/lib/qdrantHandler";
 
 // Mock the QdrantHandler module to prevent actual API calls
-jest.mock("@/lib/qdrantHandler", () => {
-  const mockCreateEmbedding = jest.fn();
-  const mockSearchSimilarProjects = jest.fn();
+vi.mock("@/lib/qdrantHandler", () => {
+  const mockCreateEmbedding = vi.fn();
+  const mockSearchSimilarProjects = vi.fn();
 
   return {
-    QdrantHandler: jest.fn().mockImplementation(() => ({
+    QdrantHandler: vi.fn().mockImplementation(() => ({
       createEmbedding: mockCreateEmbedding,
       searchSimilarProjects: mockSearchSimilarProjects,
     })),
@@ -17,9 +18,7 @@ jest.mock("@/lib/qdrantHandler", () => {
   };
 });
 
-const MockedQdrantHandler = QdrantHandler as jest.MockedClass<
-  typeof QdrantHandler
->;
+const MockedQdrantHandler = QdrantHandler as ReturnType<typeof vi.fn>;
 
 // Helper function to create mock request and response
 function createMockRequestResponse(method = "POST", body = {}) {
@@ -31,8 +30,8 @@ function createMockRequestResponse(method = "POST", body = {}) {
   } as unknown as NextApiRequest;
 
   const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
+    status: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnThis(),
     _getStatusCode: function () {
       return this._statusCode || 200;
     },
@@ -44,12 +43,14 @@ function createMockRequestResponse(method = "POST", body = {}) {
   } as unknown as NextApiResponse;
 
   // Override status and json to capture values
-  (res.status as jest.Mock).mockImplementation((code: number) => {
-    (res as any)._statusCode = code;
-    return res;
-  });
+  (res.status as ReturnType<typeof vi.fn>).mockImplementation(
+    (code: number) => {
+      (res as any)._statusCode = code;
+      return res;
+    },
+  );
 
-  (res.json as jest.Mock).mockImplementation((data: any) => {
+  (res.json as ReturnType<typeof vi.fn>).mockImplementation((data: any) => {
     (res as any)._jsonData = data;
     return res;
   });
@@ -58,13 +59,13 @@ function createMockRequestResponse(method = "POST", body = {}) {
 }
 
 describe("/api/search-ideas", () => {
-  let mockCreateEmbedding: jest.MockedFunction<any>;
-  let mockSearchSimilarProjects: jest.MockedFunction<any>;
+  let mockCreateEmbedding: ReturnType<typeof vi.fn>;
+  let mockSearchSimilarProjects: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockCreateEmbedding = jest.fn();
-    mockSearchSimilarProjects = jest.fn();
+    vi.clearAllMocks();
+    mockCreateEmbedding = vi.fn();
+    mockSearchSimilarProjects = vi.fn();
 
     MockedQdrantHandler.mockImplementation(
       () =>
@@ -76,7 +77,7 @@ describe("/api/search-ideas", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should return 405 for non-POST methods", async () => {

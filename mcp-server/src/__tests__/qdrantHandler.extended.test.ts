@@ -1,18 +1,12 @@
 /**
  * Extended integration tests for QdrantHandler with comprehensive error scenarios
  *
- * Note: Due to Jest's limitations with ESM module mocking, these tests use
- * actual HTTP requests with invalid credentials to test error handling.
- *
- * For full mock-based testing, consider:
- * 1. Migrating to Vitest which has better ESM support
- * 2. Using dependency injection pattern in QdrantHandler
- * 3. Using a test HTTP server to simulate API responses
+ * Now using Vitest for better ESM module support and improved testing capabilities.
  *
  * Related: https://github.com/susumutomita/Hackathon-AI/issues/235
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { QdrantHandler } from "../qdrantClient";
 import { ERROR_MESSAGES } from "../testConstants/errorMessages";
 
