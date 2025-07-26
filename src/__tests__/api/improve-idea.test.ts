@@ -1,15 +1,14 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { NextApiRequest, NextApiResponse } from "next";
 import handler from "@/pages/api/improve-idea";
 import { parseHtmlWithLLM } from "@/lib/llmParser";
 
 // Mock the LLM parser module
-jest.mock("@/lib/llmParser", () => ({
-  parseHtmlWithLLM: jest.fn(),
+vi.mock("@/lib/llmParser", () => ({
+  parseHtmlWithLLM: vi.fn(),
 }));
 
-const mockParseHtmlWithLLM = parseHtmlWithLLM as jest.MockedFunction<
-  typeof parseHtmlWithLLM
->;
+const mockParseHtmlWithLLM = parseHtmlWithLLM as ReturnType<typeof vi.fn>;
 
 // Helper function to create mock request and response
 function createMockRequestResponse(method = "POST", body = {}) {
@@ -21,8 +20,8 @@ function createMockRequestResponse(method = "POST", body = {}) {
   } as unknown as NextApiRequest;
 
   const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
+    status: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnThis(),
     _getStatusCode: function () {
       return this._statusCode || 200;
     },
@@ -34,12 +33,14 @@ function createMockRequestResponse(method = "POST", body = {}) {
   } as unknown as NextApiResponse;
 
   // Override status and json to capture values
-  (res.status as jest.Mock).mockImplementation((code: number) => {
-    (res as any)._statusCode = code;
-    return res;
-  });
+  (res.status as ReturnType<typeof vi.fn>).mockImplementation(
+    (code: number) => {
+      (res as any)._statusCode = code;
+      return res;
+    },
+  );
 
-  (res.json as jest.Mock).mockImplementation((data: any) => {
+  (res.json as ReturnType<typeof vi.fn>).mockImplementation((data: any) => {
     (res as any)._jsonData = data;
     return res;
   });
@@ -49,11 +50,11 @@ function createMockRequestResponse(method = "POST", body = {}) {
 
 describe("/api/improve-idea", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should return 400 when idea is missing", async () => {

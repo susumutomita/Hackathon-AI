@@ -1,14 +1,16 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { NextApiRequest, NextApiResponse } from "next";
 import handler from "@/pages/api/crawl";
 import { crawlEthGlobalShowcase } from "@/lib/crawler";
 
 // Mock the crawler module
-jest.mock("@/lib/crawler", () => ({
-  crawlEthGlobalShowcase: jest.fn(),
+vi.mock("@/lib/crawler", () => ({
+  crawlEthGlobalShowcase: vi.fn(),
 }));
 
-const mockCrawlEthGlobalShowcase =
-  crawlEthGlobalShowcase as jest.MockedFunction<typeof crawlEthGlobalShowcase>;
+const mockCrawlEthGlobalShowcase = crawlEthGlobalShowcase as ReturnType<
+  typeof vi.fn
+>;
 
 // Helper function to create mock request and response
 function createMockRequestResponse(method = "GET") {
@@ -20,8 +22,8 @@ function createMockRequestResponse(method = "GET") {
   } as unknown as NextApiRequest;
 
   const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
+    status: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnThis(),
     _getStatusCode: function () {
       return this._statusCode || 200;
     },
@@ -33,12 +35,14 @@ function createMockRequestResponse(method = "GET") {
   } as unknown as NextApiResponse;
 
   // Override status and json to capture values
-  (res.status as jest.Mock).mockImplementation((code: number) => {
-    (res as any)._statusCode = code;
-    return res;
-  });
+  (res.status as ReturnType<typeof vi.fn>).mockImplementation(
+    (code: number) => {
+      (res as any)._statusCode = code;
+      return res;
+    },
+  );
 
-  (res.json as jest.Mock).mockImplementation((data: any) => {
+  (res.json as ReturnType<typeof vi.fn>).mockImplementation((data: any) => {
     (res as any)._jsonData = data;
     return res;
   });
@@ -48,13 +52,13 @@ function createMockRequestResponse(method = "GET") {
 
 describe("/api/crawl", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset environment variable
     process.env.NEXT_PUBLIC_ENVIRONMENT = undefined;
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should return 403 when environment is production", async () => {
