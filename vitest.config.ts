@@ -21,10 +21,10 @@ export default defineConfig({
         "mcp-server/src/test-search.ts",
       ],
       thresholds: {
-        branches: 45,
+        branches: 60,
         functions: 60,
-        lines: 40,
-        statements: 40,
+        lines: 60,
+        statements: 60,
       },
     },
     mockReset: true,
