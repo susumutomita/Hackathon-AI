@@ -20,8 +20,6 @@ function getEventFilters(): string {
 const finalistImageUrl =
   "https://ethglobal.b-cdn.net/organizations/xdat5/square-logo/default.png";
 const baseUrl = "https://ethglobal.com/showcase/";
-const eventFilter = getEventFilters();
-logger.info(`Event filter: ${eventFilter}`);
 
 async function extractProjectDetails(html: string): Promise<Project[]> {
   const $ = cheerio.load(html);
@@ -80,6 +78,8 @@ async function fetchProjectDetailPage(url: string): Promise<Partial<Project>> {
 
 export async function crawlEthGlobalShowcase() {
   const qdrantHandler = new QdrantHandler();
+  const eventFilter = getEventFilters();
+  logger.info(`Event filter: ${eventFilter}`);
 
   const allProjects: Project[] = [];
   let page = 1;

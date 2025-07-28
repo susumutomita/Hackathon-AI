@@ -23,8 +23,8 @@ export default defineConfig({
       thresholds: {
         branches: 45,
         functions: 60,
-        lines: 30,
-        statements: 30,
+        lines: 40,
+        statements: 40,
       },
     },
     mockReset: true,
