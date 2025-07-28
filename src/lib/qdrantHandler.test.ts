@@ -1,0 +1,437 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { QdrantHandler } from "./qdrantHandler";
+import { QdrantClient } from "@qdrant/js-client-rest";
+import axios from "axios";
+import ollama from "ollama";
+import logger from "@/lib/logger";
+
+vi.mock("@qdrant/js-client-rest");
+vi.mock("axios");
+vi.mock("ollama");
+vi.mock("@/lib/logger", () => ({
+  default: {
+    info: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock("uuid", () => ({
+  v4: () => "test-uuid-123",
+}));
+
+describe("QdrantHandler", () => {
+  let handler: QdrantHandler;
+  let mockQdrantClient: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockQdrantClient = {
+      getCollection: vi.fn(),
+      createCollection: vi.fn(),
+      upsert: vi.fn(),
+      search: vi.fn(),
+    };
+
+    (QdrantClient as any).mockImplementation(() => mockQdrantClient);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("constructor and ensureCollectionExists", () => {
+    it("should create QdrantClient with correct URL and API key", async () => {
+      process.env.QD_URL = "http://test-qdrant:6333";
+      process.env.QD_API_KEY = "test-api-key";
+
+      handler = new QdrantHandler();
+
+      expect(QdrantClient).toHaveBeenCalledWith({
+        url: "http://test-qdrant:6333",
+        apiKey: "test-api-key",
+      });
+    });
+
+    it("should use default values when environment variables are not set", async () => {
+      delete process.env.QD_URL;
+      delete process.env.QD_API_KEY;
+
+      handler = new QdrantHandler();
+
+      expect(QdrantClient).toHaveBeenCalledWith({
+        url: "http://localhost:6333",
+        apiKey: "",
+      });
+    });
+
+    it("should check if collection exists on initialization", async () => {
+      mockQdrantClient.getCollection.mockResolvedValue({});
+
+      handler = new QdrantHandler();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(mockQdrantClient.getCollection).toHaveBeenCalledWith(
+        "eth_global_showcase",
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        "Collection 'eth_global_showcase' exists.",
+      );
+    });
+
+    it("should create collection if it does not exist", async () => {
+      mockQdrantClient.getCollection.mockRejectedValue(new Error("Not found"));
+      mockQdrantClient.createCollection.mockResolvedValue({});
+
+      handler = new QdrantHandler();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(mockQdrantClient.createCollection).toHaveBeenCalledWith(
+        "eth_global_showcase",
+        {
+          vectors: {
+            size: 768,
+            distance: "Cosine",
+          },
+        },
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        "Collection not found, creating a new one.",
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        "Collection 'eth_global_showcase' created successfully.",
+      );
+    });
+  });
+
+  describe("addProject", () => {
+    beforeEach(() => {
+      mockQdrantClient.getCollection.mockResolvedValue({});
+    });
+
+    it("should add project successfully", async () => {
+      process.env.NEXT_PUBLIC_ENVIRONMENT = "development";
+      const mockEmbedding = Array(768).fill(0.1);
+
+      vi.mocked(ollama.embed).mockResolvedValue({
+        embeddings: [mockEmbedding],
+      } as any);
+
+      mockQdrantClient.upsert.mockResolvedValue({});
+
+      handler = new QdrantHandler();
+      await handler.addProject(
+        "Test Project",
+        "Test Description",
+        "How its made",
+        "https://github.com/test",
+        "https://test.com",
+        "ETHGlobal 2024",
+      );
+
+      expect(mockQdrantClient.upsert).toHaveBeenCalledWith(
+        "eth_global_showcase",
+        {
+          wait: true,
+          points: [
+            {
+              id: "test-uuid-123",
+              vector: mockEmbedding,
+              payload: {
+                title: "Test Project",
+                projectDescription: "Test Description",
+                howItsMade: "How its made",
+                sourceCode: "https://github.com/test",
+                link: "https://test.com",
+                hackathon: "ETHGlobal 2024",
+              },
+            },
+          ],
+        },
+      );
+
+      expect(logger.info).toHaveBeenCalledWith(
+        "Project 'Test Project' from event 'ETHGlobal 2024' added to the 'eth_global_showcase'.",
+      );
+    });
+
+    it("should handle errors when adding project", async () => {
+      process.env.NEXT_PUBLIC_ENVIRONMENT = "development";
+
+      vi.mocked(ollama.embed).mockRejectedValue(new Error("Embedding failed"));
+
+      handler = new QdrantHandler();
+      await handler.addProject(
+        "Test Project",
+        "Test Description",
+        "How its made",
+        "https://github.com/test",
+        "https://test.com",
+        "ETHGlobal 2024",
+      );
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "Failed to add project:",
+        expect.any(Error),
+      );
+    });
+  });
+
+  describe("createEmbedding", () => {
+    beforeEach(() => {
+      mockQdrantClient.getCollection.mockResolvedValue({});
+    });
+
+    describe("development environment (Ollama)", () => {
+      beforeEach(() => {
+        process.env.NEXT_PUBLIC_ENVIRONMENT = "development";
+      });
+
+      it("should create embedding using Ollama in development", async () => {
+        const mockEmbedding = Array(768).fill(0.1);
+        vi.mocked(ollama.embed).mockResolvedValue({
+          embeddings: [mockEmbedding],
+        } as any);
+
+        handler = new QdrantHandler();
+        const result = await handler.createEmbedding("Test text");
+
+        expect(ollama.embed).toHaveBeenCalledWith({
+          model: "nomic-embed-text",
+          input: "Test text",
+        });
+        expect(result).toEqual(mockEmbedding);
+        expect(logger.info).toHaveBeenCalledWith(
+          "Using Ollama for local embeddings",
+        );
+        expect(logger.info).toHaveBeenCalledWith(
+          "Ollama embedding created successfully",
+        );
+      });
+
+      it("should handle Ollama connection refused error", async () => {
+        const error = new Error("connection refused");
+        error.code = "ECONNREFUSED";
+        vi.mocked(ollama.embed).mockRejectedValue(error);
+
+        handler = new QdrantHandler();
+
+        await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+          "Ollama is not running. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull nomic-embed-text'",
+        );
+      });
+
+      it("should handle other Ollama errors", async () => {
+        vi.mocked(ollama.embed).mockRejectedValue(new Error("Model not found"));
+
+        handler = new QdrantHandler();
+
+        await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+          "Ollama embedding failed: Model not found",
+        );
+      });
+    });
+
+    describe("production environment (Nomic API)", () => {
+      beforeEach(() => {
+        process.env.NEXT_PUBLIC_ENVIRONMENT = "production";
+        process.env.NOMIC_API_KEY = "test-nomic-key";
+      });
+
+      it("should create embedding using Nomic API in production", async () => {
+        const mockEmbedding = Array(768).fill(0.2);
+        vi.mocked(axios.post).mockResolvedValue({
+          status: 200,
+          data: { embeddings: [mockEmbedding] },
+        });
+
+        handler = new QdrantHandler();
+        const result = await handler.createEmbedding("Test text");
+
+        expect(axios.post).toHaveBeenCalledWith(
+          "https://api-atlas.nomic.ai/v1/embedding/text",
+          {
+            model: "nomic-embed-text-v1",
+            texts: ["Test text"],
+          },
+          {
+            headers: {
+              Authorization: "Bearer test-nomic-key",
+              "Content-Type": "application/json",
+            },
+            timeout: 10000,
+          },
+        );
+        expect(result).toEqual(mockEmbedding);
+      });
+
+      it("should handle 403 authentication error", async () => {
+        vi.mocked(axios.post).mockRejectedValue({
+          response: {
+            status: 403,
+            data: { error: "Invalid API key" },
+          },
+        });
+
+        handler = new QdrantHandler();
+
+        await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+          "Nomic API authentication failed (403): Invalid API key. Please check your NOMIC_API_KEY.",
+        );
+      });
+
+      it("should handle 401 unauthorized error", async () => {
+        vi.mocked(axios.post).mockRejectedValue({
+          response: {
+            status: 401,
+            data: { message: "Unauthorized" },
+          },
+        });
+
+        handler = new QdrantHandler();
+
+        await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+          "Nomic API unauthorized (401): Unauthorized. API key may be invalid.",
+        );
+      });
+
+      it("should handle 429 rate limit error", async () => {
+        vi.mocked(axios.post).mockRejectedValue({
+          response: {
+            status: 429,
+            data: { error: "Rate limit exceeded" },
+          },
+        });
+
+        handler = new QdrantHandler();
+
+        await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+          "Nomic API rate limit exceeded (429): Rate limit exceeded",
+        );
+      });
+
+      it("should handle generic API errors", async () => {
+        vi.mocked(axios.post).mockRejectedValue({
+          response: {
+            status: 500,
+            data: { error: "Internal server error" },
+          },
+        });
+
+        handler = new QdrantHandler();
+
+        await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+          "Nomic API error (500): Internal server error",
+        );
+      });
+
+      it("should handle non-200 response status", async () => {
+        vi.mocked(axios.post).mockResolvedValue({
+          status: 500,
+          data: { error: "Server error" },
+        });
+
+        handler = new QdrantHandler();
+
+        await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+          "Failed to create embedding",
+        );
+
+        expect(logger.error).toHaveBeenCalledWith(
+          "Failed to create embedding: ",
+          { error: "Server error" },
+        );
+      });
+    });
+  });
+
+  describe("searchSimilarProjects", () => {
+    beforeEach(() => {
+      mockQdrantClient.getCollection.mockResolvedValue({});
+    });
+
+    it("should search and return similar projects", async () => {
+      const mockSearchResults = [
+        {
+          payload: {
+            title: "Project 1",
+            projectDescription: "Description 1",
+            link: "https://project1.com",
+            howItsMade: "Made with love",
+            sourceCode: "https://github.com/project1",
+          },
+        },
+        {
+          payload: {
+            title: "Project 2",
+            projectDescription: "Description 2",
+            link: "https://project2.com",
+            howItsMade: "Made with care",
+            sourceCode: "https://github.com/project2",
+          },
+        },
+      ];
+
+      mockQdrantClient.search.mockResolvedValue(mockSearchResults);
+
+      handler = new QdrantHandler();
+      const embedding = Array(768).fill(0.1);
+      const results = await handler.searchSimilarProjects(embedding, 10);
+
+      expect(mockQdrantClient.search).toHaveBeenCalledWith(
+        "eth_global_showcase",
+        {
+          vector: embedding,
+          limit: 10,
+        },
+      );
+
+      expect(results).toEqual([
+        {
+          title: "Project 1",
+          description: "Description 1",
+          link: "https://project1.com",
+          howItsMade: "Made with love",
+          sourceCode: "https://github.com/project1",
+        },
+        {
+          title: "Project 2",
+          description: "Description 2",
+          link: "https://project2.com",
+          howItsMade: "Made with care",
+          sourceCode: "https://github.com/project2",
+        },
+      ]);
+    });
+
+    it("should use default limit of 5 when not specified", async () => {
+      mockQdrantClient.search.mockResolvedValue([]);
+
+      handler = new QdrantHandler();
+      const embedding = Array(768).fill(0.1);
+      await handler.searchSimilarProjects(embedding);
+
+      expect(mockQdrantClient.search).toHaveBeenCalledWith(
+        "eth_global_showcase",
+        {
+          vector: embedding,
+          limit: 5,
+        },
+      );
+    });
+
+    it("should handle search errors and return empty array", async () => {
+      mockQdrantClient.search.mockRejectedValue(new Error("Search failed"));
+
+      handler = new QdrantHandler();
+      const embedding = Array(768).fill(0.1);
+      const results = await handler.searchSimilarProjects(embedding);
+
+      expect(results).toEqual([]);
+      expect(logger.error).toHaveBeenCalledWith(
+        "Failed to search for similar projects:",
+        expect.any(Error),
+      );
+    });
+  });
+});
