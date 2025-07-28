@@ -217,6 +217,21 @@ describe("AxiosAdapter", () => {
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith("/items/1", {});
       expect(result.status).toBe(204);
     });
+
+    test("should handle delete error", async () => {
+      const axiosError = new Error("Delete failed");
+      (axiosError as any).isAxiosError = true;
+      (axiosError as any).response = {
+        status: 404,
+        statusText: "Not Found",
+        data: { error: "Item not found" },
+      };
+
+      mockAxiosInstance.delete.mockRejectedValue(axiosError);
+      (axios.isAxiosError as any).mockReturnValue(true);
+
+      await expect(adapter.delete("/items/1")).rejects.toThrow("Delete failed");
+    });
   });
 
   describe("error handling", () => {
@@ -252,6 +267,34 @@ describe("AxiosAdapter", () => {
       await expect(adapter.get("/test")).rejects.toThrow(
         "Something went wrong",
       );
+    });
+
+    test("should handle axios error with response details", async () => {
+      const axiosError = new Error("Request failed");
+      (axiosError as any).isAxiosError = true;
+      (axiosError as any).response = {
+        status: 400,
+        statusText: "Bad Request",
+        data: { message: "Invalid input" },
+      };
+
+      // Mock axios.isAxiosError to return true for our error
+      (axios.isAxiosError as any).mockReturnValue(true);
+
+      mockAxiosInstance.post.mockRejectedValue(axiosError);
+
+      try {
+        await adapter.post("/test", { data: "test" });
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (error: any) {
+        expect(error.name).toBe("HttpError");
+        expect(error.message).toBe("Request failed");
+        expect(error.status).toBe(400);
+        expect(error.statusText).toBe("Bad Request");
+        expect(error.response).toEqual({ message: "Invalid input" });
+        expect(error.cause).toBe(axiosError);
+      }
     });
   });
 });
