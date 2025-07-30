@@ -1,4 +1,6 @@
 name: Delete workflow history
+permissions:
+  actions: write
 
 on:
   workflow_dispatch:
