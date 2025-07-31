@@ -7,21 +7,21 @@ default: help
 NPM_RUN_TARGETS = clean lint lint_text format format_check test dev build
 
 $(NPM_RUN_TARGETS):
-	npm run $@
+	pnpm run $@
 
 install:
-	npm install
+	pnpm install
 
 setup_husky:
-	npm run husky
+	pnpm run husky
 
 before_commit: lint_text lint format_check build test
 
 start:
-	npm start
+	pnpm start
 
 test_coverage:
-	npm run test:coverage
+	pnpm run test:coverage
 
 crawl:
 	curl http://localhost:3000/api/crawl
