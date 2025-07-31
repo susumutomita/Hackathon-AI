@@ -3,7 +3,7 @@
 # デフォルトターゲットはhelp
 default: help
 
-# npm run を実行するターゲット
+# pnpm run を実行するターゲット
 NPM_RUN_TARGETS = clean lint lint_text format format_check test dev build
 
 $(NPM_RUN_TARGETS):
@@ -33,7 +33,7 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  install         Install npm packages"
+	@echo "  install         Install pnpm packages"
 	@echo "  clean           Clean the project"
 	@echo "  setup_husky     Setup Husky"
 	@echo "  lint            Run linter"

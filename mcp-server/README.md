@@ -44,8 +44,8 @@ The server supports two embedding providers:
 From the mcp-server directory:
 
 ```bash
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 ### Running
@@ -53,7 +53,7 @@ npm run build
 The server runs on stdio and can be integrated with Claude or other MCP-compatible applications.
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## Available Tools
@@ -140,7 +140,7 @@ For using Ollama (local LLM):
 For development with hot reloading:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 ### Testing Search Functionality
@@ -149,13 +149,13 @@ Test the search functionality with custom queries:
 
 ```bash
 # Search with default limit (5 results)
-npm run test:search "NFT marketplace"
+pnpm run test:search "NFT marketplace"
 
 # Search with custom limit
-npm run test:search "DeFi lending platform" 10
+pnpm run test:search "DeFi lending platform" 10
 
 # Search in Japanese
-npm run test:search "分散型金融" 3
+pnpm run test:search "分散型金融" 3
 ```
 
 The test script:

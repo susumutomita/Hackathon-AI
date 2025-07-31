@@ -57,7 +57,7 @@ graph TB
 ### Prerequisites
 
 - Node.js (version 14.x or above)
-- npm or yarn
+- pnpm
 - Ollama (for running the LLM locally)
 
 ### Installation Steps
