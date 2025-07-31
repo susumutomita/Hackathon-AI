@@ -42,8 +42,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       groq-sdk:
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^0.29.0
+        version: 0.29.0
       lucide-react:
         specifier: ^0.460.0
         version: 0.460.0(react@18.3.1)
@@ -3113,8 +3113,8 @@ packages:
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
-  groq-sdk@0.5.0:
-    resolution: {integrity: sha512-RVmhW7qZ+XZoy5fIuSdx/LGQJONpL8MHgZEW7dFwTdgkzStub2XQx6OKv28CHogijdwH41J+Npj/z2jBPu3vmw==}
+  groq-sdk@0.29.0:
+    resolution: {integrity: sha512-oDbTqE5yg7mEzSRG0WnvezA/loaM6rY+hHl1Es8MbeOs/zgZFw+DZu3zTXJ0ik4fdNQ3/N6MluOjmytUMkZHtQ==}
 
   handle-thing@1.2.5:
     resolution: {integrity: sha512-Ld9EYcBflMUF6SsJLGDADVH50jSzLNIUUrOFlFGK/zwqimATg9+wY4jsLWCR7DZSxt2BfK0+liHUMdoR11bjLg==}
@@ -5719,10 +5719,6 @@ packages:
 
   web-namespaces@1.1.4:
     resolution: {integrity: sha512-wYxSGajtmoP4WxfejAPIr4l0fVh+jeMXZb08wNc0tMg6xsfZXj3cECqIK0G7ZAqUq0PP8WlMDtaOGVBTAWztNw==}
-
-  web-streams-polyfill@3.3.3:
-    resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
-    engines: {node: '>= 8'}
 
   web-streams-polyfill@4.0.0-beta.3:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
@@ -8548,7 +8544,7 @@ snapshots:
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint@8.57.1)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.1)
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.57.1)
@@ -8578,7 +8574,7 @@ snapshots:
       tinyglobby: 0.2.14
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -8593,7 +8589,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.2.0(eslint@8.57.1)(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -9157,7 +9153,7 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  groq-sdk@0.5.0:
+  groq-sdk@0.29.0:
     dependencies:
       '@types/node': 18.19.121
       '@types/node-fetch': 2.6.13
@@ -9166,7 +9162,6 @@ snapshots:
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
       node-fetch: 2.7.0
-      web-streams-polyfill: 3.3.3
     transitivePeerDependencies:
       - encoding
 
@@ -12415,8 +12410,6 @@ snapshots:
       minimalistic-assert: 1.0.1
 
   web-namespaces@1.1.4: {}
-
-  web-streams-polyfill@3.3.3: {}
 
   web-streams-polyfill@4.0.0-beta.3: {}
 
