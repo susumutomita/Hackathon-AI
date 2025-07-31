@@ -22,7 +22,7 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - name: Install packages via packages.json
-        run: make install
+        run: make install_ci
       - name: Run textlint
         run: |
           make lint_text

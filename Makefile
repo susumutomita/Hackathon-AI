@@ -12,6 +12,9 @@ $(NPM_RUN_TARGETS):
 install:
 	pnpm install
 
+install_ci:
+	pnpm run install:ci
+
 setup_husky:
 	pnpm run husky
 
