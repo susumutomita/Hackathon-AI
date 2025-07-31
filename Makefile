@@ -1,4 +1,7 @@
-.PHONY: install setup_husky clean lint lint_text format format_check before_commit start test dev build crawl help
+.PHONY: help install setup_husky clean lint lint_text format format_check before_commit start test test_coverage dev build crawl
+
+# デフォルトターゲットはhelp
+default: help
 
 # npm run を実行するターゲット
 NPM_RUN_TARGETS = clean lint lint_text format format_check test dev build
@@ -16,6 +19,9 @@ before_commit: lint_text lint format_check build test
 
 start:
 	npm start
+
+test_coverage:
+	npm run test:coverage
 
 crawl:
 	curl http://localhost:3000/api/crawl
@@ -36,4 +42,5 @@ help:
 	@echo "  build           Build the project"
 	@echo "  start           Start app"
 	@echo "  test            Run tests"
+	@echo "  test_coverage   Run tests with coverage report"
 	@echo "  help            Show this help message"

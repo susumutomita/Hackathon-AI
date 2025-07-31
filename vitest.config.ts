@@ -12,12 +12,20 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      include: ["src/**/*.{ts,tsx}"],
+      include: ["src/**/*.{ts,tsx}", "mcp-server/src/**/*.{ts,tsx}"],
       exclude: [
         "src/**/*.d.ts",
         "src/**/*.stories.tsx",
         "src/**/__tests__/**/*",
+        "mcp-server/src/**/__tests__/**/*",
+        "mcp-server/src/test-search.ts",
       ],
+      thresholds: {
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        statements: 80,
+      },
     },
     mockReset: true,
     restoreMocks: true,
