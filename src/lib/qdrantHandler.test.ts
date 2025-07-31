@@ -31,6 +31,8 @@ describe("QdrantHandler", () => {
       createCollection: vi.fn(),
       upsert: vi.fn(),
       search: vi.fn(),
+      scroll: vi.fn(),
+      retrieve: vi.fn(),
     };
 
     (QdrantClient as any).mockImplementation(() => mockQdrantClient);
@@ -117,6 +119,8 @@ describe("QdrantHandler", () => {
         embeddings: [mockEmbedding],
       } as any);
 
+      // Mock findProjectByLink to return null (no existing project)
+      mockQdrantClient.scroll.mockResolvedValue({ points: [] });
       mockQdrantClient.upsert.mockResolvedValue({});
 
       handler = new QdrantHandler();
@@ -144,6 +148,7 @@ describe("QdrantHandler", () => {
                 sourceCode: "https://github.com/test",
                 link: "https://test.com",
                 hackathon: "ETHGlobal 2024",
+                lastUpdated: expect.any(String),
               },
             },
           ],
@@ -151,13 +156,15 @@ describe("QdrantHandler", () => {
       );
 
       expect(logger.info).toHaveBeenCalledWith(
-        "Project 'Test Project' from event 'ETHGlobal 2024' added to the 'eth_global_showcase'.",
+        "Project 'Test Project' from event 'ETHGlobal 2024' upserted to the 'eth_global_showcase'.",
       );
     });
 
     it("should handle errors when adding project", async () => {
       process.env.NEXT_PUBLIC_ENVIRONMENT = "development";
 
+      // Mock scroll to return no existing project
+      mockQdrantClient.scroll.mockResolvedValue({ points: [] });
       vi.mocked(ollama.embed).mockRejectedValue(new Error("Embedding failed"));
 
       handler = new QdrantHandler();
@@ -171,7 +178,7 @@ describe("QdrantHandler", () => {
       );
 
       expect(logger.error).toHaveBeenCalledWith(
-        "Failed to add project:",
+        "Failed to add/update project:",
         expect.any(Error),
       );
     });

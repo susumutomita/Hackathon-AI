@@ -40,9 +40,26 @@ export class QdrantHandler {
     hackathon: string,
   ) {
     try {
+      // 既存のプロジェクトをリンクで検索
+      const existingProject = await this.findProjectByLink(link);
+
+      let projectId: string;
+      if (existingProject) {
+        // 既存のプロジェクトが見つかった場合、そのIDを使用
+        projectId = existingProject.id;
+        logger.info(
+          `Found existing project '${title}' with ID: ${projectId}. Updating...`,
+        );
+      } else {
+        // 新規プロジェクトの場合
+        // 後方互換性のため、UUIDを使用（既存システムとの互換性維持）
+        projectId = uuidv4();
+        logger.info(`Creating new project '${title}' with ID: ${projectId}`);
+      }
+
       const embedding = await this.createEmbedding(projectDescription);
       const point = {
-        id: uuidv4(),
+        id: projectId,
         vector: embedding,
         payload: {
           title,
@@ -51,17 +68,48 @@ export class QdrantHandler {
           sourceCode,
           link,
           hackathon,
+          lastUpdated: new Date().toISOString(),
         },
       };
+
       await this.client.upsert("eth_global_showcase", {
         wait: true,
         points: [point],
       });
+
       logger.info(
-        `Project '${title}' from event '${hackathon}' added to the 'eth_global_showcase'.`,
+        `Project '${title}' from event '${hackathon}' upserted to the 'eth_global_showcase'.`,
       );
     } catch (error) {
-      logger.error("Failed to add project:", error);
+      logger.error("Failed to add/update project:", error);
+    }
+  }
+
+  private async findProjectByLink(link: string): Promise<any | null> {
+    try {
+      // ペイロードフィルターを使用してリンクで検索
+      const searchResult = await this.client.scroll("eth_global_showcase", {
+        filter: {
+          must: [
+            {
+              key: "link",
+              match: {
+                value: link,
+              },
+            },
+          ],
+        },
+        limit: 1,
+      });
+
+      if (searchResult.points && searchResult.points.length > 0) {
+        return searchResult.points[0];
+      }
+
+      return null;
+    } catch (error) {
+      logger.error("Failed to find project by link:", error);
+      return null;
     }
   }
 
