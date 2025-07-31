@@ -3,23 +3,24 @@
   "version": "1.0.0",
   "description": "HackathonAI is a project that aims to provide a platform for hackathon participants to collaborate and share their ideas. The platform will use AI to help participants find teammates, brainstorm ideas, and develop their projects. The goal is to create a supportive and inclusive environment for hackathon participants to learn and grow together.",
   "scripts": {
-    "clean": "npx rimraf node_modules out",
+    "clean": "pnpm exec rimraf node_modules out",
+    "install:ci": "pnpm install --no-frozen-lockfile",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "format": "prettier --write '**/**/*.{ts,tsx,js,jsx,css}'",
     "format_check": "prettier --check '**/**/*.{ts,tsx,js,jsx,css}'",
-    "lint_text": "npx textlint '**/*.md'",
-    "lint_text_fix": "npx textlint '**/*.md' --fix",
+    "lint_text": "pnpm exec textlint '**/*.md'",
+    "lint_text_fix": "pnpm exec textlint '**/*.md' --fix",
     "lint-staged": "lint-staged",
     "husky": "husky install",
     "start": "next start",
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "mcp:build": "cd mcp-server && npm run build",
-    "mcp:install": "cd mcp-server && npm install"
+    "mcp:build": "cd mcp-server && pnpm run build",
+    "mcp:install": "cd mcp-server && pnpm install"
   },
   "keywords": [],
   "author": "Susumu Tomita <oyter880@gmail.com> (https://susumutomita.netlify.app/)",
@@ -59,6 +60,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
+    "dotenv": "^16.4.5",
     "eslint": "^8",
     "eslint-config-next": "14.2.6",
     "husky": "^9.1.4",
@@ -76,12 +78,13 @@
     "textlint-rule-preset-ja-spacing": "^2.2.0",
     "textlint-rule-preset-ja-technical-writing": "^10.0.1",
     "textlint-rule-spellcheck-tech-word": "^5.0.0",
-    "typescript": "^5",
     "vitest": "^3.2.4"
   },
-  "workspaces": [
-    "mcp-server"
-  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.15.2",
   "mcpServers": {
     "hackathon-database": {
       "command": "node",

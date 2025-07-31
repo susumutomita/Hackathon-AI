@@ -1,8 +1,12 @@
-import { config } from "dotenv";
 import { vi } from "vitest";
 
-// Load test environment variables
-config({ path: ".env.test" });
+// Try to load dotenv if available
+try {
+  const { config } = await import("dotenv");
+  config({ path: ".env.test" });
+} catch {
+  // dotenv not available, continue without it
+}
 
 // Mock environment variables for tests
 process.env.NEXT_PUBLIC_ENVIRONMENT = "test";
