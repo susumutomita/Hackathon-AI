@@ -10,14 +10,14 @@
 
 ```bash
 # MCPサーバーの依存関係をインストール
-npm run mcp:install
+pnpm run mcp:install
 ```
 
 ### 2. MCPサーバーのビルド
 
 ```bash
 # MCPサーバーをビルド
-npm run mcp:build
+pnpm run mcp:build
 ```
 
 ### 3. 環境変数の設定
@@ -81,7 +81,7 @@ npm run mcp:build
 ### MCPサーバーが起動しない
 
 1. 環境変数が正しく設定されているか確認
-2. ビルドが成功しているか確認：`cd mcp-server && npm run build`
+2. ビルドが成功しているか確認：`cd mcp-server && pnpm run build`
 3. ログを確認：MCP サーバーは stderr にログを出力
 
 ### 検索結果が返ってこない
@@ -98,20 +98,20 @@ MCP サーバーの開発モード。
 
 ```bash
 cd mcp-server
-npm run dev
+pnpm run dev
 ```
 
 検索機能のテスト。
 
 ```bash
 # 基本的な検索（デフォルト5件）
-npm run test:search "NFTマーケットプレイス"
+pnpm run test:search "NFTマーケットプレイス"
 
 # 結果数を指定して検索
-npm run test:search "DeFi プロトコル" 10
+pnpm run test:search "DeFi プロトコル" 10
 
 # 英語での検索
-npm run test:search "blockchain gaming" 3
+pnpm run test:search "blockchain gaming" 3
 ```
 
 テストスクリプトの特徴。
