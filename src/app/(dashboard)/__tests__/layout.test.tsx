@@ -10,7 +10,7 @@ vi.mock("lucide-react", () => ({
   Home: () => <svg data-icon="home" />,
   LineChart: () => <svg data-icon="line-chart" />,
   Package: () => <svg data-icon="package" />,
-  PanelLeft: () => <svg data-icon="panel-left" />,
+  PanelLeft: () => <svg data-testid="panel-left" data-icon="panel-left" />,
   Settings: () => <svg data-icon="settings" />,
 }));
 
@@ -24,14 +24,27 @@ vi.mock("@/components/ui/button", () => ({
 }));
 
 vi.mock("@/components/ui/sheet", () => ({
-  Sheet: ({ children }: any) => <div data-component="sheet">{children}</div>,
+  Sheet: ({ children }: any) => (
+    <div data-testid="sheet" data-component="sheet">
+      {children}
+    </div>
+  ),
   SheetContent: ({ children, side, className }: any) => (
-    <div data-component="sheet-content" data-side={side} className={className}>
+    <div
+      data-testid="sheet-content"
+      data-component="sheet-content"
+      data-side={side}
+      className={className}
+    >
       {children}
     </div>
   ),
   SheetTrigger: ({ asChild, children }: any) => (
-    <div data-component="sheet-trigger" data-as-child={asChild}>
+    <div
+      data-testid="sheet-trigger"
+      data-component="sheet-trigger"
+      data-as-child={asChild}
+    >
       {children}
     </div>
   ),
@@ -113,8 +126,102 @@ describe("DashboardLayout", () => {
   });
 
   test("MobileNav should render Sheet with trigger button", async () => {
-    // Skip detailed component testing due to JSX rendering complexity
-    expect(true).toBe(true);
+    const layoutModule = await import("../layout");
+    const DashboardLayout = layoutModule.default;
+
+    const component = DashboardLayout({ children: <div>Test</div> }) as any;
+
+    // Navigate to MobileNav
+    const mainWrapper = component.props.children;
+    const innerDiv = mainWrapper.props.children[0];
+    const header = innerDiv.props.children[0];
+    const mobileNav = header.props.children;
+
+    // Call MobileNav to get its rendered output
+    const mobileNavRendered = mobileNav.type();
+
+    // Verify the complete structure
+    expect(mobileNavRendered.type.name).toBe("Sheet");
+
+    // Check SheetTrigger and Button
+    const sheetTrigger = mobileNavRendered.props.children[0];
+    const button = sheetTrigger.props.children;
+
+    expect(button.props.size).toBe("icon");
+    expect(button.props.variant).toBe("outline");
+    expect(button.props.className).toBe("sm:hidden");
+
+    // Check button contains PanelLeft icon and sr-only text
+    const [icon, srText] = button.props.children;
+    expect(icon.type.name).toBe("PanelLeft");
+    expect(icon.props.className).toBe("h-5 w-5");
+    expect(srText.props.className).toBe("sr-only");
+    expect(srText.props.children).toBe("Toggle Menu");
+
+    // Check SheetContent
+    const sheetContent = mobileNavRendered.props.children[1];
+    expect(sheetContent.props.side).toBe("left");
+    expect(sheetContent.props.className).toBe("sm:max-w-xs");
+
+    // Check nav element
+    const nav = sheetContent.props.children;
+    expect(nav.type).toBe("nav");
+    expect(nav.props.className).toBe("grid gap-6 text-lg font-medium");
+  });
+
+  test("MobileNav component structure", async () => {
+    // Direct test of MobileNav component
+    const layoutModule = await import("../layout");
+
+    // Access MobileNav through the module
+    const component = layoutModule.default({ children: null }) as any;
+    const mainWrapper = component.props.children;
+    const innerDiv = mainWrapper.props.children[0];
+    const header = innerDiv.props.children[0];
+    const mobileNav = header.props.children;
+
+    // Verify MobileNav is a function component
+    expect(typeof mobileNav.type).toBe("function");
+    expect(mobileNav.type.name).toBe("MobileNav");
+
+    // Call MobileNav to get its rendered output
+    const mobileNavRendered = mobileNav.type();
+
+    // Check Sheet component
+    expect(mobileNavRendered.type.name).toBe("Sheet");
+    expect(mobileNavRendered.props.children).toHaveLength(2);
+
+    // Check SheetTrigger
+    const sheetTrigger = mobileNavRendered.props.children[0];
+    expect(sheetTrigger.type.name).toBe("SheetTrigger");
+    expect(sheetTrigger.props.asChild).toBe(true);
+
+    // Check Button inside SheetTrigger
+    const button = sheetTrigger.props.children;
+    expect(button.type.name).toBe("Button");
+    expect(button.props.size).toBe("icon");
+    expect(button.props.variant).toBe("outline");
+    expect(button.props.className).toBe("sm:hidden");
+
+    // Check button children
+    const buttonChildren = button.props.children;
+    expect(buttonChildren).toHaveLength(2);
+    expect(buttonChildren[0].type.name).toBe("PanelLeft");
+    expect(buttonChildren[0].props.className).toBe("h-5 w-5");
+    expect(buttonChildren[1].type).toBe("span");
+    expect(buttonChildren[1].props.className).toBe("sr-only");
+    expect(buttonChildren[1].props.children).toBe("Toggle Menu");
+
+    // Check SheetContent
+    const sheetContent = mobileNavRendered.props.children[1];
+    expect(sheetContent.type.name).toBe("SheetContent");
+    expect(sheetContent.props.side).toBe("left");
+    expect(sheetContent.props.className).toBe("sm:max-w-xs");
+
+    // Check nav inside SheetContent
+    const nav = sheetContent.props.children;
+    expect(nav.type).toBe("nav");
+    expect(nav.props.className).toBe("grid gap-6 text-lg font-medium");
   });
 
   test("should handle different children types", async () => {
