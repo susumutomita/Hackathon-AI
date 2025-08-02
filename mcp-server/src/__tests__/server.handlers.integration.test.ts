@@ -41,7 +41,7 @@ describe("MCP Server Handler Integration", () => {
       createEmbedding: vi.fn(),
       searchSimilarProjects: vi.fn(),
     };
-    
+
     // Mock server setup
     server = {
       setRequestHandler: vi.fn(),
@@ -72,11 +72,19 @@ describe("MCP Server Handler Integration", () => {
 
       // Create embedding
       const embedding = await mockQdrantHandler.createEmbedding(args.query);
-      expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith("blockchain gaming");
+      expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith(
+        "blockchain gaming",
+      );
 
       // Search for similar projects
-      const results = await mockQdrantHandler.searchSimilarProjects(embedding, args.limit);
-      expect(mockQdrantHandler.searchSimilarProjects).toHaveBeenCalledWith([0.1, 0.2, 0.3], 5);
+      const results = await mockQdrantHandler.searchSimilarProjects(
+        embedding,
+        args.limit,
+      );
+      expect(mockQdrantHandler.searchSimilarProjects).toHaveBeenCalledWith(
+        [0.1, 0.2, 0.3],
+        5,
+      );
 
       // Verify expected response format
       const response = {
@@ -106,7 +114,9 @@ describe("MCP Server Handler Integration", () => {
     });
 
     test("should handle search_projects with embedding creation error", async () => {
-      mockQdrantHandler.createEmbedding.mockRejectedValue(new Error("Embedding API error"));
+      mockQdrantHandler.createEmbedding.mockRejectedValue(
+        new Error("Embedding API error"),
+      );
 
       const request = {
         params: {
@@ -129,14 +139,18 @@ describe("MCP Server Handler Integration", () => {
           isError: true,
         };
 
-        expect(errorResponse.content[0].text).toBe("Error searching projects: Embedding API error");
+        expect(errorResponse.content[0].text).toBe(
+          "Error searching projects: Embedding API error",
+        );
         expect(errorResponse.isError).toBe(true);
       }
     });
 
     test("should handle search_projects with search error", async () => {
       mockQdrantHandler.createEmbedding.mockResolvedValue([0.1, 0.2, 0.3]);
-      mockQdrantHandler.searchSimilarProjects.mockRejectedValue(new Error("Qdrant search failed"));
+      mockQdrantHandler.searchSimilarProjects.mockRejectedValue(
+        new Error("Qdrant search failed"),
+      );
 
       const request = {
         params: {
@@ -160,7 +174,9 @@ describe("MCP Server Handler Integration", () => {
           isError: true,
         };
 
-        expect(errorResponse.content[0].text).toBe("Error searching projects: Qdrant search failed");
+        expect(errorResponse.content[0].text).toBe(
+          "Error searching projects: Qdrant search failed",
+        );
         expect(errorResponse.isError).toBe(true);
       }
     });
@@ -190,7 +206,7 @@ describe("MCP Server Handler Integration", () => {
       };
 
       expect(response.content[0].text).toBe(
-        "Getting project by ID is not yet implemented. Please use search_projects instead."
+        "Getting project by ID is not yet implemented. Please use search_projects instead.",
       );
     });
 
@@ -229,7 +245,9 @@ describe("MCP Server Handler Integration", () => {
         };
 
         expect(errorResponse.isError).toBe(true);
-        expect(errorResponse.content[0].text).toContain("Error getting project:");
+        expect(errorResponse.content[0].text).toContain(
+          "Error getting project:",
+        );
       }
     });
   });
@@ -272,7 +290,9 @@ describe("MCP Server Handler Integration", () => {
       };
 
       expect(expectedResponse.resources).toHaveLength(1);
-      expect(expectedResponse.resources[0].uri).toBe("hackathon://database/info");
+      expect(expectedResponse.resources[0].uri).toBe(
+        "hackathon://database/info",
+      );
       expect(expectedResponse.resources[0].mimeType).toBe("application/json");
     });
   });
@@ -280,10 +300,11 @@ describe("MCP Server Handler Integration", () => {
   describe("ReadResourceRequest handler", () => {
     test("should return database info content", () => {
       const uri = "hackathon://database/info";
-      
+
       const dbInfo = {
         name: "Hackathon Projects Database",
-        description: "A vector database of hackathon projects powered by Qdrant",
+        description:
+          "A vector database of hackathon projects powered by Qdrant",
         capabilities: [
           "Semantic search for similar projects",
           "Project retrieval by ID (coming soon)",
@@ -310,15 +331,17 @@ describe("MCP Server Handler Integration", () => {
 
       expect(response.contents[0].uri).toBe(uri);
       expect(response.contents[0].mimeType).toBe("application/json");
-      
+
       const parsedContent = JSON.parse(response.contents[0].text);
       expect(parsedContent.name).toBe("Hackathon Projects Database");
-      expect(parsedContent.capabilities).toContain("Semantic search for similar projects");
+      expect(parsedContent.capabilities).toContain(
+        "Semantic search for similar projects",
+      );
     });
 
     test("should return empty contents for unknown resource", () => {
       const uri = "hackathon://unknown/resource";
-      
+
       const response = {
         contents: [],
       };

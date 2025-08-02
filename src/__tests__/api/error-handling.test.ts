@@ -5,7 +5,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 function createMockRequestResponse(
   method = "GET",
   body: any = {},
-  query: any = {}
+  query: any = {},
 ) {
   const req = {
     method,
@@ -32,7 +32,7 @@ function createMockRequestResponse(
     (code: number) => {
       (res as any)._statusCode = code;
       return res;
-    }
+    },
   );
 
   (res.json as ReturnType<typeof vi.fn>).mockImplementation((data: any) => {
@@ -73,9 +73,7 @@ describe("API Error Handling", () => {
 
       // Simulate validation for required fields
       const requiredFields = ["idea", "prompt"];
-      const missingFields = requiredFields.filter(
-        (field) => !req.body[field]
-      );
+      const missingFields = requiredFields.filter((field) => !req.body[field]);
 
       if (missingFields.length > 0) {
         res.status(400).json({
@@ -192,7 +190,7 @@ describe("API Error Handling", () => {
 
       // Simulate missing or invalid authentication
       const authHeader = req.headers.authorization;
-      
+
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         res.status(401).json({
           error: "Unauthorized",
@@ -216,18 +214,19 @@ describe("API Error Handling", () => {
         throw new Error("Unexpected internal error");
       } catch (error: any) {
         mockLogger("Internal server error:", error);
-        
+
         res.status(500).json({
           error: "Internal server error",
-          details: process.env.NODE_ENV === "development" 
-            ? error.message 
-            : "An unexpected error occurred",
+          details:
+            process.env.NODE_ENV === "development"
+              ? error.message
+              : "An unexpected error occurred",
         });
       }
 
       expect(mockLogger).toHaveBeenCalledWith(
         "Internal server error:",
-        expect.any(Error)
+        expect.any(Error),
       );
       expect((res as any)._getStatusCode()).toBe(500);
     });
