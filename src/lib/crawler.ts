@@ -9,12 +9,17 @@ import path from "path";
 const eventsFilePath = path.join(process.cwd(), "crawledEvents.json");
 
 function getEventFilters(): string {
-  const rawData = fs.readFileSync(eventsFilePath, "utf-8");
-  const events = JSON.parse(rawData);
-  const selectedEvents = Object.keys(events).filter(
-    (event) => events[event] === true,
-  );
-  return selectedEvents.join(",");
+  try {
+    const rawData = fs.readFileSync(eventsFilePath, "utf-8");
+    const events = JSON.parse(rawData);
+    const selectedEvents = Object.keys(events).filter(
+      (event) => events[event] === true,
+    );
+    return selectedEvents.join(",");
+  } catch (error) {
+    logger.error("Error reading event filters:", error);
+    return "";
+  }
 }
 
 const finalistImageUrl =
@@ -104,14 +109,22 @@ export async function crawlEthGlobalShowcase() {
         const additionalDetails =
           await fetchProjectDetailPage(projectDetailPageUrl);
         Object.assign(project, additionalDetails);
-        await qdrantHandler.addProject(
-          project.title,
-          project.projectDescription || "",
-          project.howItsMade || "",
-          project.sourceCode || "",
-          project.link || "",
-          project.hackathon || "",
-        );
+
+        try {
+          await qdrantHandler.addProject(
+            project.title,
+            project.projectDescription || "",
+            project.howItsMade || "",
+            project.sourceCode || "",
+            project.link || "",
+            project.hackathon || "",
+          );
+        } catch (error) {
+          logger.error(
+            `Failed to add project to Qdrant: ${project.title}`,
+            error,
+          );
+        }
       }
 
       allProjects.push(...projectDetails);
