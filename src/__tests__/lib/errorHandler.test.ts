@@ -64,14 +64,21 @@ describe("Error Handler", () => {
 
       expect(error.type).toBe(ErrorType.VALIDATION_ERROR);
       expect(error.message).toBe("Test message");
-      expect(error.userMessage).toBe("入力内容に問題があります。内容を確認してください。");
+      expect(error.userMessage).toBe(
+        "入力内容に問題があります。内容を確認してください。",
+      );
       expect(error.statusCode).toBe(400);
     });
 
     it("should create an error with context and suggestions", () => {
       const context = { field: "email" };
       const suggestions = ["Check email format"];
-      const error = createError(ErrorType.VALIDATION_ERROR, "Invalid email", context, suggestions);
+      const error = createError(
+        ErrorType.VALIDATION_ERROR,
+        "Invalid email",
+        context,
+        suggestions,
+      );
 
       expect(error.context).toEqual(context);
       expect(error.suggestions).toEqual(suggestions);
@@ -136,7 +143,7 @@ describe("Error Handler", () => {
           error: "入力内容に問題があります。内容を確認してください。",
           type: ErrorType.VALIDATION_ERROR,
           timestamp: expect.any(String),
-        })
+        }),
       );
     });
 
@@ -149,23 +156,23 @@ describe("Error Handler", () => {
         expect.objectContaining({
           error: "予期しないエラーが発生しました。しばらくお待ちください。",
           type: ErrorType.INTERNAL_SERVER_ERROR,
-        })
+        }),
       );
     });
 
     it("should include suggestions when available", () => {
       const errorWithSuggestions = createError(
-        ErrorType.VALIDATION_ERROR, 
-        "Test error", 
-        {}, 
-        ["Try again", "Check input"]
+        ErrorType.VALIDATION_ERROR,
+        "Test error",
+        {},
+        ["Try again", "Check input"],
       );
       handleApiError(errorWithSuggestions, mockRes as NextApiResponse);
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           suggestions: ["Try again", "Check input"],
-        })
+        }),
       );
     });
 
@@ -174,7 +181,9 @@ describe("Error Handler", () => {
       process.env.NODE_ENV = "development";
 
       const error = new Error("Test error");
-      handleApiError(error, mockRes as NextApiResponse, { testContext: "value" });
+      handleApiError(error, mockRes as NextApiResponse, {
+        testContext: "value",
+      });
 
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -182,7 +191,7 @@ describe("Error Handler", () => {
             originalMessage: "Test error",
             context: { testContext: "value" },
           }),
-        })
+        }),
       );
 
       process.env.NODE_ENV = originalEnv;
@@ -198,17 +207,23 @@ describe("Error Handler", () => {
 
       it("should throw error for missing fields", () => {
         const data = { name: "John" };
-        expect(() => validateRequired(data, ["name", "email"])).toThrow(AppError);
+        expect(() => validateRequired(data, ["name", "email"])).toThrow(
+          AppError,
+        );
       });
 
       it("should throw error for empty string fields", () => {
         const data = { name: "John", email: "" };
-        expect(() => validateRequired(data, ["name", "email"])).toThrow(AppError);
+        expect(() => validateRequired(data, ["name", "email"])).toThrow(
+          AppError,
+        );
       });
 
       it("should throw error for whitespace-only fields", () => {
         const data = { name: "John", email: "   " };
-        expect(() => validateRequired(data, ["name", "email"])).toThrow(AppError);
+        expect(() => validateRequired(data, ["name", "email"])).toThrow(
+          AppError,
+        );
       });
     });
 
@@ -218,11 +233,15 @@ describe("Error Handler", () => {
       });
 
       it("should throw error for disallowed method", () => {
-        expect(() => validateMethod("DELETE", ["GET", "POST"])).toThrow(AppError);
+        expect(() => validateMethod("DELETE", ["GET", "POST"])).toThrow(
+          AppError,
+        );
       });
 
       it("should throw error for undefined method", () => {
-        expect(() => validateMethod(undefined, ["GET", "POST"])).toThrow(AppError);
+        expect(() => validateMethod(undefined, ["GET", "POST"])).toThrow(
+          AppError,
+        );
       });
     });
 
@@ -232,7 +251,9 @@ describe("Error Handler", () => {
       });
 
       it("should pass validation for content type with charset", () => {
-        expect(() => validateContentType("application/json; charset=utf-8")).not.toThrow();
+        expect(() =>
+          validateContentType("application/json; charset=utf-8"),
+        ).not.toThrow();
       });
 
       it("should throw error for incorrect content type", () => {
@@ -248,11 +269,15 @@ describe("Error Handler", () => {
   describe("Convenience error creators", () => {
     describe("createValidationError", () => {
       it("should create validation error with details", () => {
-        const error = createValidationError("Invalid input", ["Field A is required"]);
-        
+        const error = createValidationError("Invalid input", [
+          "Field A is required",
+        ]);
+
         expect(error.type).toBe(ErrorType.VALIDATION_ERROR);
         expect(error.message).toBe("Invalid input");
-        expect(error.context).toEqual({ validationErrors: ["Field A is required"] });
+        expect(error.context).toEqual({
+          validationErrors: ["Field A is required"],
+        });
         expect(error.suggestions).toEqual(["検証エラー: Field A is required"]);
       });
     });
@@ -260,18 +285,20 @@ describe("Error Handler", () => {
     describe("createAuthenticationError", () => {
       it("should create authentication error with default suggestions", () => {
         const error = createAuthenticationError("Auth failed");
-        
+
         expect(error.type).toBe(ErrorType.AUTHENTICATION_ERROR);
         expect(error.message).toBe("Auth failed");
         expect(error.suggestions).toEqual([
           "APIキーが正しく設定されているか確認してください",
-          "環境変数の設定を確認してください"
+          "環境変数の設定を確認してください",
         ]);
       });
 
       it("should create authentication error with custom suggestions", () => {
-        const error = createAuthenticationError("Auth failed", ["Custom suggestion"]);
-        
+        const error = createAuthenticationError("Auth failed", [
+          "Custom suggestion",
+        ]);
+
         expect(error.suggestions).toEqual(["Custom suggestion"]);
       });
     });
@@ -279,12 +306,12 @@ describe("Error Handler", () => {
     describe("createTimeoutError", () => {
       it("should create timeout error", () => {
         const error = createTimeoutError("Request timed out");
-        
+
         expect(error.type).toBe(ErrorType.TIMEOUT_ERROR);
         expect(error.message).toBe("Request timed out");
         expect(error.suggestions).toEqual([
-          "しばらく待ってから再度お試しください", 
-          "ネットワーク接続を確認してください"
+          "しばらく待ってから再度お試しください",
+          "ネットワーク接続を確認してください",
         ]);
       });
     });
@@ -292,15 +319,17 @@ describe("Error Handler", () => {
     describe("createRateLimitError", () => {
       it("should create rate limit error without retry after", () => {
         const error = createRateLimitError();
-        
+
         expect(error.type).toBe(ErrorType.RATE_LIMIT_ERROR);
         expect(error.message).toBe("Rate limit exceeded");
-        expect(error.suggestions).toEqual(["しばらく待ってから再度お試しください"]);
+        expect(error.suggestions).toEqual([
+          "しばらく待ってから再度お試しください",
+        ]);
       });
 
       it("should create rate limit error with retry after", () => {
         const error = createRateLimitError(60);
-        
+
         expect(error.context).toEqual({ retryAfter: 60 });
         expect(error.suggestions).toEqual(["60秒後に再度お試しください"]);
       });

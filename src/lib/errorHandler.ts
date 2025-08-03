@@ -90,7 +90,7 @@ export function createError(
   type: ErrorType,
   message: string,
   context?: Record<string, any>,
-  suggestions?: string[]
+  suggestions?: string[],
 ): AppError {
   const errorConfig = errorMessages[type];
   return new AppError({
@@ -205,7 +205,7 @@ export function classifyError(error: any): ErrorType {
 export function handleApiError(
   error: any,
   res: NextApiResponse,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): void {
   let appError: AppError;
 
@@ -258,10 +258,12 @@ export function handleApiError(
 
 export function validateRequired(
   data: Record<string, any>,
-  requiredFields: string[]
+  requiredFields: string[],
 ): void {
   const missingFields = requiredFields.filter(
-    (field) => !data[field] || (typeof data[field] === "string" && data[field].trim() === "")
+    (field) =>
+      !data[field] ||
+      (typeof data[field] === "string" && data[field].trim() === ""),
   );
 
   if (missingFields.length > 0) {
@@ -269,54 +271,54 @@ export function validateRequired(
       ErrorType.VALIDATION_ERROR,
       `Missing required fields: ${missingFields.join(", ")}`,
       { missingFields },
-      [`必須項目を入力してください: ${missingFields.join(", ")}`]
+      [`必須項目を入力してください: ${missingFields.join(", ")}`],
     );
   }
 }
 
 export function validateMethod(
   actualMethod: string | undefined,
-  allowedMethods: string[]
+  allowedMethods: string[],
 ): void {
   if (!actualMethod || !allowedMethods.includes(actualMethod)) {
     throw createError(
       ErrorType.VALIDATION_ERROR,
       `Method ${actualMethod} not allowed. Allowed methods: ${allowedMethods.join(", ")}`,
       { actualMethod, allowedMethods },
-      [`許可されたメソッド: ${allowedMethods.join(", ")}`]
+      [`許可されたメソッド: ${allowedMethods.join(", ")}`],
     );
   }
 }
 
 export function validateContentType(
   contentType: string | undefined,
-  requiredType: string = "application/json"
+  requiredType: string = "application/json",
 ): void {
   if (!contentType || !contentType.includes(requiredType)) {
     throw createError(
       ErrorType.VALIDATION_ERROR,
       `Content-Type must be ${requiredType}`,
       { actualContentType: contentType, requiredType },
-      [`Content-Type を ${requiredType} に設定してください`]
+      [`Content-Type を ${requiredType} に設定してください`],
     );
   }
 }
 
 export function createValidationError(
   message: string,
-  details?: string[]
+  details?: string[],
 ): AppError {
   return createError(
     ErrorType.VALIDATION_ERROR,
     message,
     { validationErrors: details },
-    details?.map(detail => `検証エラー: ${detail}`)
+    details?.map((detail) => `検証エラー: ${detail}`),
   );
 }
 
 export function createAuthenticationError(
   message: string,
-  suggestions?: string[]
+  suggestions?: string[],
 ): AppError {
   return createError(
     ErrorType.AUTHENTICATION_ERROR,
@@ -324,18 +326,16 @@ export function createAuthenticationError(
     undefined,
     suggestions || [
       "APIキーが正しく設定されているか確認してください",
-      "環境変数の設定を確認してください"
-    ]
+      "環境変数の設定を確認してください",
+    ],
   );
 }
 
 export function createTimeoutError(message: string): AppError {
-  return createError(
-    ErrorType.TIMEOUT_ERROR,
-    message,
-    undefined,
-    ["しばらく待ってから再度お試しください", "ネットワーク接続を確認してください"]
-  );
+  return createError(ErrorType.TIMEOUT_ERROR, message, undefined, [
+    "しばらく待ってから再度お試しください",
+    "ネットワーク接続を確認してください",
+  ]);
 }
 
 export function createRateLimitError(retryAfter?: number): AppError {
@@ -345,6 +345,6 @@ export function createRateLimitError(retryAfter?: number): AppError {
     { retryAfter },
     retryAfter
       ? [`${retryAfter}秒後に再度お試しください`]
-      : ["しばらく待ってから再度お試しください"]
+      : ["しばらく待ってから再度お試しください"],
   );
 }

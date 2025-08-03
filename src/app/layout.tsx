@@ -17,9 +17,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className="flex min-h-screen w-full flex-col">
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
+        <ErrorBoundary>{children}</ErrorBoundary>
         <Analytics />
       </body>
     </html>

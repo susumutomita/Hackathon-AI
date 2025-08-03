@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { parseHtmlWithLLM } from "@/lib/llmParser";
-import { 
-  handleApiError, 
-  validateMethod, 
+import {
+  handleApiError,
+  validateMethod,
   validateRequired,
   createTimeoutError,
   createValidationError,
@@ -30,7 +30,9 @@ export default async function handler(
     }
 
     if (idea.length > 10000) {
-      throw createValidationError("Idea exceeds maximum length of 10000 characters");
+      throw createValidationError(
+        "Idea exceeds maximum length of 10000 characters",
+      );
     }
 
     if (!Array.isArray(similarProjects)) {
@@ -44,7 +46,9 @@ export default async function handler(
     // Validate similar projects structure
     for (const project of similarProjects) {
       if (!project.title || !project.description) {
-        throw createValidationError("Each similar project must have title and description");
+        throw createValidationError(
+          "Each similar project must have title and description",
+        );
       }
     }
 
@@ -94,7 +98,7 @@ export default async function handler(
       similarProjectsCount: similarProjects.length,
     });
 
-    res.status(200).json({ 
+    res.status(200).json({
       improvedIdea: response,
       metadata: {
         processingTime: duration,
@@ -102,7 +106,6 @@ export default async function handler(
         similarProjectsAnalyzed: similarProjects.length,
       },
     });
-
   } catch (error: any) {
     const duration = Date.now() - startTime;
     logger.performanceLog("Improve idea failed", duration, {
@@ -110,18 +113,23 @@ export default async function handler(
     });
 
     // Handle specific error types
-    if (error.message?.includes("timeout") || error.message?.includes("ETIMEDOUT")) {
+    if (
+      error.message?.includes("timeout") ||
+      error.message?.includes("ETIMEDOUT")
+    ) {
       const timeoutError = createTimeoutError(error.message);
-      return handleApiError(timeoutError, res, { 
+      return handleApiError(timeoutError, res, {
         endpoint: "/api/improve-idea",
         duration,
       });
     }
 
     // Handle general errors
-    handleApiError(error, res, { 
+    handleApiError(error, res, {
       endpoint: "/api/improve-idea",
-      idea: req.body?.idea ? req.body.idea.substring(0, 100) + "..." : undefined,
+      idea: req.body?.idea
+        ? req.body.idea.substring(0, 100) + "..."
+        : undefined,
       similarProjectsCount: req.body?.similarProjects?.length,
       duration,
     });

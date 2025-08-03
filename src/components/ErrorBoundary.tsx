@@ -1,5 +1,7 @@
+"use client";
+
 import React, { Component, ReactNode } from "react";
-import logger from "@/lib/logger";
+import logger from "@/lib/logger.client";
 
 interface Props {
   children: ReactNode;
@@ -38,7 +40,8 @@ export class ErrorBoundary extends Component<Props, State> {
         componentStack: errorInfo.componentStack,
       },
       timestamp: new Date().toISOString(),
-      userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "server",
+      userAgent:
+        typeof window !== "undefined" ? window.navigator.userAgent : "server",
       url: typeof window !== "undefined" ? window.location.href : "server",
     });
 
@@ -154,7 +157,7 @@ export class ErrorBoundary extends Component<Props, State> {
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   fallback?: ReactNode,
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void,
 ) {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary fallback={fallback} onError={onError}>

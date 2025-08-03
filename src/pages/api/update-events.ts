@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { checkAndUpdateEvents } from "@/lib/eventUpdater";
-import { 
-  handleApiError, 
+import {
+  handleApiError,
   validateMethod,
   createAuthenticationError,
   createError,
@@ -28,14 +28,14 @@ export default async function handler(
         ErrorType.CONFIGURATION_ERROR,
         "CRON_SECRET environment variable is not configured",
         { missingEnvVar: "CRON_SECRET" },
-        ["管理者にお問い合わせください"]
+        ["管理者にお問い合わせください"],
       );
     }
 
     if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
       throw createAuthenticationError(
         "Invalid or missing authorization token",
-        ["有効な認証トークンが必要です"]
+        ["有効な認証トークンが必要です"],
       );
     }
 
@@ -72,17 +72,16 @@ export default async function handler(
         ErrorType.EXTERNAL_SERVICE_ERROR,
         result.error || "Failed to update events",
         { result },
-        ["しばらく待ってから再度お試しください"]
+        ["しばらく待ってから再度お試しください"],
       );
     }
-
   } catch (error: any) {
     const duration = Date.now() - startTime;
     logger.performanceLog("Update events failed", duration, {
       error: error.message,
     });
 
-    handleApiError(error, res, { 
+    handleApiError(error, res, {
       endpoint: "/api/update-events",
       duration,
     });

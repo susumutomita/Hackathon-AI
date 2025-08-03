@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { crawlEthGlobalShowcase } from "@/lib/crawler";
-import { 
-  handleApiError, 
+import {
+  handleApiError,
   validateMethod,
   createError,
   ErrorType,
@@ -24,7 +24,7 @@ export default async function handler(
         ErrorType.AUTHORIZATION_ERROR,
         "Crawling API is disabled in production environment",
         { environment: process.env.NEXT_PUBLIC_ENVIRONMENT },
-        ["この機能は本番環境では無効化されています"]
+        ["この機能は本番環境では無効化されています"],
       );
     }
 
@@ -48,14 +48,13 @@ export default async function handler(
         projectsFound: projects?.length || 0,
       },
     });
-
   } catch (error: any) {
     const duration = Date.now() - startTime;
     logger.performanceLog("Crawl failed", duration, {
       error: error.message,
     });
 
-    handleApiError(error, res, { 
+    handleApiError(error, res, {
       endpoint: "/api/crawl",
       duration,
     });

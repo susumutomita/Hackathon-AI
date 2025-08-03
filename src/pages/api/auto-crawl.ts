@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { checkAndUpdateEvents } from "@/lib/eventUpdater";
 import { crawlEthGlobalShowcase } from "@/lib/crawler";
-import { 
-  handleApiError, 
+import {
+  handleApiError,
   validateMethod,
   createAuthenticationError,
   createError,
@@ -24,20 +24,14 @@ export default async function handler(
     const authHeader = req.headers.authorization;
     const expectedToken = process.env.CRON_SECRET;
 
-    if (!expectedToken) {
-      throw createError(
-        ErrorType.CONFIGURATION_ERROR,
-        "CRON_SECRET environment variable is not configured",
-        { missingEnvVar: "CRON_SECRET" },
-        ["管理者にお問い合わせください"]
-      );
-    }
-
-    if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
-      throw createAuthenticationError(
-        "Invalid or missing authorization token",
-        ["有効な認証トークンが必要です"]
-      );
+    // CRON_SECRETが設定されている場合のみ認証チェック
+    if (expectedToken) {
+      if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
+        throw createAuthenticationError(
+          "Invalid or missing authorization token",
+          ["有効な認証トークンが必要です"],
+        );
+      }
     }
 
     logger.info("Auto crawl request started", {
@@ -54,7 +48,7 @@ export default async function handler(
         ErrorType.EXTERNAL_SERVICE_ERROR,
         updateResult.error || "Failed to update events",
         { updateResult },
-        ["イベント情報の更新に失敗しました"]
+        ["イベント情報の更新に失敗しました"],
       );
     }
 
@@ -87,14 +81,13 @@ export default async function handler(
         totalProcessingTime: duration,
       },
     });
-
   } catch (error: any) {
     const duration = Date.now() - startTime;
     logger.performanceLog("Auto crawl failed", duration, {
       error: error.message,
     });
 
-    handleApiError(error, res, { 
+    handleApiError(error, res, {
       endpoint: "/api/auto-crawl",
       duration,
     });

@@ -8,6 +8,83 @@ vi.mock("@/lib/llmParser", () => ({
   parseHtmlWithLLM: vi.fn(),
 }));
 
+// Mock logger to prevent Winston issues in test environment
+vi.mock("@/lib/logger", () => ({
+  default: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    performanceLog: vi.fn(),
+  },
+}));
+
+// Mock error handler to work with custom response object
+vi.mock("@/lib/errorHandler", () => ({
+  ErrorType: {
+    VALIDATION_ERROR: "VALIDATION_ERROR",
+    INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+  },
+  handleApiError: vi.fn((error, res) => {
+    const statusCode = error.statusCode || 500;
+    const errorMessage =
+      error.userMessage ||
+      error.message ||
+      "予期しないエラーが発生しました。しばらくお待ちください。";
+    res.status(statusCode).json({
+      error: errorMessage,
+      type: error.type || "INTERNAL_SERVER_ERROR",
+      timestamp: new Date().toISOString(),
+      ...(error.suggestions && { suggestions: error.suggestions }),
+    });
+  }),
+  validateMethod: vi.fn((method, allowed) => {
+    if (!method || !allowed.includes(method)) {
+      const error = new Error(`Method ${method} not allowed`);
+      error.statusCode = 400;
+      throw error;
+    }
+  }),
+  validateRequired: vi.fn((data, fields) => {
+    const missingFields = fields.filter((field) => !data[field]);
+    if (missingFields.length > 0) {
+      const error = new Error(
+        `Missing required fields: ${missingFields.join(", ")}`,
+      );
+      error.statusCode = 400;
+      error.type = "VALIDATION_ERROR";
+      error.userMessage = "入力内容に問題があります。内容を確認してください。";
+      error.suggestions = [
+        `必須項目を入力してください: ${missingFields.join(", ")}`,
+      ];
+      throw error;
+    }
+  }),
+  createError: vi.fn((type, message) => {
+    const error = new Error(message);
+    error.type = type;
+    error.statusCode = 500;
+    error.userMessage =
+      "予期しないエラーが発生しました。しばらくお待ちください。";
+    return error;
+  }),
+  createValidationError: vi.fn((message) => {
+    const error = new Error(message);
+    error.type = "VALIDATION_ERROR";
+    error.statusCode = 400;
+    error.userMessage = "入力内容に問題があります。内容を確認してください。";
+    return error;
+  }),
+  createTimeoutError: vi.fn((message) => {
+    const error = new Error(message);
+    error.type = "TIMEOUT_ERROR";
+    error.statusCode = 504;
+    error.userMessage =
+      "リクエストがタイムアウトしました。しばらくお待ちください。";
+    return error;
+  }),
+}));
+
 const mockParseHtmlWithLLM = parseHtmlWithLLM as ReturnType<typeof vi.fn>;
 
 // Helper function to create mock request and response
@@ -17,6 +94,9 @@ function createMockRequestResponse(method = "POST", body = {}) {
     headers: {},
     query: {},
     body,
+    socket: {
+      remoteAddress: "127.0.0.1",
+    },
   } as unknown as NextApiRequest;
 
   const res = {
@@ -68,7 +148,10 @@ describe("/api/improve-idea", () => {
 
     expect((res as any)._getStatusCode()).toBe(400);
     expect(JSON.parse((res as any)._getData())).toEqual({
-      error: "Missing idea or similar projects data",
+      error: "入力内容に問題があります。内容を確認してください。",
+      type: "VALIDATION_ERROR",
+      timestamp: expect.any(String),
+      suggestions: ["必須項目を入力してください: idea"],
     });
   });
 
@@ -81,7 +164,10 @@ describe("/api/improve-idea", () => {
 
     expect((res as any)._getStatusCode()).toBe(400);
     expect(JSON.parse((res as any)._getData())).toEqual({
-      error: "Missing idea or similar projects data",
+      error: "入力内容に問題があります。内容を確認してください。",
+      type: "VALIDATION_ERROR",
+      timestamp: expect.any(String),
+      suggestions: ["必須項目を入力してください: similarProjects"],
     });
   });
 
@@ -105,6 +191,11 @@ describe("/api/improve-idea", () => {
     expect((res as any)._getStatusCode()).toBe(200);
     expect(JSON.parse((res as any)._getData())).toEqual({
       improvedIdea: mockResponse,
+      metadata: {
+        processingTime: expect.any(Number),
+        ideaLength: idea.length,
+        similarProjectsAnalyzed: similarProjects.length,
+      },
     });
 
     // Verify the LLM parser was called with correct parameters
@@ -130,8 +221,9 @@ describe("/api/improve-idea", () => {
 
     expect((res as any)._getStatusCode()).toBe(500);
     expect(JSON.parse((res as any)._getData())).toEqual({
-      error: "Failed to generate improved idea",
-      details: errorMessage,
+      error: errorMessage,
+      type: "INTERNAL_SERVER_ERROR",
+      timestamp: expect.any(String),
     });
   });
 
@@ -147,8 +239,9 @@ describe("/api/improve-idea", () => {
 
     expect((res as any)._getStatusCode()).toBe(500);
     expect(JSON.parse((res as any)._getData())).toEqual({
-      error: "Failed to generate improved idea",
-      details: "An unknown error occurred",
+      error: "予期しないエラーが発生しました。しばらくお待ちください。",
+      type: "INTERNAL_SERVER_ERROR",
+      timestamp: expect.any(String),
     });
   });
 
@@ -176,6 +269,11 @@ describe("/api/improve-idea", () => {
     expect((res as any)._getStatusCode()).toBe(200);
     expect(JSON.parse((res as any)._getData())).toEqual({
       improvedIdea: mockResponse,
+      metadata: {
+        processingTime: expect.any(Number),
+        ideaLength: idea.length,
+        similarProjectsAnalyzed: similarProjects.length,
+      },
     });
 
     // Verify the prompt includes all similar projects

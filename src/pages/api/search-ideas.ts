@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { QdrantHandler } from "@/lib/qdrantHandler";
-import { 
-  handleApiError, 
-  validateMethod, 
+import {
+  handleApiError,
+  validateMethod,
   validateRequired,
   createAuthenticationError,
   createTimeoutError,
@@ -41,7 +41,8 @@ export default async function handler(
 
     const qdrantHandler = new QdrantHandler();
     const embedding = await qdrantHandler.createEmbedding(idea);
-    const similarProjects = await qdrantHandler.searchSimilarProjects(embedding);
+    const similarProjects =
+      await qdrantHandler.searchSimilarProjects(embedding);
 
     const duration = Date.now() - startTime;
     logger.performanceLog("Search ideas completed", duration, {
@@ -57,7 +58,6 @@ export default async function handler(
         resultsCount: similarProjects?.length || 0,
       },
     });
-
   } catch (error: any) {
     const duration = Date.now() - startTime;
     logger.performanceLog("Search ideas failed", duration, {
@@ -65,32 +65,37 @@ export default async function handler(
     });
 
     // Handle specific error types
-    if (error.message?.includes("403") || error.message?.includes("authentication")) {
-      const authError = createAuthenticationError(
-        error.message,
-        [
-          "NOMIC_API_KEYが正しく設定されているか確認してください",
-          "APIキーが有効であることを確認してください"
-        ]
-      );
-      return handleApiError(authError, res, { 
+    if (
+      error.message?.includes("403") ||
+      error.message?.includes("authentication")
+    ) {
+      const authError = createAuthenticationError(error.message, [
+        "NOMIC_API_KEYが正しく設定されているか確認してください",
+        "APIキーが有効であることを確認してください",
+      ]);
+      return handleApiError(authError, res, {
         endpoint: "/api/search-ideas",
         duration,
       });
     }
 
-    if (error.message?.includes("timeout") || error.message?.includes("ETIMEDOUT")) {
+    if (
+      error.message?.includes("timeout") ||
+      error.message?.includes("ETIMEDOUT")
+    ) {
       const timeoutError = createTimeoutError(error.message);
-      return handleApiError(timeoutError, res, { 
+      return handleApiError(timeoutError, res, {
         endpoint: "/api/search-ideas",
         duration,
       });
     }
 
     // Handle general errors
-    handleApiError(error, res, { 
+    handleApiError(error, res, {
       endpoint: "/api/search-ideas",
-      idea: req.body?.idea ? req.body.idea.substring(0, 100) + "..." : undefined,
+      idea: req.body?.idea
+        ? req.body.idea.substring(0, 100) + "..."
+        : undefined,
       duration,
     });
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import logger from "@/lib/logger";
+import logger from "@/lib/logger.client";
 import { useErrorHandler } from "@/components/ErrorBoundary";
 
 export default function ErrorComponent({
@@ -23,7 +23,8 @@ export default function ErrorComponent({
         digest: error.digest,
       },
       timestamp: new Date().toISOString(),
-      userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "server",
+      userAgent:
+        typeof window !== "undefined" ? window.navigator.userAgent : "server",
       url: typeof window !== "undefined" ? window.location.href : "server",
     });
 
