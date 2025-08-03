@@ -1,26 +1,63 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { crawlEthGlobalShowcase } from "@/lib/crawler";
+import { 
+  handleApiError, 
+  validateMethod,
+  createError,
+  ErrorType,
+} from "@/lib/errorHandler";
+import logger from "@/lib/logger";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
-    return res
-      .status(403)
-      .json({ error: "This API is disabled in the production environment." });
-  }
+  const startTime = Date.now();
 
   try {
-    const projects = await crawlEthGlobalShowcase();
-    res.status(200).json({
-      message: "Crawling completed successfully",
-      projects,
+    // Validate HTTP method
+    validateMethod(req.method, ["GET"]);
+
+    // Check environment restriction
+    if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
+      throw createError(
+        ErrorType.AUTHORIZATION_ERROR,
+        "Crawling API is disabled in production environment",
+        { environment: process.env.NEXT_PUBLIC_ENVIRONMENT },
+        ["この機能は本番環境では無効化されています"]
+      );
+    }
+
+    logger.info("Crawl request started", {
+      userAgent: req.headers["user-agent"],
+      ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
     });
+
+    const projects = await crawlEthGlobalShowcase();
+
+    const duration = Date.now() - startTime;
+    logger.performanceLog("Crawl completed", duration, {
+      projectsFound: projects?.length || 0,
+    });
+
+    res.status(200).json({
+      message: "クローリングが正常に完了しました",
+      projects,
+      metadata: {
+        crawlTime: duration,
+        projectsFound: projects?.length || 0,
+      },
+    });
+
   } catch (error: any) {
-    res.status(500).json({
-      error: "Crawling failed",
-      details: error.message || "An unknown error occurred",
+    const duration = Date.now() - startTime;
+    logger.performanceLog("Crawl failed", duration, {
+      error: error.message,
+    });
+
+    handleApiError(error, res, { 
+      endpoint: "/api/crawl",
+      duration,
     });
   }
 }

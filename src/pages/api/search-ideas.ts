@@ -1,49 +1,97 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { QdrantHandler } from "@/lib/qdrantHandler";
+import { 
+  handleApiError, 
+  validateMethod, 
+  validateRequired,
+  createAuthenticationError,
+  createTimeoutError,
+} from "@/lib/errorHandler";
+import logger from "@/lib/logger";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
-  const { idea } = req.body;
-
-  if (!idea) {
-    return res.status(400).json({ message: "Idea is required" });
-  }
+  const startTime = Date.now();
 
   try {
+    // Validate HTTP method
+    validateMethod(req.method, ["POST"]);
+
+    // Validate required fields
+    validateRequired(req.body, ["idea"]);
+
+    const { idea } = req.body;
+
+    // Additional validation
+    if (typeof idea !== "string" || idea.trim().length === 0) {
+      throw new Error("Idea must be a non-empty string");
+    }
+
+    if (idea.length > 5000) {
+      throw new Error("Idea exceeds maximum length of 5000 characters");
+    }
+
+    logger.info("Search ideas request started", {
+      ideaLength: idea.length,
+      userAgent: req.headers["user-agent"],
+      ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
+    });
+
     const qdrantHandler = new QdrantHandler();
     const embedding = await qdrantHandler.createEmbedding(idea);
-    const similarProjects =
-      await qdrantHandler.searchSimilarProjects(embedding);
+    const similarProjects = await qdrantHandler.searchSimilarProjects(embedding);
+
+    const duration = Date.now() - startTime;
+    logger.performanceLog("Search ideas completed", duration, {
+      projectsFound: similarProjects?.length || 0,
+      ideaLength: idea.length,
+    });
 
     res.status(200).json({
-      message: "Search completed successfully",
+      message: "検索が正常に完了しました",
       projects: similarProjects,
+      metadata: {
+        searchTime: duration,
+        resultsCount: similarProjects?.length || 0,
+      },
     });
-  } catch (error: any) {
-    console.error("Search API error:", error);
 
-    // Check if it's a specific authentication error
-    if (
-      error.message?.includes("403") ||
-      error.message?.includes("authentication failed")
-    ) {
-      res.status(403).json({
-        message: "Authentication failed",
-        error: error.message,
-        suggestion:
-          "Please check that your NOMIC_API_KEY environment variable is set correctly and the API key is valid.",
-      });
-    } else {
-      res.status(500).json({
-        message: "Search failed",
-        error: error.message || "An unknown error occurred",
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+    logger.performanceLog("Search ideas failed", duration, {
+      error: error.message,
+    });
+
+    // Handle specific error types
+    if (error.message?.includes("403") || error.message?.includes("authentication")) {
+      const authError = createAuthenticationError(
+        error.message,
+        [
+          "NOMIC_API_KEYが正しく設定されているか確認してください",
+          "APIキーが有効であることを確認してください"
+        ]
+      );
+      return handleApiError(authError, res, { 
+        endpoint: "/api/search-ideas",
+        duration,
       });
     }
+
+    if (error.message?.includes("timeout") || error.message?.includes("ETIMEDOUT")) {
+      const timeoutError = createTimeoutError(error.message);
+      return handleApiError(timeoutError, res, { 
+        endpoint: "/api/search-ideas",
+        duration,
+      });
+    }
+
+    // Handle general errors
+    handleApiError(error, res, { 
+      endpoint: "/api/search-ideas",
+      idea: req.body?.idea ? req.body.idea.substring(0, 100) + "..." : undefined,
+      duration,
+    });
   }
 }
