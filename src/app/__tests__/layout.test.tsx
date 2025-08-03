@@ -9,6 +9,16 @@ vi.mock("@vercel/analytics/react", () => ({
   Analytics: vi.fn(() => ({ type: "Analytics", props: {} })),
 }));
 
+// Mock ErrorBoundary component
+const mockErrorBoundary = vi.fn(({ children }) => ({
+  type: "ErrorBoundary",
+  props: { children },
+}));
+mockErrorBoundary.displayName = "ErrorBoundary";
+vi.mock("@/components/ErrorBoundary", () => ({
+  ErrorBoundary: mockErrorBoundary,
+}));
+
 describe("RootLayout", () => {
   describe("metadata", () => {
     test("should export correct metadata", async () => {
@@ -40,14 +50,17 @@ describe("RootLayout", () => {
       // Check the structure
       expect(result).toBeDefined();
       expect(result.type).toBe("html");
-      expect(result.props.lang).toBe("en");
+      expect(result.props.lang).toBe("ja");
 
-      // Check children array (body and Analytics)
-      const [body, analytics] = result.props.children;
-
+      // Check body element
+      const body = result.props.children;
       expect(body.type).toBe("body");
       expect(body.props.className).toBe("flex min-h-screen w-full flex-col");
-      expect(body.props.children).toBe(mockChildren);
+
+      // Check children array (ErrorBoundary and Analytics)
+      const [errorBoundary, analytics] = body.props.children;
+      expect(errorBoundary.type).toBe(mockErrorBoundary);
+      expect(errorBoundary.props.children).toBe(mockChildren);
 
       expect(typeof analytics.type).toBe("function");
       // Analytics is a mocked function
@@ -62,8 +75,10 @@ describe("RootLayout", () => {
 
       // Test with string children
       const stringResult = RootLayout({ children: "String content" });
-      const [body] = stringResult.props.children;
-      expect(body.props.children).toBe("String content");
+      const body = stringResult.props.children;
+      const [errorBoundary] = body.props.children;
+      expect(errorBoundary.type).toBe(mockErrorBoundary);
+      expect(errorBoundary.props.children).toBe("String content");
 
       // Test with array children
       const arrayChildren = [
@@ -71,13 +86,17 @@ describe("RootLayout", () => {
         { type: "div", key: "2", props: { children: "Child 2" } },
       ];
       const arrayResult = RootLayout({ children: arrayChildren });
-      const [bodyArray] = arrayResult.props.children;
-      expect(bodyArray.props.children).toBe(arrayChildren);
+      const bodyArray = arrayResult.props.children;
+      const [errorBoundaryArray] = bodyArray.props.children;
+      expect(errorBoundaryArray.type).toBe(mockErrorBoundary);
+      expect(errorBoundaryArray.props.children).toBe(arrayChildren);
 
       // Test with null children
       const nullResult = RootLayout({ children: null });
-      const [bodyNull] = nullResult.props.children;
-      expect(bodyNull.props.children).toBe(null);
+      const bodyNull = nullResult.props.children;
+      const [errorBoundaryNull] = bodyNull.props.children;
+      expect(errorBoundaryNull.type).toBe(mockErrorBoundary);
+      expect(errorBoundaryNull.props.children).toBe(null);
 
       // Test with React element children
       const elementChild = {
@@ -91,8 +110,10 @@ describe("RootLayout", () => {
         },
       };
       const elementResult = RootLayout({ children: elementChild });
-      const [bodyElement] = elementResult.props.children;
-      expect(bodyElement.props.children).toBe(elementChild);
+      const bodyElement = elementResult.props.children;
+      const [errorBoundaryElement] = bodyElement.props.children;
+      expect(errorBoundaryElement.type).toBe(mockErrorBoundary);
+      expect(errorBoundaryElement.props.children).toBe(elementChild);
     });
   });
 
@@ -143,15 +164,17 @@ describe("RootLayout", () => {
 
       // Verify HTML element
       expect(result.type).toBe("html");
-      expect(result.props.lang).toBe("en");
-
-      // Verify children structure (body and Analytics)
-      const [body, analytics] = result.props.children;
+      expect(result.props.lang).toBe("ja");
 
       // Verify body element
+      const body = result.props.children;
       expect(body.type).toBe("body");
       expect(body.props.className).toBe("flex min-h-screen w-full flex-col");
-      expect(body.props.children).toBe(testContent);
+
+      // Verify children structure (ErrorBoundary and Analytics)
+      const [errorBoundary, analytics] = body.props.children;
+      expect(errorBoundary.type).toBe(mockErrorBoundary);
+      expect(errorBoundary.props.children).toBe(testContent);
 
       // Verify Analytics component
       expect(typeof analytics.type).toBe("function");
@@ -169,7 +192,8 @@ describe("RootLayout", () => {
       const RootLayout = layoutModule.default;
 
       const result = RootLayout({ children: "test" });
-      const [, analytics] = result.props.children;
+      const body = result.props.children;
+      const [, analytics] = body.props.children;
 
       expect(analytics).toBeDefined();
       expect(typeof analytics.type).toBe("function");

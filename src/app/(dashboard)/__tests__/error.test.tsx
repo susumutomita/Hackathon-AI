@@ -12,16 +12,25 @@ vi.mock("react", async () => {
   };
 });
 
-describe("ErrorComponent", () => {
-  let consoleErrorSpy: any;
+// Mock logger.client
+vi.mock("@/lib/logger.client", () => ({
+  default: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
+// Mock useErrorHandler hook
+const mockReportError = vi.fn();
+vi.mock("@/components/ErrorBoundary", () => ({
+  useErrorHandler: () => ({ reportError: mockReportError }),
+}));
+
+describe("ErrorComponent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleErrorSpy.mockRestore();
   });
 
   test("should export default component", async () => {
@@ -51,10 +60,23 @@ describe("ErrorComponent", () => {
     expect(div.type).toBe("div");
     expect(div.props.className).toBe("mb-8 space-y-4");
 
-    const h1 = div.props.children;
+    // Check that div has multiple children (icon, text, buttons, etc)
+    expect(Array.isArray(div.props.children)).toBe(true);
+    const [iconDiv, textDiv] = div.props.children;
+
+    // Check icon div
+    expect(iconDiv.type).toBe("div");
+    expect(iconDiv.props.className).toContain(
+      "flex items-center justify-center",
+    );
+
+    // Check text div contains h1
+    expect(textDiv.type).toBe("div");
+    expect(textDiv.props.className).toBe("text-center");
+    const h1 = textDiv.props.children[0];
     expect(h1.type).toBe("h1");
-    expect(h1.props.className).toBe("font-semibold text-lg md:text-2xl");
-    expect(h1.props.children).toBe("An error occurred");
+    expect(h1.props.className).toContain("font-semibold text-lg md:text-2xl");
+    expect(h1.props.children).toBe("予期しないエラーが発生しました");
   });
 
   test("should call useEffect with error", async () => {
@@ -72,8 +94,22 @@ describe("ErrorComponent", () => {
     // Check useEffect was called
     expect(mockUseEffect).toHaveBeenCalled();
 
-    // Check console.error was called (useEffect executes immediately in our mock)
-    expect(consoleErrorSpy).toHaveBeenCalledWith(mockError);
+    // Check logger.error was called
+    const loggerModule = await import("@/lib/logger.client");
+    expect(loggerModule.default.error).toHaveBeenCalledWith(
+      "Next.js Error Boundary triggered",
+      expect.objectContaining({
+        error: expect.objectContaining({
+          name: mockError.name,
+          message: mockError.message,
+        }),
+      }),
+    );
+
+    // Check reportError was called
+    expect(mockReportError).toHaveBeenCalledWith(mockError, {
+      digest: undefined,
+    });
   });
 
   test("should handle error with digest property", async () => {
@@ -92,8 +128,21 @@ describe("ErrorComponent", () => {
       reset: mockReset,
     });
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(mockError);
-    expect(mockError.digest).toBe("ERROR_DIGEST_123");
+    // Check logger was called with error details
+    const loggerModule = await import("@/lib/logger.client");
+    expect(loggerModule.default.error).toHaveBeenCalledWith(
+      "Next.js Error Boundary triggered",
+      expect.objectContaining({
+        error: expect.objectContaining({
+          digest: "ERROR_DIGEST_123",
+        }),
+      }),
+    );
+
+    // Check reportError was called with digest
+    expect(mockReportError).toHaveBeenCalledWith(mockError, {
+      digest: "ERROR_DIGEST_123",
+    });
   });
 
   test("should handle different error types", async () => {
@@ -107,10 +156,20 @@ describe("ErrorComponent", () => {
       reset: vi.fn(),
     });
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(typeError);
+    // Check logger was called with TypeError
+    const loggerModule = await import("@/lib/logger.client");
+    expect(loggerModule.default.error).toHaveBeenCalledWith(
+      "Next.js Error Boundary triggered",
+      expect.objectContaining({
+        error: expect.objectContaining({
+          name: "TypeError",
+          message: "Type error test",
+        }),
+      }),
+    );
 
     // Clear mock calls
-    consoleErrorSpy.mockClear();
+    vi.clearAllMocks();
 
     // Test with ReferenceError
     const refError = new ReferenceError("Reference error test");
@@ -119,7 +178,15 @@ describe("ErrorComponent", () => {
       reset: vi.fn(),
     });
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(refError);
+    expect(loggerModule.default.error).toHaveBeenCalledWith(
+      "Next.js Error Boundary triggered",
+      expect.objectContaining({
+        error: expect.objectContaining({
+          name: "ReferenceError",
+          message: "Reference error test",
+        }),
+      }),
+    );
   });
 
   test("should re-run effect when error changes", async () => {
@@ -136,7 +203,10 @@ describe("ErrorComponent", () => {
       reset: mockReset,
     });
 
-    expect(mockUseEffect).toHaveBeenCalledWith(expect.any(Function), [error1]);
+    expect(mockUseEffect).toHaveBeenCalledWith(expect.any(Function), [
+      error1,
+      mockReportError,
+    ]);
 
     // Second render with different error
     ErrorComponent({
@@ -144,6 +214,9 @@ describe("ErrorComponent", () => {
       reset: mockReset,
     });
 
-    expect(mockUseEffect).toHaveBeenCalledWith(expect.any(Function), [error2]);
+    expect(mockUseEffect).toHaveBeenCalledWith(expect.any(Function), [
+      error2,
+      mockReportError,
+    ]);
   });
 });
