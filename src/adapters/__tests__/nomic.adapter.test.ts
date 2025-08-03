@@ -189,5 +189,62 @@ describe("NomicAdapter", () => {
         "Failed to create embedding: Network error",
       );
     });
+
+    it("should handle generic HTTP errors (other status codes)", async () => {
+      const mockPost = mockHttpClient.post as ReturnType<typeof vi.fn>;
+      mockPost.mockRejectedValue(new HttpError("Conflict", 409, "Conflict"));
+
+      const adapter = new NomicAdapter(mockHttpClient, { apiKey: "test-key" });
+
+      await expect(adapter.createEmbedding("test")).rejects.toThrowError(
+        "Nomic API request failed: 409 Conflict",
+      );
+    });
+
+    it("should handle HTTP error with message field in response", async () => {
+      const mockPost = mockHttpClient.post as ReturnType<typeof vi.fn>;
+      mockPost.mockRejectedValue(
+        new HttpError("Bad Request", 400, "Bad Request", {
+          message: "Invalid input format",
+        }),
+      );
+
+      const adapter = new NomicAdapter(mockHttpClient, { apiKey: "test-key" });
+
+      await expect(adapter.createEmbedding("test")).rejects.toThrowError(
+        "Invalid request: Invalid input format",
+      );
+    });
+
+    it("should handle HTTP error with string response", async () => {
+      const mockPost = mockHttpClient.post as ReturnType<typeof vi.fn>;
+      mockPost.mockRejectedValue(
+        new HttpError(
+          "Bad Request",
+          400,
+          "Bad Request",
+          "String error message",
+        ),
+      );
+
+      const adapter = new NomicAdapter(mockHttpClient, { apiKey: "test-key" });
+
+      await expect(adapter.createEmbedding("test")).rejects.toThrowError(
+        "Invalid request: String error message",
+      );
+    });
+
+    it("should handle HTTP error with unknown response format", async () => {
+      const mockPost = mockHttpClient.post as ReturnType<typeof vi.fn>;
+      mockPost.mockRejectedValue(
+        new HttpError("Bad Request", 400, "Bad Request", {}),
+      );
+
+      const adapter = new NomicAdapter(mockHttpClient, { apiKey: "test-key" });
+
+      await expect(adapter.createEmbedding("test")).rejects.toThrowError(
+        "Invalid request: Unknown error",
+      );
+    });
   });
 });

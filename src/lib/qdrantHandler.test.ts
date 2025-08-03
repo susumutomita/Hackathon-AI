@@ -441,4 +441,128 @@ describe("QdrantHandler", () => {
       );
     });
   });
+
+  describe("findProjectByLink", () => {
+    it("should return null when no project is found", async () => {
+      // Mock scroll to return empty points (line 107)
+      mockQdrantClient.scroll.mockResolvedValue({ points: [] });
+
+      handler = new QdrantHandler();
+
+      // Access private method using bracket notation
+      const result = await (handler as any).findProjectByLink(
+        "https://nonexistent.com",
+      );
+
+      expect(result).toBeNull();
+      expect(mockQdrantClient.scroll).toHaveBeenCalledWith(
+        "eth_global_showcase",
+        {
+          filter: {
+            must: [
+              {
+                key: "link",
+                match: {
+                  value: "https://nonexistent.com",
+                },
+              },
+            ],
+          },
+          limit: 1,
+        },
+      );
+    });
+
+    it("should handle findProjectByLink errors and return null", async () => {
+      // Mock scroll to throw error (lines 111-113)
+      mockQdrantClient.scroll.mockRejectedValue(new Error("Database error"));
+
+      handler = new QdrantHandler();
+
+      // Access private method using bracket notation
+      const result = await (handler as any).findProjectByLink(
+        "https://test.com",
+      );
+
+      expect(result).toBeNull();
+      expect(logger.error).toHaveBeenCalledWith(
+        "Failed to find project by link:",
+        expect.any(Error),
+      );
+    });
+
+    it("should return project when found", async () => {
+      const mockProject = {
+        id: "test-project-id",
+        payload: {
+          title: "Test Project",
+          link: "https://test.com",
+        },
+      };
+
+      mockQdrantClient.scroll.mockResolvedValue({ points: [mockProject] });
+
+      handler = new QdrantHandler();
+
+      // Access private method using bracket notation
+      const result = await (handler as any).findProjectByLink(
+        "https://test.com",
+      );
+
+      expect(result).toEqual(mockProject);
+    });
+  });
+
+  describe("createEmbedding Nomic API edge cases", () => {
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_ENVIRONMENT = "production";
+      process.env.NOMIC_API_KEY = "test-nomic-key";
+    });
+
+    it("should handle Nomic API error with unknown error fallback", async () => {
+      // Test line 181: "Unknown error" fallback
+      vi.mocked(axios.post).mockRejectedValue({
+        response: {
+          status: 500,
+          data: {}, // No error or message field
+        },
+      });
+
+      handler = new QdrantHandler();
+
+      await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+        "Nomic API error (500): Unknown error",
+      );
+    });
+
+    it("should handle Nomic API error with message field", async () => {
+      vi.mocked(axios.post).mockRejectedValue({
+        response: {
+          status: 429,
+          data: { message: "Rate limit exceeded" },
+        },
+      });
+
+      handler = new QdrantHandler();
+
+      await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+        "Nomic API rate limit exceeded (429): Rate limit exceeded",
+      );
+    });
+
+    it("should handle Nomic API error with error field", async () => {
+      vi.mocked(axios.post).mockRejectedValue({
+        response: {
+          status: 400,
+          data: { error: "Invalid input" },
+        },
+      });
+
+      handler = new QdrantHandler();
+
+      await expect(handler.createEmbedding("Test text")).rejects.toThrow(
+        "Nomic API error (400): Invalid input",
+      );
+    });
+  });
 });

@@ -130,5 +130,33 @@ describe("OllamaAdapter", () => {
 
       expect(process.env.OLLAMA_HOST).toBe("http://custom:11434");
     });
+
+    it("should handle connection error with error object having code property", async () => {
+      const connectionError = {
+        code: "ECONNREFUSED",
+        message: "Connection refused",
+      };
+      mockEmbed.mockRejectedValue(connectionError);
+
+      const adapter = new OllamaAdapter();
+
+      await expect(adapter.createEmbedding("test")).rejects.toThrow(
+        EmbeddingError,
+      );
+      await expect(adapter.createEmbedding("test")).rejects.toThrowError(
+        /Ollama is not running.*Please start Ollama/,
+      );
+    });
+
+    it("should handle non-Error objects for model not found check", async () => {
+      const nonErrorObject = { message: "some error" };
+      mockEmbed.mockRejectedValue(nonErrorObject);
+
+      const adapter = new OllamaAdapter();
+
+      await expect(adapter.createEmbedding("test")).rejects.toThrowError(
+        "Ollama embedding failed: Unknown Ollama error",
+      );
+    });
   });
 });
