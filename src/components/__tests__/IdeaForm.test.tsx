@@ -129,11 +129,80 @@ describe("IdeaForm", () => {
   });
 
   test("should handle successful form submission", async () => {
-    // Skip this test as it's complex to test form submission with mocked React state
-    expect(true).toBe(true);
+    const projectsData = [
+      {
+        title: "Similar Project 1",
+        description: "Description 1",
+        link: "/project1",
+      },
+    ];
+
+    // Set the idea value before creating the component
+    mockIdea = "Test idea";
+
+    // Mock successful search API response followed by successful improve API response
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ projects: projectsData }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          improvedIdea: "Improved idea based on similar projects",
+        }),
+      });
+
+    const ideaFormModule = await import("../IdeaForm");
+    const IdeaForm = ideaFormModule.default;
+
+    const component = IdeaForm({}) as ReactElement;
+
+    // Simulate form submission
+    const formElement = component.props.children[1].props.children[0].props
+      .children[1] as ReactElement;
+    const handleSubmit = formElement.props.onSubmit;
+
+    const mockEvent = {
+      preventDefault: vi.fn(),
+    };
+
+    await handleSubmit(mockEvent);
+
+    // Verify search API was called correctly
+    expect(mockFetch).toHaveBeenCalledWith("/api/search-ideas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idea: "Test idea" }),
+    });
+
+    // Verify improve API was called correctly with search results (lines 52-53)
+    expect(mockFetch).toHaveBeenCalledWith("/api/improve-idea", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idea: "Test idea",
+        similarProjects: projectsData,
+      }),
+    });
+
+    // Verify setImprovedIdea was called with the response (line 53)
+    expect(mockSetImprovedIdea).toHaveBeenCalledWith(
+      "Improved idea based on similar projects",
+    );
+
+    // Verify setResults was called with search results
+    expect(mockSetResults).toHaveBeenCalledWith(projectsData);
+
+    // Verify loading state was set properly
+    expect(mockSetLoading).toHaveBeenCalledWith(true);
+    expect(mockSetLoading).toHaveBeenCalledWith(false);
   });
 
   test("should handle search API error", async () => {
+    // Set the idea value before creating the component
+    mockIdea = "Test idea";
+
     mockFetch.mockResolvedValueOnce({
       ok: false,
     });
@@ -155,8 +224,6 @@ describe("IdeaForm", () => {
     const mockEvent = {
       preventDefault: vi.fn(),
     };
-
-    mockIdea = "Test idea";
 
     await handleSubmit(mockEvent);
 
@@ -208,6 +275,9 @@ describe("IdeaForm", () => {
   });
 
   test("should handle network error", async () => {
+    // Set the idea value before creating the component
+    mockIdea = "Test idea";
+
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
     const consoleErrorSpy = vi

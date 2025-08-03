@@ -194,6 +194,22 @@ describe("AxiosAdapter", () => {
       );
       expect(result.data).toEqual(putData);
     });
+
+    test("should handle PUT request error", async () => {
+      const putData = { id: 1, name: "Updated Item" };
+      const axiosError = new Error("Put failed");
+      (axiosError as any).isAxiosError = true;
+      (axiosError as any).response = {
+        status: 400,
+        statusText: "Bad Request",
+        data: { error: "Invalid data" },
+      };
+
+      mockAxiosInstance.put.mockRejectedValue(axiosError);
+      (axios.isAxiosError as any).mockReturnValue(true);
+
+      await expect(adapter.put("/items/1", putData)).rejects.toThrow();
+    });
   });
 
   describe("delete method", () => {
