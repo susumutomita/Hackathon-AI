@@ -25,7 +25,7 @@ import axios from "axios";
 import ollama from "ollama";
 import { StatusCodes } from "http-status-codes";
 // Note: Using local env validation for MCP server
-import { z } from 'zod';
+import { z } from "zod";
 
 export interface Project {
   title: string;
@@ -84,13 +84,15 @@ function isGeneralError(error: unknown): error is GeneralError {
 
 // MCP Server environment validation
 const mcpEnvSchema = z.object({
-  QD_URL: z.string().url().default('http://localhost:6333'),
+  QD_URL: z.string().url().default("http://localhost:6333"),
   QD_API_KEY: z.string().optional(),
-  NOMIC_API_KEY: z.string().min(1, 'NOMIC_API_KEY is required'),
-  EMBEDDING_PROVIDER: z.enum(['nomic', 'ollama']).default('nomic'),
-  OLLAMA_MODEL: z.string().default('nomic-embed-text'),
-  OLLAMA_URL: z.string().url().default('http://localhost:11434'),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NOMIC_API_KEY: z.string().min(1, "NOMIC_API_KEY is required"),
+  EMBEDDING_PROVIDER: z.enum(["nomic", "ollama"]).default("nomic"),
+  OLLAMA_MODEL: z.string().default("nomic-embed-text"),
+  OLLAMA_URL: z.string().url().default("http://localhost:11434"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
 });
 
 type MCPEnvironment = z.infer<typeof mcpEnvSchema>;
@@ -101,8 +103,8 @@ function validateMCPEnv(): MCPEnvironment {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errorMessage = error.errors
-        .map(err => `${err.path.join('.')}: ${err.message}`)
-        .join(', ');
+        .map((err) => `${err.path.join(".")}: ${err.message}`)
+        .join(", ");
       throw new Error(`MCP environment validation failed: ${errorMessage}`);
     }
     throw error;
@@ -115,9 +117,9 @@ export class QdrantHandler {
 
   constructor() {
     this.env = validateMCPEnv();
-    this.client = new QdrantClient({ 
-      url: this.env.QD_URL, 
-      apiKey: this.env.QD_API_KEY 
+    this.client = new QdrantClient({
+      url: this.env.QD_URL,
+      apiKey: this.env.QD_API_KEY,
     });
   }
 

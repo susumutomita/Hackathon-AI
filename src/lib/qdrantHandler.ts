@@ -11,9 +11,9 @@ export class QdrantHandler {
 
   constructor() {
     const env = getValidatedEnv();
-    this.client = new QdrantClient({ 
-      url: env.QD_URL, 
-      apiKey: env.QD_API_KEY 
+    this.client = new QdrantClient({
+      url: env.QD_URL,
+      apiKey: env.QD_API_KEY,
     });
     this.ensureCollectionExists();
   }

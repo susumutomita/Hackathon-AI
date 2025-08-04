@@ -18,6 +18,9 @@ describeIfNotCI("QdrantHandler Extended Error Tests", () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    // Set default environment variables for tests
+    process.env.NODE_ENV = "test";
+    process.env.QD_URL = "http://localhost:6333";
   });
 
   afterEach(() => {
@@ -41,10 +44,10 @@ describeIfNotCI("QdrantHandler Extended Error Tests", () => {
 
     it("should handle missing API key error", async () => {
       delete process.env.NOMIC_API_KEY;
-      const handler = new QdrantHandler();
 
-      await expect(handler.createEmbedding("test text")).rejects.toThrow(
-        ERROR_MESSAGES.NOMIC_API_KEY_MISSING,
+      // In MCP environment, missing NOMIC_API_KEY throws during constructor
+      expect(() => new QdrantHandler()).toThrow(
+        "MCP environment validation failed: NOMIC_API_KEY: Required",
       );
     });
 
@@ -86,7 +89,7 @@ describeIfNotCI("QdrantHandler Extended Error Tests", () => {
       } catch (error: any) {
         // Check for connection error patterns
         expect(error.message).toMatch(
-          /Ollama failed: .*(ENOTFOUND|ECONNREFUSED|getaddrinfo)/,
+          /Ollama failed: .*(fetch failed|ENOTFOUND|ECONNREFUSED|getaddrinfo)/,
         );
       }
     });

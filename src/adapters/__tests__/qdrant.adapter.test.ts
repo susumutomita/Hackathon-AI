@@ -2,10 +2,16 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import { QdrantAdapter } from "../qdrant.adapter";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import { VectorDBError } from "@/interfaces/vectordb.interface";
+import { getValidatedEnv } from "@/lib/env";
 
 // Mock QdrantClient
 vi.mock("@qdrant/js-client-rest", () => ({
   QdrantClient: vi.fn(),
+}));
+
+// Mock getValidatedEnv
+vi.mock("@/lib/env", () => ({
+  getValidatedEnv: vi.fn(),
 }));
 
 describe("QdrantAdapter", () => {
@@ -16,6 +22,15 @@ describe("QdrantAdapter", () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     vi.clearAllMocks();
+
+    // Mock getValidatedEnv with default values
+    vi.mocked(getValidatedEnv).mockReturnValue({
+      QD_URL: "http://localhost:6333",
+      QD_API_KEY: "",
+      NOMIC_API_KEY: "test-key",
+      NODE_ENV: "test",
+      NEXT_PUBLIC_ENVIRONMENT: "test",
+    } as any);
 
     // Create mock Qdrant client
     mockQdrantClient = {
@@ -38,11 +53,20 @@ describe("QdrantAdapter", () => {
       delete process.env.QD_URL;
       delete process.env.QD_API_KEY;
 
+      // Mock getValidatedEnv to return default values
+      vi.mocked(getValidatedEnv).mockReturnValue({
+        QD_URL: "http://localhost:6333",
+        QD_API_KEY: "",
+        NOMIC_API_KEY: "test-key",
+        NODE_ENV: "test",
+        NEXT_PUBLIC_ENVIRONMENT: "test",
+      } as any);
+
       adapter = new QdrantAdapter();
 
       expect(QdrantClient).toHaveBeenCalledWith({
         url: "http://localhost:6333",
-        apiKey: undefined,
+        apiKey: "",
         timeout: undefined,
       });
     });
@@ -67,6 +91,15 @@ describe("QdrantAdapter", () => {
       process.env.QD_URL = "http://env-url:6333";
       process.env.QD_API_KEY = "env-api-key";
 
+      // Mock getValidatedEnv to return the environment variables
+      vi.mocked(getValidatedEnv).mockReturnValue({
+        QD_URL: "http://env-url:6333",
+        QD_API_KEY: "env-api-key",
+        NOMIC_API_KEY: "test-key",
+        NODE_ENV: "test",
+        NEXT_PUBLIC_ENVIRONMENT: "test",
+      } as any);
+
       adapter = new QdrantAdapter();
 
       expect(QdrantClient).toHaveBeenCalledWith({
@@ -79,6 +112,15 @@ describe("QdrantAdapter", () => {
     test("should prefer config over environment variables", () => {
       process.env.QD_URL = "http://env-url:6333";
       process.env.QD_API_KEY = "env-api-key";
+
+      // Mock getValidatedEnv to return the environment variables
+      vi.mocked(getValidatedEnv).mockReturnValue({
+        QD_URL: "http://env-url:6333",
+        QD_API_KEY: "env-api-key",
+        NOMIC_API_KEY: "test-key",
+        NODE_ENV: "test",
+        NEXT_PUBLIC_ENVIRONMENT: "test",
+      } as any);
 
       const config = {
         url: "http://config-url:6333",
