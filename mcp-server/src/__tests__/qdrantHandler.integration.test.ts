@@ -12,6 +12,9 @@ describe("QdrantHandler Integration Tests", () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    // Set default environment variables for tests
+    process.env.NODE_ENV = "test";
+    process.env.QD_URL = "http://localhost:6333";
   });
 
   afterEach(() => {
@@ -23,10 +26,9 @@ describe("QdrantHandler Integration Tests", () => {
       process.env.EMBEDDING_PROVIDER = "nomic";
       delete process.env.NOMIC_API_KEY;
 
-      const handler = new QdrantHandler();
-
-      await expect(handler.createEmbedding("test")).rejects.toThrow(
-        ERROR_MESSAGES.NOMIC_API_KEY_MISSING,
+      // In MCP environment, missing NOMIC_API_KEY throws during constructor
+      expect(() => new QdrantHandler()).toThrow(
+        "MCP environment validation failed: NOMIC_API_KEY: Required",
       );
     });
 
@@ -35,22 +37,19 @@ describe("QdrantHandler Integration Tests", () => {
       process.env.EMBEDDING_PROVIDER = "nomic";
       delete process.env.NOMIC_API_KEY;
 
-      const handler = new QdrantHandler();
-
-      await expect(handler.createEmbedding("test")).rejects.toThrow(
-        ERROR_MESSAGES.NOMIC_API_KEY_MISSING_PRODUCTION,
+      // In MCP environment, missing NOMIC_API_KEY throws during constructor
+      expect(() => new QdrantHandler()).toThrow(
+        "MCP environment validation failed: NOMIC_API_KEY: Required",
       );
     });
 
     it("should throw error when invalid embedding provider is set", async () => {
       process.env.EMBEDDING_PROVIDER = "invalid-provider";
-      // Since invalid provider defaults to nomic, we need to ensure NOMIC_API_KEY is set
-      process.env.NOMIC_API_KEY = "test-key";
 
-      const handler = new QdrantHandler();
-
-      // The actual implementation treats invalid provider as nomic, so it will try to use Nomic API
-      await expect(handler.createEmbedding("test")).rejects.toThrow();
+      // In MCP environment, invalid embedding provider throws during constructor
+      expect(() => new QdrantHandler()).toThrow(
+        "MCP environment validation failed: EMBEDDING_PROVIDER: Invalid enum value. Expected 'nomic' | 'ollama', received 'invalid-provider'",
+      );
     });
   });
 

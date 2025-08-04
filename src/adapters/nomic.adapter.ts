@@ -4,6 +4,7 @@ import {
   EmbeddingError,
 } from "@/interfaces/embedding.interface";
 import { HttpClient, HttpError } from "@/interfaces/http.interface";
+import { getValidatedEnv } from "@/lib/env";
 
 /**
  * Nomic adapter configuration
@@ -43,7 +44,8 @@ export class NomicAdapter implements EmbeddingProvider {
     private readonly httpClient: HttpClient,
     config?: NomicConfig,
   ) {
-    this.apiKey = config?.apiKey || process.env.NOMIC_API_KEY || "";
+    const env = getValidatedEnv();
+    this.apiKey = config?.apiKey || env.NOMIC_API_KEY || "";
     this.baseUrl = config?.baseUrl || "https://api-atlas.nomic.ai";
     this.model = config?.model || "nomic-embed-text-v1";
     this.timeout = config?.timeout;

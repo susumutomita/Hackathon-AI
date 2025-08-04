@@ -4,14 +4,17 @@ import { v4 as uuidv4 } from "uuid";
 import logger from "@/lib/logger";
 import { Project } from "@/types";
 import ollama from "ollama";
+import { getValidatedEnv, isProduction } from "@/lib/env";
 
 export class QdrantHandler {
   private client: QdrantClient;
 
   constructor() {
-    const url = process.env.QD_URL || "http://localhost:6333";
-    const apiKey = process.env.QD_API_KEY || "";
-    this.client = new QdrantClient({ url, apiKey });
+    const env = getValidatedEnv();
+    this.client = new QdrantClient({
+      url: env.QD_URL,
+      apiKey: env.QD_API_KEY,
+    });
     this.ensureCollectionExists();
   }
 
@@ -114,10 +117,11 @@ export class QdrantHandler {
   }
 
   public async createEmbedding(text: string): Promise<number[]> {
-    const isProduction = process.env.NEXT_PUBLIC_ENVIRONMENT === "production";
+    const env = getValidatedEnv();
+    const isProd = isProduction();
 
     try {
-      if (!isProduction) {
+      if (!isProd) {
         // Use Ollama for local embeddings in development
         logger.info("Using Ollama for local embeddings");
 
@@ -144,7 +148,7 @@ export class QdrantHandler {
       } else {
         // Use Nomic API in production
         const url = "https://api-atlas.nomic.ai/v1/embedding/text";
-        const apiKey = process.env.NOMIC_API_KEY;
+        const apiKey = env.NOMIC_API_KEY;
 
         // Debug log to check if API key is loaded
         logger.info("Nomic API Key present:", !!apiKey);

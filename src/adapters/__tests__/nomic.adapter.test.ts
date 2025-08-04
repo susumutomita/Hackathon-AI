@@ -1,15 +1,23 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NomicAdapter } from "../nomic.adapter";
 import { EmbeddingError } from "@/interfaces/embedding.interface";
 import { HttpClient, HttpError } from "@/interfaces/http.interface";
+import { resetEnvCache } from "@/lib/env";
 
 describe("NomicAdapter", () => {
   let mockHttpClient: HttpClient;
+  const originalEnv = process.env;
 
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset environment variables
+    process.env = { ...originalEnv };
     delete process.env.NOMIC_API_KEY;
+    // Set required environment variables for tests
+    process.env.NODE_ENV = "test";
+    process.env.NEXT_PUBLIC_ENVIRONMENT = "test";
+    // Reset the cached environment
+    resetEnvCache();
 
     // Create mock HTTP client
     mockHttpClient = {
@@ -18,6 +26,12 @@ describe("NomicAdapter", () => {
       put: vi.fn(),
       delete: vi.fn(),
     };
+  });
+
+  afterEach(() => {
+    // Restore original environment
+    process.env = originalEnv;
+    resetEnvCache();
   });
 
   describe("constructor", () => {

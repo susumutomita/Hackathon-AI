@@ -4,6 +4,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 import axios from "axios";
 import ollama from "ollama";
 import logger from "@/lib/logger";
+import { getValidatedEnv, isProduction } from "@/lib/env";
 
 vi.mock("@qdrant/js-client-rest");
 vi.mock("axios");
@@ -15,6 +16,11 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
+vi.mock("@/lib/env", () => ({
+  getValidatedEnv: vi.fn(),
+  isProduction: vi.fn(),
+}));
+
 vi.mock("uuid", () => ({
   v4: () => "test-uuid-123",
 }));
@@ -22,9 +28,25 @@ vi.mock("uuid", () => ({
 describe("QdrantHandler", () => {
   let handler: QdrantHandler;
   let mockQdrantClient: any;
+  const originalEnv = process.env;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset environment variables
+    process.env = { ...originalEnv };
+    // Clear specific env vars that might be set from other tests
+    delete process.env.QD_URL;
+    delete process.env.QD_API_KEY;
+
+    // Setup default mock implementations
+    vi.mocked(getValidatedEnv).mockReturnValue({
+      QD_URL: process.env.QD_URL || "http://localhost:6333",
+      QD_API_KEY: process.env.QD_API_KEY || "",
+      NOMIC_API_KEY: process.env.NOMIC_API_KEY || "test-api-key",
+      NODE_ENV: process.env.NODE_ENV || "test",
+      NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT || "test",
+    } as any);
+    vi.mocked(isProduction).mockReturnValue(false);
 
     mockQdrantClient = {
       getCollection: vi.fn(),
@@ -40,12 +62,20 @@ describe("QdrantHandler", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    // Restore original environment
+    process.env = originalEnv;
   });
 
   describe("constructor and ensureCollectionExists", () => {
     it("should create QdrantClient with correct URL and API key", async () => {
-      process.env.QD_URL = "http://test-qdrant:6333";
-      process.env.QD_API_KEY = "test-api-key";
+      // Setup mock BEFORE creating handler
+      vi.mocked(getValidatedEnv).mockReturnValue({
+        QD_URL: "http://test-qdrant:6333",
+        QD_API_KEY: "test-api-key",
+        NOMIC_API_KEY: "test-api-key",
+        NODE_ENV: "test",
+        NEXT_PUBLIC_ENVIRONMENT: "test",
+      } as any);
 
       handler = new QdrantHandler();
 
@@ -56,8 +86,14 @@ describe("QdrantHandler", () => {
     });
 
     it("should use default values when environment variables are not set", async () => {
-      delete process.env.QD_URL;
-      delete process.env.QD_API_KEY;
+      // Setup mock with default values
+      vi.mocked(getValidatedEnv).mockReturnValue({
+        QD_URL: "http://localhost:6333",
+        QD_API_KEY: "",
+        NOMIC_API_KEY: "test-api-key",
+        NODE_ENV: "test",
+        NEXT_PUBLIC_ENVIRONMENT: "test",
+      } as any);
 
       handler = new QdrantHandler();
 
@@ -243,6 +279,14 @@ describe("QdrantHandler", () => {
       beforeEach(() => {
         process.env.NEXT_PUBLIC_ENVIRONMENT = "production";
         process.env.NOMIC_API_KEY = "test-nomic-key";
+        vi.mocked(isProduction).mockReturnValue(true);
+        vi.mocked(getValidatedEnv).mockReturnValue({
+          QD_URL: process.env.QD_URL || "http://localhost:6333",
+          QD_API_KEY: process.env.QD_API_KEY || "",
+          NOMIC_API_KEY: "test-nomic-key",
+          NODE_ENV: process.env.NODE_ENV || "test",
+          NEXT_PUBLIC_ENVIRONMENT: "production",
+        } as any);
       });
 
       it("should create embedding using Nomic API in production", async () => {
@@ -515,8 +559,18 @@ describe("QdrantHandler", () => {
 
   describe("createEmbedding Nomic API edge cases", () => {
     beforeEach(() => {
+      mockQdrantClient.getCollection.mockResolvedValue({});
       process.env.NEXT_PUBLIC_ENVIRONMENT = "production";
       process.env.NOMIC_API_KEY = "test-nomic-key";
+      // Setup production mocks
+      vi.mocked(isProduction).mockReturnValue(true);
+      vi.mocked(getValidatedEnv).mockReturnValue({
+        QD_URL: "http://localhost:6333",
+        QD_API_KEY: "",
+        NOMIC_API_KEY: "test-nomic-key",
+        NODE_ENV: "production",
+        NEXT_PUBLIC_ENVIRONMENT: "production",
+      } as any);
     });
 
     it("should handle Nomic API error with unknown error fallback", async () => {

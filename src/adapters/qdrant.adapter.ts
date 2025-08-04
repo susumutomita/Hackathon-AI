@@ -7,6 +7,7 @@ import {
   CollectionConfig,
   VectorDBError,
 } from "@/interfaces/vectordb.interface";
+import { getValidatedEnv } from "@/lib/env";
 
 /**
  * Qdrant adapter configuration
@@ -40,8 +41,9 @@ export class QdrantAdapter implements VectorDBClient {
   private readonly client: QdrantClient;
 
   constructor(config?: QdrantConfig) {
-    const url = config?.url || process.env.QD_URL || "http://localhost:6333";
-    const apiKey = config?.apiKey || process.env.QD_API_KEY;
+    const env = getValidatedEnv();
+    const url = config?.url || env.QD_URL;
+    const apiKey = config?.apiKey || env.QD_API_KEY;
 
     this.client = new QdrantClient({
       url,
