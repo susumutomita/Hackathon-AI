@@ -7,7 +7,13 @@ import logger from "@/lib/logger";
 import { getValidatedEnv, isProduction } from "@/lib/env";
 
 vi.mock("@qdrant/js-client-rest");
-vi.mock("axios");
+vi.mock("axios", () => ({
+  default: {
+    post: vi.fn(),
+    isAxiosError: vi.fn(),
+  },
+  isAxiosError: vi.fn(),
+}));
 vi.mock("ollama");
 vi.mock("@/lib/logger", () => ({
   default: {
@@ -317,12 +323,14 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle 403 authentication error", async () => {
-        vi.mocked(axios.post).mockRejectedValue({
+        const mockError = {
           response: {
             status: 403,
             data: { error: "Invalid API key" },
           },
-        });
+        };
+        vi.mocked(axios.post).mockRejectedValue(mockError);
+        vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
         handler = new QdrantHandler();
 
@@ -332,12 +340,14 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle 401 unauthorized error", async () => {
-        vi.mocked(axios.post).mockRejectedValue({
+        const mockError = {
           response: {
             status: 401,
             data: { message: "Unauthorized" },
           },
-        });
+        };
+        vi.mocked(axios.post).mockRejectedValue(mockError);
+        vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
         handler = new QdrantHandler();
 
@@ -347,12 +357,14 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle 429 rate limit error", async () => {
-        vi.mocked(axios.post).mockRejectedValue({
+        const mockError = {
           response: {
             status: 429,
             data: { error: "Rate limit exceeded" },
           },
-        });
+        };
+        vi.mocked(axios.post).mockRejectedValue(mockError);
+        vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
         handler = new QdrantHandler();
 
@@ -362,12 +374,14 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle generic API errors", async () => {
-        vi.mocked(axios.post).mockRejectedValue({
+        const mockError = {
           response: {
             status: 500,
             data: { error: "Internal server error" },
           },
-        });
+        };
+        vi.mocked(axios.post).mockRejectedValue(mockError);
+        vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
         handler = new QdrantHandler();
 
@@ -575,12 +589,14 @@ describe("QdrantHandler", () => {
 
     it("should handle Nomic API error with unknown error fallback", async () => {
       // Test line 181: "Unknown error" fallback
-      vi.mocked(axios.post).mockRejectedValue({
+      const mockError = {
         response: {
           status: 500,
           data: {}, // No error or message field
         },
-      });
+      };
+      vi.mocked(axios.post).mockRejectedValue(mockError);
+      vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
       handler = new QdrantHandler();
 
@@ -590,12 +606,14 @@ describe("QdrantHandler", () => {
     });
 
     it("should handle Nomic API error with message field", async () => {
-      vi.mocked(axios.post).mockRejectedValue({
+      const mockError = {
         response: {
           status: 429,
           data: { message: "Rate limit exceeded" },
         },
-      });
+      };
+      vi.mocked(axios.post).mockRejectedValue(mockError);
+      vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
       handler = new QdrantHandler();
 
@@ -605,12 +623,14 @@ describe("QdrantHandler", () => {
     });
 
     it("should handle Nomic API error with error field", async () => {
-      vi.mocked(axios.post).mockRejectedValue({
+      const mockError = {
         response: {
           status: 400,
           data: { error: "Invalid input" },
         },
-      });
+      };
+      vi.mocked(axios.post).mockRejectedValue(mockError);
+      vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
       handler = new QdrantHandler();
 

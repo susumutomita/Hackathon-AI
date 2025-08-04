@@ -5,6 +5,11 @@ import logger from "@/lib/logger";
 import { Project } from "@/types";
 import ollama from "ollama";
 import { getValidatedEnv, isProduction } from "@/lib/env";
+import {
+  QdrantPoint,
+  QdrantSearchResult,
+  OllamaError,
+} from "@/types/qdrant.types";
 
 export class QdrantHandler {
   private client: QdrantClient;
@@ -49,7 +54,7 @@ export class QdrantHandler {
       let projectId: string;
       if (existingProject) {
         // 既存のプロジェクトが見つかった場合、そのIDを使用
-        projectId = existingProject.id;
+        projectId = String(existingProject.id);
         logger.info(
           `Found existing project '${title}' with ID: ${projectId}. Updating...`,
         );
@@ -88,7 +93,7 @@ export class QdrantHandler {
     }
   }
 
-  private async findProjectByLink(link: string): Promise<any | null> {
+  private async findProjectByLink(link: string): Promise<QdrantPoint | null> {
     try {
       // ペイロードフィルターを使用してリンクで検索
       const searchResult = await this.client.scroll("eth_global_showcase", {
@@ -106,7 +111,7 @@ export class QdrantHandler {
       });
 
       if (searchResult.points && searchResult.points.length > 0) {
-        return searchResult.points[0];
+        return searchResult.points[0] as unknown as QdrantPoint;
       }
 
       return null;
@@ -133,17 +138,18 @@ export class QdrantHandler {
           });
           logger.info("Ollama embedding created successfully");
           return response.embeddings[0];
-        } catch (ollamaError: any) {
+        } catch (ollamaError) {
           // If Ollama fails, provide helpful error message
+          const err = ollamaError as OllamaError;
           if (
-            ollamaError.message?.includes("connection refused") ||
-            ollamaError.code === "ECONNREFUSED"
+            err.message?.includes("connection refused") ||
+            err.code === "ECONNREFUSED"
           ) {
             throw new Error(
               "Ollama is not running. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull nomic-embed-text'",
             );
           }
-          throw new Error(`Ollama embedding failed: ${ollamaError.message}`);
+          throw new Error(`Ollama embedding failed: ${err.message}`);
         }
       } else {
         // Use Nomic API in production
@@ -173,11 +179,11 @@ export class QdrantHandler {
           throw new Error("Failed to create embedding");
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       logger.error("Error during embedding creation: ", error);
 
       // Check if it's an axios error with response
-      if (error.response) {
+      if (axios.isAxiosError(error) && error.response) {
         const status = error.response.status;
         const errorMessage =
           error.response.data?.error ||
@@ -201,7 +207,9 @@ export class QdrantHandler {
         }
       }
 
-      throw new Error(`Error during embedding creation: ${error.message}`);
+      throw new Error(
+        `Error during embedding creation: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   }
   public async searchSimilarProjects(
@@ -215,13 +223,17 @@ export class QdrantHandler {
       });
 
       console.log("Full response object:", JSON.stringify(response, null, 2));
-      return response.map((item: any) => ({
-        title: item.payload.title,
-        description: item.payload.projectDescription,
-        link: item.payload.link,
-        howItsMade: item.payload.howItsMade,
-        sourceCode: item.payload.sourceCode,
-      }));
+      // TODO: Improve Qdrant response typing when API types are stabilized
+      // Currently using any due to complex nested response structure
+      return response
+        .filter((item: any) => item.payload != null)
+        .map((item: any) => ({
+          title: String(item.payload.title || ""),
+          description: String(item.payload.projectDescription || ""),
+          link: item.payload.link as string | undefined,
+          howItsMade: item.payload.howItsMade as string | undefined,
+          sourceCode: item.payload.sourceCode as string | undefined,
+        }));
     } catch (error) {
       logger.error("Failed to search for similar projects:", error);
       return [];
