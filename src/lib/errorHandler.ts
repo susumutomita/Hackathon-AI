@@ -1,5 +1,10 @@
 import { NextApiResponse } from "next";
 import logger from "./logger";
+import {
+  ErrorContext,
+  ErrorResponseData,
+  UnknownError,
+} from "@/types/error.types";
 
 export enum ErrorType {
   VALIDATION_ERROR = "VALIDATION_ERROR",
@@ -19,7 +24,7 @@ export interface ErrorDetails {
   message: string;
   userMessage: string;
   statusCode: number;
-  context?: Record<string, any>;
+  context?: ErrorContext;
   suggestions?: string[];
 }
 
@@ -103,7 +108,7 @@ export function createError(
   });
 }
 
-export function classifyError(error: any): ErrorType {
+export function classifyError(error: UnknownError): ErrorType {
   if (!error) return ErrorType.INTERNAL_SERVER_ERROR;
 
   const errorMessage = error.message?.toLowerCase() || "";
@@ -203,17 +208,18 @@ export function classifyError(error: any): ErrorType {
 }
 
 export function handleApiError(
-  error: any,
+  error: unknown,
   res: NextApiResponse,
-  context?: Record<string, any>,
+  context?: ErrorContext,
 ): void {
   let appError: AppError;
 
   if (error instanceof AppError) {
     appError = error;
   } else {
-    const errorType = classifyError(error);
-    const originalMessage = error.message || "Unknown error occurred";
+    const unknownError: UnknownError = error as UnknownError;
+    const errorType = classifyError(unknownError);
+    const originalMessage = unknownError.message || "Unknown error occurred";
     appError = createError(errorType, originalMessage, context);
   }
 
@@ -234,7 +240,7 @@ export function handleApiError(
   }
 
   // Prepare response
-  const response: any = {
+  const response: ErrorResponseData = {
     error: appError.userMessage,
     type: appError.type,
     timestamp: new Date().toISOString(),
@@ -257,7 +263,7 @@ export function handleApiError(
 }
 
 export function validateRequired(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   requiredFields: string[],
 ): void {
   const missingFields = requiredFields.filter(
