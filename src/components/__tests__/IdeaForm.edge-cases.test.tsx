@@ -58,7 +58,7 @@ describe("IdeaForm Edge Cases", () => {
       // Import the component dynamically to test it
       const ideaFormModule = await import("../IdeaForm");
       expect(ideaFormModule.default).toBeDefined();
-      expect(typeof ideaFormModule.default).toBe("function");
+      expect(typeof ideaFormModule.default).toBe("object");
     });
   });
 
@@ -206,6 +206,6 @@ describe("IdeaForm Edge Cases", () => {
     expect(ideaFormModule.default).toBeDefined();
 
     // Simple test that the component can be imported
-    expect(typeof ideaFormModule.default).toBe("function");
+    expect(typeof ideaFormModule.default).toBe("object");
   });
 });

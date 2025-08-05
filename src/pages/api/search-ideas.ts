@@ -8,6 +8,7 @@ import {
   createTimeoutError,
 } from "@/lib/errorHandler";
 import logger from "@/lib/logger";
+import { PerformanceMonitor, timeOperation } from "@/lib/performance";
 
 export default async function handler(
   req: NextApiRequest,
@@ -40,14 +41,40 @@ export default async function handler(
     });
 
     const qdrantHandler = new QdrantHandler();
-    const embedding = await qdrantHandler.createEmbedding(idea);
-    const similarProjects =
-      await qdrantHandler.searchSimilarProjects(embedding);
+    const performanceMonitor = PerformanceMonitor.getInstance();
+
+    // Time embedding creation
+    const { result: embedding, duration: embeddingTime } = await timeOperation(
+      "embedding creation",
+      () => qdrantHandler.createEmbedding(idea),
+    );
+
+    // Time vector search
+    const { result: similarProjects, duration: vectorSearchTime } =
+      await timeOperation("vector search", () =>
+        qdrantHandler.searchSimilarProjects(
+          embedding,
+          10, // Increased limit for better results
+        ),
+      );
 
     const duration = Date.now() - startTime;
+
+    // Record performance metrics
+    performanceMonitor.recordMetrics({
+      apiResponseTime: duration,
+      vectorSearchTime,
+      embeddingTime,
+      totalRequestTime: duration,
+      cacheHitRate:
+        qdrantHandler.getCacheStats().embeddingCacheSize > 0 ? 1 : 0,
+    });
+
     logger.performanceLog("Search ideas completed", duration, {
       projectsFound: similarProjects?.length || 0,
       ideaLength: idea.length,
+      embeddingTime,
+      vectorSearchTime,
     });
 
     res.status(200).json({
@@ -56,6 +83,10 @@ export default async function handler(
       metadata: {
         searchTime: duration,
         resultsCount: similarProjects?.length || 0,
+        cacheStats: qdrantHandler.getCacheStats(),
+        embeddingTime,
+        vectorSearchTime,
+        performanceMetrics: performanceMonitor.getAverageMetrics(),
       },
     });
   } catch (error: any) {

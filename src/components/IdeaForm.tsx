@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,59 +11,62 @@ import {
 } from "@/components/ui/table";
 import TextareaAutosize from "react-textarea-autosize";
 
-export default function IdeaForm() {
+const IdeaForm = memo(function IdeaForm() {
   const [idea, setIdea] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [improvedIdea, setImprovedIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-    setSearchStatus("アイデアを検索中...");
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+      setLoading(true);
+      setSearchStatus("アイデアを検索中...");
 
-    try {
-      const response = await fetch("/api/search-ideas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ idea }),
-      });
+      try {
+        const response = await fetch("/api/search-ideas", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ idea }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to search for similar projects");
+        if (!response.ok) {
+          throw new Error("Failed to search for similar projects");
+        }
+
+        const data = await response.json();
+        setResults(data.projects);
+        setSearchStatus("改善されたアイデアを生成中...");
+
+        const improvedResponse = await fetch("/api/improve-idea", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ idea, similarProjects: data.projects }),
+        });
+
+        if (!improvedResponse.ok) {
+          throw new Error("Failed to generate improved idea");
+        }
+
+        const improvedData = await improvedResponse.json();
+        setImprovedIdea(improvedData.improvedIdea);
+        setSearchStatus(
+          `検索完了: ${data.projects.length}件の類似プロジェクトが見つかりました`,
+        );
+      } catch (error: any) {
+        console.error("Error during search:", error);
+        setSearchStatus("エラーが発生しました。もう一度お試しください。");
+      } finally {
+        setLoading(false);
       }
-
-      const data = await response.json();
-      setResults(data.projects);
-      setSearchStatus("改善されたアイデアを生成中...");
-
-      const improvedResponse = await fetch("/api/improve-idea", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ idea, similarProjects: data.projects }),
-      });
-
-      if (!improvedResponse.ok) {
-        throw new Error("Failed to generate improved idea");
-      }
-
-      const improvedData = await improvedResponse.json();
-      setImprovedIdea(improvedData.improvedIdea);
-      setSearchStatus(
-        `検索完了: ${data.projects.length}件の類似プロジェクトが見つかりました`,
-      );
-    } catch (error: any) {
-      console.error("Error during search:", error);
-      setSearchStatus("エラーが発生しました。もう一度お試しください。");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [idea],
+  );
 
   return (
     <div className="container mx-auto px-4">
@@ -275,4 +278,6 @@ export default function IdeaForm() {
       </section>
     </div>
   );
-}
+});
+
+export default IdeaForm;
