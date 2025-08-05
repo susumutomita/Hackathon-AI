@@ -54,7 +54,9 @@ export default function IdeaForm() {
 
       const improvedData = await improvedResponse.json();
       setImprovedIdea(improvedData.improvedIdea);
-      setSearchStatus(`検索完了: ${data.projects.length}件の類似プロジェクトが見つかりました`);
+      setSearchStatus(
+        `検索完了: ${data.projects.length}件の類似プロジェクトが見つかりました`,
+      );
     } catch (error: any) {
       console.error("Error during search:", error);
       setSearchStatus("エラーが発生しました。もう一度お試しください。");
@@ -85,11 +87,11 @@ export default function IdeaForm() {
           hackathons.
         </p>
       </header>
-      
+
       {/* Live region for status announcements */}
-      <div 
-        aria-live="polite" 
-        aria-atomic="true" 
+      <div
+        aria-live="polite"
+        aria-atomic="true"
         className="sr-only"
         id="search-status"
       >
@@ -99,11 +101,24 @@ export default function IdeaForm() {
       {/* Main Content Wrapper */}
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Submit Your Idea Section */}
-        <section className="flex-1 h-full" aria-labelledby="submit-idea-heading">
-          <h2 id="submit-idea-heading" className="text-xl font-bold mb-4">Submit Your Idea</h2>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 h-full" role="form" aria-describedby="search-status">
+        <section
+          className="flex-1 h-full"
+          aria-labelledby="submit-idea-heading"
+        >
+          <h2 id="submit-idea-heading" className="text-xl font-bold mb-4">
+            Submit Your Idea
+          </h2>
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-4 h-full"
+            role="form"
+            aria-describedby="search-status"
+          >
             <div className="flex flex-col gap-2">
-              <label htmlFor="idea-input" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="idea-input"
+                className="text-sm font-medium text-gray-700"
+              >
                 Enter your hackathon project idea
               </label>
               <TextareaAutosize
@@ -116,8 +131,13 @@ export default function IdeaForm() {
                 required
                 aria-describedby="idea-input-description"
               />
-              <div id="idea-input-description" className="text-sm text-gray-500">
-                Describe your project idea, target audience, and key features. The more detail you provide, the better suggestions you'll receive.
+              <div
+                id="idea-input-description"
+                className="text-sm text-gray-500"
+              >
+                Describe your project idea, target audience, and key features.
+                The more detail you provide, the better suggestions you&apos;ll
+                receive.
               </div>
             </div>
             <Button
@@ -137,10 +157,18 @@ export default function IdeaForm() {
         </section>
 
         {/* Improved Idea Section */}
-        <section className="flex-1 h-full" aria-labelledby="improved-idea-heading">
-          <h2 id="improved-idea-heading" className="text-xl font-bold mb-4">Improved Idea</h2>
+        <section
+          className="flex-1 h-full"
+          aria-labelledby="improved-idea-heading"
+        >
+          <h2 id="improved-idea-heading" className="text-xl font-bold mb-4">
+            Improved Idea
+          </h2>
           <div className="flex flex-col gap-2">
-            <label htmlFor="improved-idea-input" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="improved-idea-input"
+              className="text-sm font-medium text-gray-700"
+            >
               AI-enhanced version of your idea
             </label>
             <TextareaAutosize
@@ -153,8 +181,13 @@ export default function IdeaForm() {
               readOnly={!improvedIdea}
               aria-describedby="improved-idea-description"
             />
-            <div id="improved-idea-description" className="text-sm text-gray-500">
-              This field will be automatically populated with an enhanced version of your idea based on analysis of similar successful projects.
+            <div
+              id="improved-idea-description"
+              className="text-sm text-gray-500"
+            >
+              This field will be automatically populated with an enhanced
+              version of your idea based on analysis of similar successful
+              projects.
             </div>
           </div>
         </section>
@@ -172,7 +205,7 @@ export default function IdeaForm() {
                 <TableRow>
                   <TableHead scope="col">Title</TableHead>
                   <TableHead scope="col">Project Description</TableHead>
-                  <TableHead scope="col">How it's Made</TableHead>
+                  <TableHead scope="col">How it&apos;s Made</TableHead>
                   <TableHead scope="col">Source Code</TableHead>
                 </TableRow>
               </TableHeader>
@@ -194,14 +227,18 @@ export default function IdeaForm() {
                       {result.description ? (
                         <span>{result.description}</span>
                       ) : (
-                        <span className="text-gray-500 italic">No description available</span>
+                        <span className="text-gray-500 italic">
+                          No description available
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       {result.howItsMade ? (
                         <span>{result.howItsMade}</span>
                       ) : (
-                        <span className="text-gray-500 italic">No technical details available</span>
+                        <span className="text-gray-500 italic">
+                          No technical details available
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -216,7 +253,9 @@ export default function IdeaForm() {
                           View Source
                         </a>
                       ) : (
-                        <span className="text-gray-500 italic">Source code not available</span>
+                        <span className="text-gray-500 italic">
+                          Source code not available
+                        </span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -227,7 +266,9 @@ export default function IdeaForm() {
         ) : (
           !loading && (
             <p className="text-gray-600" role="status" aria-live="polite">
-              {idea.trim() ? "No matching ideas found. Try submitting your idea to see similar projects." : "Submit your idea above to find similar projects."}
+              {idea.trim()
+                ? "No matching ideas found. Try submitting your idea to see similar projects."
+                : "Submit your idea above to find similar projects."}
             </p>
           )
         )}

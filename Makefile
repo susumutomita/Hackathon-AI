@@ -4,7 +4,7 @@
 default: help
 
 # pnpm run を実行するターゲット
-NPM_RUN_TARGETS = clean lint lint_text format format_check test dev build
+NPM_RUN_TARGETS = clean lint lint_text format format_check typecheck test dev build
 
 $(NPM_RUN_TARGETS):
 	pnpm run $@
@@ -18,7 +18,7 @@ install_ci:
 setup_husky:
 	pnpm run husky
 
-before_commit: lint_text lint format_check build test
+before_commit: lint_text lint typecheck format_check build test
 
 start:
 	pnpm start
@@ -38,6 +38,7 @@ help:
 	@echo "  setup_husky     Setup Husky"
 	@echo "  lint            Run linter"
 	@echo "  lint_text       Run textlint"
+	@echo "  typecheck       Run TypeScript type checking"
 	@echo "  format          Format code"
 	@echo "  format_check    Check code formatting"
 	@echo "  before_commit   Run checks before commit"

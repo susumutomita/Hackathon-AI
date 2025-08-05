@@ -22,7 +22,10 @@ export default function RootLayout({
         <meta name="color-scheme" content="light dark" />
       </head>
       <body className="flex min-h-screen w-full flex-col">
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-br-md">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-br-md"
+        >
           Skip to main content
         </a>
         <ErrorBoundary>{children}</ErrorBoundary>

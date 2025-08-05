@@ -52,13 +52,14 @@ describe("RootLayout", () => {
       expect(result.type).toBe("html");
       expect(result.props.lang).toBe("ja");
 
-      // Check body element
-      const body = result.props.children;
+      // Check head and body elements
+      const [head, body] = result.props.children;
+      expect(head.type).toBe("head");
       expect(body.type).toBe("body");
       expect(body.props.className).toBe("flex min-h-screen w-full flex-col");
 
-      // Check children array (ErrorBoundary and Analytics)
-      const [errorBoundary, analytics] = body.props.children;
+      // Check body children array (skip link, ErrorBoundary, and Analytics)
+      const [skipLink, errorBoundary, analytics] = body.props.children;
       expect(errorBoundary.type).toBe(mockErrorBoundary);
       expect(errorBoundary.props.children).toBe(mockChildren);
 
@@ -75,8 +76,8 @@ describe("RootLayout", () => {
 
       // Test with string children
       const stringResult = RootLayout({ children: "String content" });
-      const body = stringResult.props.children;
-      const [errorBoundary] = body.props.children;
+      const [, body] = stringResult.props.children;
+      const [, errorBoundary] = body.props.children;
       expect(errorBoundary.type).toBe(mockErrorBoundary);
       expect(errorBoundary.props.children).toBe("String content");
 
@@ -86,15 +87,15 @@ describe("RootLayout", () => {
         { type: "div", key: "2", props: { children: "Child 2" } },
       ];
       const arrayResult = RootLayout({ children: arrayChildren });
-      const bodyArray = arrayResult.props.children;
-      const [errorBoundaryArray] = bodyArray.props.children;
+      const [, bodyArray] = arrayResult.props.children;
+      const [, errorBoundaryArray] = bodyArray.props.children;
       expect(errorBoundaryArray.type).toBe(mockErrorBoundary);
       expect(errorBoundaryArray.props.children).toBe(arrayChildren);
 
       // Test with null children
       const nullResult = RootLayout({ children: null });
-      const bodyNull = nullResult.props.children;
-      const [errorBoundaryNull] = bodyNull.props.children;
+      const [, bodyNull] = nullResult.props.children;
+      const [, errorBoundaryNull] = bodyNull.props.children;
       expect(errorBoundaryNull.type).toBe(mockErrorBoundary);
       expect(errorBoundaryNull.props.children).toBe(null);
 
@@ -110,8 +111,8 @@ describe("RootLayout", () => {
         },
       };
       const elementResult = RootLayout({ children: elementChild });
-      const bodyElement = elementResult.props.children;
-      const [errorBoundaryElement] = bodyElement.props.children;
+      const [, bodyElement] = elementResult.props.children;
+      const [, errorBoundaryElement] = bodyElement.props.children;
       expect(errorBoundaryElement.type).toBe(mockErrorBoundary);
       expect(errorBoundaryElement.props.children).toBe(elementChild);
     });
@@ -166,13 +167,14 @@ describe("RootLayout", () => {
       expect(result.type).toBe("html");
       expect(result.props.lang).toBe("ja");
 
-      // Verify body element
-      const body = result.props.children;
+      // Verify head and body elements
+      const [head, body] = result.props.children;
+      expect(head.type).toBe("head");
       expect(body.type).toBe("body");
       expect(body.props.className).toBe("flex min-h-screen w-full flex-col");
 
-      // Verify children structure (ErrorBoundary and Analytics)
-      const [errorBoundary, analytics] = body.props.children;
+      // Verify body children structure (skip link, ErrorBoundary, and Analytics)
+      const [skipLink, errorBoundary, analytics] = body.props.children;
       expect(errorBoundary.type).toBe(mockErrorBoundary);
       expect(errorBoundary.props.children).toBe(testContent);
 
@@ -192,8 +194,8 @@ describe("RootLayout", () => {
       const RootLayout = layoutModule.default;
 
       const result = RootLayout({ children: "test" });
-      const body = result.props.children;
-      const [, analytics] = body.props.children;
+      const [, body] = result.props.children;
+      const [, , analytics] = body.props.children;
 
       expect(analytics).toBeDefined();
       expect(typeof analytics.type).toBe("function");

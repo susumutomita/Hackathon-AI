@@ -42,6 +42,7 @@ let mockIdea = "";
 let mockResults: any[] = [];
 let mockImprovedIdea = "";
 let mockLoading = false;
+let mockSearchStatus = "";
 
 const mockSetIdea = vi.fn((value: any) => {
   mockIdea = typeof value === "function" ? value(mockIdea) : value;
@@ -56,6 +57,10 @@ const mockSetImprovedIdea = vi.fn((value: any) => {
 const mockSetLoading = vi.fn((value: any) => {
   mockLoading = typeof value === "function" ? value(mockLoading) : value;
 });
+const mockSetSearchStatus = vi.fn((value: any) => {
+  mockSearchStatus =
+    typeof value === "function" ? value(mockSearchStatus) : value;
+});
 
 vi.mock("react", async () => {
   const actual = await vi.importActual<typeof import("react")>("react");
@@ -69,7 +74,7 @@ vi.mock("react", async () => {
       const currentCallIndex = callIndex++;
 
       // Reset for next component render
-      if (callIndex >= 4) {
+      if (callIndex >= 5) {
         callIndex = 0;
       }
 
@@ -86,6 +91,9 @@ vi.mock("react", async () => {
       } else if (currentCallIndex === 3) {
         // loading state
         return [mockLoading, mockSetLoading];
+      } else if (currentCallIndex === 4) {
+        // searchStatus state
+        return [mockSearchStatus, mockSetSearchStatus];
       }
 
       return [initial, vi.fn()];
@@ -100,11 +108,13 @@ describe("IdeaForm", () => {
     mockResults = [];
     mockImprovedIdea = "";
     mockLoading = false;
+    mockSearchStatus = "";
     mockFetch.mockReset();
     mockSetIdea.mockClear();
     mockSetResults.mockClear();
     mockSetImprovedIdea.mockClear();
     mockSetLoading.mockClear();
+    mockSetSearchStatus.mockClear();
   });
 
   afterEach(() => {
@@ -159,8 +169,10 @@ describe("IdeaForm", () => {
     const component = IdeaForm({}) as ReactElement;
 
     // Simulate form submission
-    const formElement = component.props.children[1].props.children[0].props
-      .children[1] as ReactElement;
+    // Structure: component > div[2] (main content) > section[0] > form
+    const mainContentDiv = component.props.children[2] as ReactElement;
+    const submitSection = mainContentDiv.props.children[0] as ReactElement;
+    const formElement = submitSection.props.children[1] as ReactElement;
     const handleSubmit = formElement.props.onSubmit;
 
     const mockEvent = {
@@ -217,8 +229,10 @@ describe("IdeaForm", () => {
     const component = IdeaForm({}) as ReactElement;
 
     // Simulate form submission
-    const formElement = component.props.children[1].props.children[0].props
-      .children[1] as ReactElement;
+    // Structure: component > div[2] (main content) > section[0] > form
+    const mainContentDiv = component.props.children[2] as ReactElement;
+    const submitSection = mainContentDiv.props.children[0] as ReactElement;
+    const formElement = submitSection.props.children[1] as ReactElement;
     const handleSubmit = formElement.props.onSubmit;
 
     const mockEvent = {
@@ -256,8 +270,10 @@ describe("IdeaForm", () => {
     const component = IdeaForm({}) as ReactElement;
 
     // Simulate form submission
-    const formElement = component.props.children[1].props.children[0].props
-      .children[1] as ReactElement;
+    // Structure: component > div[2] (main content) > section[0] > form
+    const mainContentDiv = component.props.children[2] as ReactElement;
+    const submitSection = mainContentDiv.props.children[0] as ReactElement;
+    const formElement = submitSection.props.children[1] as ReactElement;
     const handleSubmit = formElement.props.onSubmit;
 
     const mockEvent = {
@@ -290,8 +306,10 @@ describe("IdeaForm", () => {
     const component = IdeaForm({}) as ReactElement;
 
     // Simulate form submission
-    const formElement = component.props.children[1].props.children[0].props
-      .children[1] as ReactElement;
+    // Structure: component > div[2] (main content) > section[0] > form
+    const mainContentDiv = component.props.children[2] as ReactElement;
+    const submitSection = mainContentDiv.props.children[0] as ReactElement;
+    const formElement = submitSection.props.children[1] as ReactElement;
     const handleSubmit = formElement.props.onSubmit;
 
     const mockEvent = {
@@ -316,8 +334,12 @@ describe("IdeaForm", () => {
     const component = IdeaForm({}) as ReactElement;
 
     // Get idea textarea
-    const ideaTextarea = component.props.children[1].props.children[0].props
-      .children[1].props.children[0] as ReactElement;
+    // Structure: component > div[2] > section[0] > form > div > TextareaAutosize
+    const mainContentDiv = component.props.children[2] as ReactElement;
+    const submitSection = mainContentDiv.props.children[0] as ReactElement;
+    const form = submitSection.props.children[1] as ReactElement;
+    const textareaWrapper = form.props.children[0] as ReactElement;
+    const ideaTextarea = textareaWrapper.props.children[1] as ReactElement;
 
     // Simulate onChange
     const mockEvent = {
@@ -335,8 +357,11 @@ describe("IdeaForm", () => {
     const component = IdeaForm({}) as ReactElement;
 
     // Get improved idea textarea
-    const improvedTextarea = component.props.children[1].props.children[1].props
-      .children[1] as ReactElement;
+    // Structure: component > div[2] > section[1] > div > TextareaAutosize
+    const mainContentDiv = component.props.children[2] as ReactElement;
+    const improvedSection = mainContentDiv.props.children[1] as ReactElement;
+    const improvedWrapper = improvedSection.props.children[1] as ReactElement;
+    const improvedTextarea = improvedWrapper.props.children[1] as ReactElement;
 
     // Simulate onChange
     const mockEvent = {
@@ -357,8 +382,11 @@ describe("IdeaForm", () => {
     const component = IdeaForm({}) as ReactElement;
 
     // Get submit button
-    const submitButton = component.props.children[1].props.children[0].props
-      .children[1].props.children[1] as ReactElement;
+    // Structure: component > div[2] > section[0] > form > Button
+    const mainContentDiv = component.props.children[2] as ReactElement;
+    const submitSection = mainContentDiv.props.children[0] as ReactElement;
+    const form = submitSection.props.children[1] as ReactElement;
+    const submitButton = form.props.children[1] as ReactElement;
 
     expect(submitButton.props.disabled).toBe(true);
     expect(submitButton.props.children).toBe("Searching...");
@@ -390,11 +418,18 @@ describe("IdeaForm", () => {
 
     const component = IdeaForm({}) as ReactElement;
 
-    // Get results section
-    const resultsSection = component.props.children[2] as ReactElement;
-    const tableContent = resultsSection.props.children[1] as ReactElement;
+    // Get results section (index 3, after header, live region, and main content div)
+    const resultsSection = component.props.children[3] as ReactElement;
 
-    expect(tableContent.type.name).toBe("Table");
+    // When there are results, it's wrapped in a div with overflow-x-auto
+    const overflowDiv = resultsSection.props.children[1] as ReactElement;
+    expect(overflowDiv.type).toBe("div");
+    expect(overflowDiv.props.className).toBe("overflow-x-auto");
+
+    // The table is inside the overflow div
+    const tableContent = overflowDiv.props.children as ReactElement;
+    // The type is the mocked Table component function
+    expect(tableContent.type).toEqual(expect.any(Function));
 
     // Check table rows
     const tableBody = tableContent.props.children[1] as ReactElement;
@@ -409,8 +444,10 @@ describe("IdeaForm", () => {
     expect(titleLink.props.href).toBe("https://ethglobal.com/project-1");
     expect(titleLink.props.children).toBe("Project 1");
 
-    // Description cell
-    expect(firstRowCells[1].props.children).toBe("Description 1");
+    // Description cell - wrapped in a span
+    const descriptionSpan = firstRowCells[1].props.children as ReactElement;
+    expect(descriptionSpan.type).toBe("span");
+    expect(descriptionSpan.props.children).toBe("Description 1");
 
     // Source code cell with link
     const sourceLink = firstRowCells[3].props.children;
@@ -420,27 +457,42 @@ describe("IdeaForm", () => {
     const secondRow = tableBody.props.children[1] as ReactElement;
     const secondRowCells = secondRow.props.children;
 
-    expect(secondRowCells[1].props.children).toBe("N/A");
-    expect(secondRowCells[2].props.children).toBe("N/A");
-    expect(secondRowCells[3].props.children).toBe("N/A");
+    // Check null values render correctly
+    const descSpan = secondRowCells[1].props.children as ReactElement;
+    expect(descSpan.type).toBe("span");
+    expect(descSpan.props.className).toBe("text-gray-500 italic");
+    expect(descSpan.props.children).toBe("No description available");
+
+    const howSpan = secondRowCells[2].props.children as ReactElement;
+    expect(howSpan.type).toBe("span");
+    expect(howSpan.props.className).toBe("text-gray-500 italic");
+    expect(howSpan.props.children).toBe("No technical details available");
+
+    const sourceSpan = secondRowCells[3].props.children as ReactElement;
+    expect(sourceSpan.type).toBe("span");
+    expect(sourceSpan.props.className).toBe("text-gray-500 italic");
+    expect(sourceSpan.props.children).toBe("Source code not available");
   });
 
   test("should show no results message when not loading and no results", async () => {
     // Set results to empty and loading to false
     mockResults = [];
     mockLoading = false;
+    mockIdea = "test idea"; // Set idea to trigger "No matching ideas found." message
 
     const ideaFormModule = await import("../IdeaForm");
     const IdeaForm = ideaFormModule.default;
 
     const component = IdeaForm({}) as ReactElement;
 
-    // Get results section
-    const resultsSection = component.props.children[2] as ReactElement;
+    // Get results section (index 3, after header, live region, and main content div)
+    const resultsSection = component.props.children[3] as ReactElement;
     const noResultsMessage = resultsSection.props.children[1] as ReactElement;
 
     expect(noResultsMessage.type).toBe("p");
-    expect(noResultsMessage.props.children).toBe("No matching ideas found.");
+    expect(noResultsMessage.props.children).toBe(
+      "No matching ideas found. Try submitting your idea to see similar projects.",
+    );
   });
 
   test("should not show no results message when loading", async () => {
@@ -453,8 +505,8 @@ describe("IdeaForm", () => {
 
     const component = IdeaForm({}) as ReactElement;
 
-    // Get results section
-    const resultsSection = component.props.children[2] as ReactElement;
+    // Get results section (index 3, after header, live region, and main content div)
+    const resultsSection = component.props.children[3] as ReactElement;
     const content = resultsSection.props.children[1];
 
     // Should be false (no message shown)
@@ -469,7 +521,8 @@ describe("IdeaForm", () => {
 
     // Get header section
     const headerSection = component.props.children[0] as ReactElement;
-    const headerLink = headerSection.props.children[0] as ReactElement;
+    const h1 = headerSection.props.children[0] as ReactElement;
+    const headerLink = h1.props.children as ReactElement;
     const description = headerSection.props.children[1] as ReactElement;
 
     expect(headerLink.type).toBe("a");
