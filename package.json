@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.5.0",
-    "@types/node": "^22",
+    "@types/node": "^24",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
