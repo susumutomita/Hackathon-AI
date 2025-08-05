@@ -17,7 +17,8 @@ describe("IdeaForm Simple Tests", () => {
   test("should export default component", async () => {
     const ideaFormModule = await import("../IdeaForm");
     expect(ideaFormModule.default).toBeDefined();
-    expect(typeof ideaFormModule.default).toBe("function");
+    // React memo components are objects, not functions
+    expect(typeof ideaFormModule.default).toBe("object");
   });
 
   test("should handle API calls correctly", async () => {

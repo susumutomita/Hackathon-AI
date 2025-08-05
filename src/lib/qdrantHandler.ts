@@ -13,6 +13,8 @@ import {
 
 export class QdrantHandler {
   private client: QdrantClient;
+  private embeddingCache: Map<string, number[]> = new Map();
+  private searchCache: Map<string, QdrantSearchResult[]> = new Map();
 
   constructor() {
     const env = getValidatedEnv();
@@ -238,5 +240,19 @@ export class QdrantHandler {
       logger.error("Failed to search for similar projects:", error);
       return [];
     }
+  }
+
+  // Performance monitoring methods
+  public getCacheStats() {
+    return {
+      embeddingCacheSize: this.embeddingCache.size,
+      searchCacheSize: this.searchCache.size,
+    };
+  }
+
+  public clearCache() {
+    this.embeddingCache.clear();
+    this.searchCache.clear();
+    logger.info("All caches cleared");
   }
 }
