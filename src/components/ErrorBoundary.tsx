@@ -73,7 +73,11 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div
+          className="min-h-screen flex items-center justify-center bg-gray-50"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
               <svg
@@ -81,6 +85,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -103,16 +108,24 @@ export class ErrorBoundary extends Component<Props, State> {
               <div className="space-y-3">
                 <button
                   onClick={this.handleRetry}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                  aria-describedby="retry-description"
                 >
                   再試行
                 </button>
+                <div id="retry-description" className="sr-only">
+                  アプリケーションを再起動せずに、エラー状態をリセットします
+                </div>
                 <button
                   onClick={this.handleReload}
-                  className="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors duration-200"
+                  className="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
+                  aria-describedby="reload-description"
                 >
                   ページを再読み込み
                 </button>
+                <div id="reload-description" className="sr-only">
+                  ページ全体を再読み込みして、アプリケーションを完全にリセットします
+                </div>
               </div>
 
               {process.env.NODE_ENV === "development" && this.state.error && (

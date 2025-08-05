@@ -79,13 +79,14 @@ describe("DashboardLayout", () => {
     // Check root structure
     expect(component.type).toBeDefined();
 
+    // The actual structure is Providers > div > (div + Analytics)
     const mainWrapper = component.props.children;
-    expect(mainWrapper.type).toBe("main");
+    expect(mainWrapper.type).toBe("div");
     expect(mainWrapper.props.className).toBe(
       "flex min-h-screen w-full flex-col bg-muted/40",
     );
 
-    // Check inner structure
+    // Check inner structure - first child is the content div
     const innerDiv = mainWrapper.props.children[0];
     expect(innerDiv.type).toBe("div");
     expect(innerDiv.props.className).toBe(

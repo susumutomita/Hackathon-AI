@@ -19,6 +19,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "mcp:build": "cd mcp-server && pnpm run build",
     "mcp:install": "cd mcp-server && pnpm install"
   },
