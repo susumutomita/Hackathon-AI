@@ -128,8 +128,8 @@ const IdeaForm = memo(function IdeaForm() {
                 id="idea-input"
                 value={idea}
                 onChange={(e) => setIdea(e.target.value)}
-                placeholder="Describe your project idea in detail..."
-                className="input resize-none overflow-auto w-full p-2 border rounded h-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="あなたのハッカソンプロジェクトのアイデアを説明してください。ターゲットユーザー、主要機能など、詳細に記載するほど良い提案を受けられます。"
+                className="resize-none overflow-auto w-full p-3 border border-gray-300 rounded-md h-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                 minRows={10}
                 required
                 aria-describedby="idea-input-description"
@@ -178,8 +178,8 @@ const IdeaForm = memo(function IdeaForm() {
               id="improved-idea-input"
               value={improvedIdea}
               onChange={(e) => setImprovedIdea(e.target.value)}
-              placeholder="Your improved idea will appear here..."
-              className="input resize-none overflow-auto w-full p-2 border rounded h-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="あなたのアイデアの改善版がここに表示されます..."
+              className="resize-none overflow-auto w-full p-3 border border-gray-300 rounded-md h-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900"
               minRows={10}
               readOnly={!improvedIdea}
               aria-describedby="improved-idea-description"
