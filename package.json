@@ -64,7 +64,7 @@
     "@vitest/ui": "^3.2.4",
     "dotenv": "^16.4.5",
     "eslint": "^8",
-    "eslint-config-next": "14.2.6",
+    "eslint-config-next": "15.4.5",
     "husky": "^9.1.4",
     "node-mocks-http": "^1.15.1",
     "postcss": "^8",
