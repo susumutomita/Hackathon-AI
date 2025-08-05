@@ -48,7 +48,7 @@
     "tailwind": "^2.3.1",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.5.4",
+    "typescript": "^5.9.2",
     "uuid": "^11.1.0",
     "winston": "^3.14.2",
     "zod": "^3.22.4"
