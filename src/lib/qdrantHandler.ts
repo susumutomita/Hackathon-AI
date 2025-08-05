@@ -177,12 +177,22 @@ export class QdrantHandler {
         if (response.status === 200) {
           return response.data.embeddings[0];
         } else {
-          logger.error("Failed to create embedding: ", response.data);
+          logger.error("Failed to create embedding: ", {
+            status: response.status,
+            statusText: response.statusText,
+            data: response.data,
+          });
           throw new Error("Failed to create embedding");
         }
       }
     } catch (error) {
-      logger.error("Error during embedding creation: ", error);
+      // Avoid circular reference by extracting error details
+      const errorDetails = {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        status: axios.isAxiosError(error) ? error.response?.status : undefined,
+      };
+      logger.error("Error during embedding creation: ", errorDetails);
 
       // Check if it's an axios error with response
       if (axios.isAxiosError(error) && error.response) {

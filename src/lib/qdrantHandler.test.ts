@@ -394,6 +394,7 @@ describe("QdrantHandler", () => {
         vi.mocked(axios.post).mockResolvedValue({
           status: 500,
           data: { error: "Server error" },
+          statusText: undefined,
         });
 
         handler = new QdrantHandler();
@@ -404,7 +405,11 @@ describe("QdrantHandler", () => {
 
         expect(logger.error).toHaveBeenCalledWith(
           "Failed to create embedding: ",
-          { error: "Server error" },
+          {
+            status: 500,
+            statusText: undefined,
+            data: { error: "Server error" },
+          },
         );
       });
     });
