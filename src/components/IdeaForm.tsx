@@ -10,6 +10,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import TextareaAutosize from "react-textarea-autosize";
+import { useFormValidation } from "@/hooks/useFormValidation";
+import { sanitizeString } from "@/lib/validation";
+import { sanitizeUrl, escapeHtmlAttribute } from "@/lib/sanitizer";
 
 const IdeaForm = memo(function IdeaForm() {
   const [idea, setIdea] = useState("");
@@ -17,20 +20,35 @@ const IdeaForm = memo(function IdeaForm() {
   const [improvedIdea, setImprovedIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
+  
+  const { errors, validateField, clearErrors } = useFormValidation();
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
+      
+      // Clear previous errors
+      clearErrors();
+      
+      // Validate the idea input
+      const validation = validateField("idea", idea);
+      if (!validation.isValid) {
+        setSearchStatus(`エラー: ${validation.error}`);
+        return;
+      }
+
       setLoading(true);
       setSearchStatus("アイデアを検索中...");
 
       try {
+        // Use sanitized value for API request
+        const sanitizedIdea = validation.sanitizedValue;
         const response = await fetch("/api/search-ideas", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ idea }),
+          body: JSON.stringify({ idea: sanitizedIdea }),
         });
 
         if (!response.ok) {
@@ -46,7 +64,7 @@ const IdeaForm = memo(function IdeaForm() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ idea, similarProjects: data.projects }),
+          body: JSON.stringify({ idea: sanitizedIdea, similarProjects: data.projects }),
         });
 
         if (!improvedResponse.ok) {
@@ -65,8 +83,16 @@ const IdeaForm = memo(function IdeaForm() {
         setLoading(false);
       }
     },
-    [idea],
+    [idea, validateField, clearErrors],
   );
+
+  const handleIdeaChange = useCallback((value: string) => {
+    setIdea(value);
+    // Clear error when user starts typing
+    if (errors.idea) {
+      clearErrors();
+    }
+  }, [errors.idea, clearErrors]);
 
   return (
     <div className="container mx-auto px-4">
@@ -127,20 +153,20 @@ const IdeaForm = memo(function IdeaForm() {
               <TextareaAutosize
                 id="idea-input"
                 value={idea}
-                onChange={(e) => setIdea(e.target.value)}
+                onChange={(e) => handleIdeaChange(e.target.value)}
                 placeholder="あなたのハッカソンプロジェクトのアイデアを説明してください。ターゲットユーザー、主要機能など、詳細に記載するほど良い提案を受けられます。"
-                className="resize-none overflow-auto w-full p-3 border border-gray-300 rounded-md h-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                className={`resize-none overflow-auto w-full p-3 border rounded-md h-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 ${
+                  errors.idea ? "border-red-500" : "border-gray-300"
+                }`}
                 minRows={10}
                 required
                 aria-describedby="idea-input-description"
               />
               <div
                 id="idea-input-description"
-                className="text-sm text-gray-500"
+                className={`text-sm ${errors.idea ? "text-red-500" : "text-gray-500"}`}
               >
-                Describe your project idea, target audience, and key features.
-                The more detail you provide, the better suggestions you&apos;ll
-                receive.
+                {errors.idea || "Describe your project idea, target audience, and key features. The more detail you provide, the better suggestions you'll receive."}
               </div>
             </div>
             <Button
@@ -217,11 +243,11 @@ const IdeaForm = memo(function IdeaForm() {
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       <a
-                        href={`https://ethglobal.com${result.link}`}
+                        href={sanitizeUrl(`https://ethglobal.com${result.link}`) || "#"}
                         className="text-blue-600 underline hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
                         target="_blank"
                         rel="noopener noreferrer"
-                        aria-label={`View ${result.title} project on ETHGlobal (opens in new tab)`}
+                        aria-label={`View ${escapeHtmlAttribute(result.title)} project on ETHGlobal (opens in new tab)`}
                       >
                         {result.title}
                       </a>
@@ -247,11 +273,11 @@ const IdeaForm = memo(function IdeaForm() {
                     <TableCell>
                       {result.sourceCode ? (
                         <a
-                          href={result.sourceCode}
+                          href={sanitizeUrl(result.sourceCode) || "#"}
                           className="text-blue-600 underline hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
                           target="_blank"
                           rel="noopener noreferrer"
-                          aria-label={`View source code for ${result.title} (opens in new tab)`}
+                          aria-label={`View source code for ${escapeHtmlAttribute(result.title)} (opens in new tab)`}
                         >
                           View Source
                         </a>
