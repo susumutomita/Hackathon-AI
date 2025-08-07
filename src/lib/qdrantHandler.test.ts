@@ -5,6 +5,8 @@ import axios from "axios";
 import ollama from "ollama";
 import logger from "@/lib/logger";
 import { getValidatedEnv, isProduction } from "@/lib/env";
+import type { EmbeddingProvider } from "@/interfaces/embedding.interface";
+import type { VectorDBClient } from "@/interfaces/vectordb.interface";
 
 vi.mock("@qdrant/js-client-rest");
 vi.mock("axios", () => ({
@@ -642,6 +644,109 @@ describe("QdrantHandler", () => {
       await expect(handler.createEmbedding("Test text")).rejects.toThrow(
         "Nomic API error (400): Invalid input",
       );
+    });
+  });
+
+  describe("Constructor Injection (Phase 4)", () => {
+    let mockEmbeddingProvider: EmbeddingProvider;
+    let mockVectorDB: VectorDBClient;
+
+    beforeEach(() => {
+      mockEmbeddingProvider = {
+        createEmbedding: vi.fn(),
+      };
+
+      mockVectorDB = {
+        search: vi.fn(),
+        upsert: vi.fn(),
+        createCollection: vi.fn(),
+      };
+    });
+
+    it("should accept dependencies through constructor", () => {
+      expect(() => {
+        new QdrantHandler(mockEmbeddingProvider, mockVectorDB);
+      }).not.toThrow();
+    });
+
+    it("should use injected embedding provider for creating embeddings", async () => {
+      const mockEmbedding = Array(768).fill(0.5);
+      vi.mocked(mockEmbeddingProvider.createEmbedding).mockResolvedValue(mockEmbedding);
+
+      const handler = new QdrantHandler(mockEmbeddingProvider, mockVectorDB);
+      const result = await handler.createEmbedding("Test text");
+
+      expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith("Test text");
+      expect(result).toEqual(mockEmbedding);
+    });
+
+    it("should use injected vector database for searching", async () => {
+      const mockSearchResults = [
+        {
+          id: "test-1",
+          score: 0.9,
+          payload: {
+            title: "Test Project",
+            projectDescription: "Test Description",
+            link: "https://test.com",
+          },
+        },
+      ];
+      
+      vi.mocked(mockVectorDB.search).mockResolvedValue(mockSearchResults);
+
+      const handler = new QdrantHandler(mockEmbeddingProvider, mockVectorDB);
+      const embedding = Array(768).fill(0.1);
+      const results = await handler.searchSimilarProjects(embedding, 5);
+
+      expect(mockVectorDB.search).toHaveBeenCalledWith("eth_global_showcase", {
+        vector: embedding,
+        limit: 5,
+      });
+
+      expect(results).toEqual([
+        {
+          title: "Test Project",
+          description: "Test Description",
+          link: "https://test.com",
+          howItsMade: undefined,
+          sourceCode: undefined,
+        },
+      ]);
+    });
+
+    it("should use injected vector database for upserting projects", async () => {
+      const mockEmbedding = Array(768).fill(0.3);
+      vi.mocked(mockEmbeddingProvider.createEmbedding).mockResolvedValue(mockEmbedding);
+      vi.mocked(mockVectorDB.upsert).mockResolvedValue();
+
+      const handler = new QdrantHandler(mockEmbeddingProvider, mockVectorDB);
+      
+      await handler.addProject(
+        "New Project",
+        "New Description", 
+        "How it's made",
+        "https://github.com/new",
+        "https://newproject.com",
+        "ETHGlobal 2024"
+      );
+
+      expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith("New Description");
+      expect(mockVectorDB.upsert).toHaveBeenCalledWith("eth_global_showcase", [
+        {
+          id: expect.any(String),
+          vector: mockEmbedding,
+          payload: {
+            title: "New Project",
+            projectDescription: "New Description",
+            howItsMade: "How it's made",
+            sourceCode: "https://github.com/new",
+            link: "https://newproject.com",
+            hackathon: "ETHGlobal 2024",
+            lastUpdated: expect.any(String),
+          },
+        },
+      ]);
     });
   });
 });

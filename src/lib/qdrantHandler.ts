@@ -10,18 +10,40 @@ import {
   QdrantSearchResult,
   OllamaError,
 } from "@/types/qdrant.types";
+import type { EmbeddingProvider } from "@/interfaces/embedding.interface";
+import type { VectorDBClient } from "@/interfaces/vectordb.interface";
+import { EmbeddingFactory } from "@/factories/embedding.factory";
+import { QdrantAdapter } from "@/adapters/qdrant.adapter";
 
 export class QdrantHandler {
   private client: QdrantClient;
   private embeddingCache: Map<string, number[]> = new Map();
   private searchCache: Map<string, QdrantSearchResult[]> = new Map();
+  private embeddingProvider: EmbeddingProvider;
+  private vectorDB: VectorDBClient;
 
-  constructor() {
-    const env = getValidatedEnv();
-    this.client = new QdrantClient({
-      url: env.QD_URL,
-      apiKey: env.QD_API_KEY,
-    });
+  constructor(embeddingProvider?: EmbeddingProvider, vectorDB?: VectorDBClient) {
+    if (embeddingProvider && vectorDB) {
+      // New constructor injection pattern
+      this.embeddingProvider = embeddingProvider;
+      this.vectorDB = vectorDB;
+      // Keep the legacy client for backward compatibility with existing methods
+      const env = getValidatedEnv();
+      this.client = new QdrantClient({
+        url: env.QD_URL,
+        apiKey: env.QD_API_KEY,
+      });
+    } else {
+      // Legacy constructor pattern for backward compatibility
+      const env = getValidatedEnv();
+      this.client = new QdrantClient({
+        url: env.QD_URL,
+        apiKey: env.QD_API_KEY,
+      });
+      // Initialize with default adapters
+      this.embeddingProvider = EmbeddingFactory.create();
+      this.vectorDB = new QdrantAdapter();
+    }
     this.ensureCollectionExists();
   }
 
@@ -82,10 +104,15 @@ export class QdrantHandler {
         },
       };
 
-      await this.client.upsert("eth_global_showcase", {
-        wait: true,
-        points: [point],
-      });
+      if (this.vectorDB.upsert) {
+        await this.vectorDB.upsert("eth_global_showcase", [point]);
+      } else {
+        // Fallback to legacy client for backward compatibility
+        await this.client.upsert("eth_global_showcase", {
+          wait: true,
+          points: [point],
+        });
+      }
 
       logger.info(
         `Project '${title}' from event '${hackathon}' upserted to the 'eth_global_showcase'.`,
@@ -124,69 +151,11 @@ export class QdrantHandler {
   }
 
   public async createEmbedding(text: string): Promise<number[]> {
-    const env = getValidatedEnv();
-    const isProd = isProduction();
-
     try {
-      if (!isProd) {
-        // Use Ollama for local embeddings in development
-        logger.info("Using Ollama for local embeddings");
-
-        // First, check if Ollama is running and the model is available
-        try {
-          const response = await ollama.embed({
-            model: "nomic-embed-text",
-            input: text,
-          });
-          logger.info("Ollama embedding created successfully");
-          return response.embeddings[0];
-        } catch (ollamaError) {
-          // If Ollama fails, provide helpful error message
-          const err = ollamaError as OllamaError;
-          if (
-            err.message?.includes("connection refused") ||
-            err.code === "ECONNREFUSED"
-          ) {
-            throw new Error(
-              "Ollama is not running. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull nomic-embed-text'",
-            );
-          }
-          throw new Error(`Ollama embedding failed: ${err.message}`);
-        }
-      } else {
-        // Use Nomic API in production
-        const url = "https://api-atlas.nomic.ai/v1/embedding/text";
-        const apiKey = env.NOMIC_API_KEY;
-
-        // Debug log to check if API key is loaded
-        logger.info("Nomic API Key present:", !!apiKey);
-
-        const headers = {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        };
-        const data = {
-          model: "nomic-embed-text-v1",
-          texts: [text],
-        };
-
-        const response = await axios.post(url, data, {
-          headers,
-          timeout: 10000,
-        });
-        if (response.status === 200) {
-          return response.data.embeddings[0];
-        } else {
-          logger.error("Failed to create embedding: ", {
-            status: response.status,
-            statusText: response.statusText,
-            data: response.data,
-          });
-          throw new Error("Failed to create embedding");
-        }
-      }
+      // Use injected embedding provider
+      return await this.embeddingProvider.createEmbedding(text);
     } catch (error) {
-      // Avoid circular reference by extracting error details
+      // For backward compatibility, preserve the existing error handling structure
       const errorDetails = {
         message: error instanceof Error ? error.message : String(error),
         code: (error as any)?.code,
@@ -194,34 +163,8 @@ export class QdrantHandler {
       };
       logger.error("Error during embedding creation: ", errorDetails);
 
-      // Check if it's an axios error with response
-      if (axios.isAxiosError(error) && error.response) {
-        const status = error.response.status;
-        const errorMessage =
-          error.response.data?.error ||
-          error.response.data?.message ||
-          "Unknown error";
-
-        if (status === 403) {
-          throw new Error(
-            `Nomic API authentication failed (403): ${errorMessage}. Please check your NOMIC_API_KEY.`,
-          );
-        } else if (status === 401) {
-          throw new Error(
-            `Nomic API unauthorized (401): ${errorMessage}. API key may be invalid.`,
-          );
-        } else if (status === 429) {
-          throw new Error(
-            `Nomic API rate limit exceeded (429): ${errorMessage}`,
-          );
-        } else {
-          throw new Error(`Nomic API error (${status}): ${errorMessage}`);
-        }
-      }
-
-      throw new Error(
-        `Error during embedding creation: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      // Re-throw the error with additional context if needed
+      throw error;
     }
   }
   public async searchSimilarProjects(
@@ -229,22 +172,20 @@ export class QdrantHandler {
     limit: number = 5,
   ): Promise<Project[]> {
     try {
-      const response = await this.client.search("eth_global_showcase", {
+      const response = await this.vectorDB.search("eth_global_showcase", {
         vector: embedding,
         limit,
       });
 
       console.log("Full response object:", JSON.stringify(response, null, 2));
-      // TODO: Improve Qdrant response typing when API types are stabilized
-      // Currently using any due to complex nested response structure
       return response
         .filter((item: any) => item.payload != null)
         .map((item: any) => ({
-          title: String(item.payload.title || ""),
-          description: String(item.payload.projectDescription || ""),
-          link: item.payload.link as string | undefined,
-          howItsMade: item.payload.howItsMade as string | undefined,
-          sourceCode: item.payload.sourceCode as string | undefined,
+          title: String(item.payload?.title || ""),
+          description: String(item.payload?.projectDescription || ""),
+          link: item.payload?.link as string | undefined,
+          howItsMade: item.payload?.howItsMade as string | undefined,
+          sourceCode: item.payload?.sourceCode as string | undefined,
         }));
     } catch (error) {
       logger.error("Failed to search for similar projects:", error);
