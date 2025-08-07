@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { QdrantHandler } from "@/lib/qdrantHandler";
+import { QdrantHandlerFactory } from "@/factories/qdrantHandler.factory";
 import {
   handleApiError,
   validateMethod,
@@ -56,7 +57,7 @@ export default async function handler(
       ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
     });
 
-    const qdrantHandler = new QdrantHandler();
+    const qdrantHandler = QdrantHandlerFactory.createDefault();
     const performanceMonitor = PerformanceMonitor.getInstance();
 
     // Time embedding creation

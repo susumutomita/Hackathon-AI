@@ -14,6 +14,17 @@ vi.mock("@/lib/qdrantHandler", () => ({
   })),
 }));
 
+// Mock QdrantHandlerFactory
+vi.mock("@/factories/qdrantHandler.factory", () => ({
+  QdrantHandlerFactory: {
+    createDefault: vi.fn(() => ({
+      createEmbedding: mockCreateEmbedding,
+      searchSimilarProjects: mockSearchSimilarProjects,
+      getCacheStats: mockGetCacheStats,
+    })),
+  },
+}));
+
 // Mock logger to prevent Winston issues in test environment
 vi.mock("@/lib/logger", () => ({
   default: {

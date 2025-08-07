@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import logger from "@/lib/logger";
 import { Project } from "@/types";
 import { QdrantHandler } from "@/lib/qdrantHandler";
+import { QdrantHandlerFactory } from "@/factories/qdrantHandler.factory";
 import fs from "fs";
 import path from "path";
 
@@ -82,7 +83,7 @@ async function fetchProjectDetailPage(url: string): Promise<Partial<Project>> {
 }
 
 export async function crawlEthGlobalShowcase() {
-  const qdrantHandler = new QdrantHandler();
+  const qdrantHandler = QdrantHandlerFactory.createDefault();
   const eventFilter = getEventFilters();
   logger.info(`Event filter: ${eventFilter}`);
 
