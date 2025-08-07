@@ -55,10 +55,10 @@ export const useFormValidation = () => {
   const validateField = useCallback(
     (field: string, value: string) => {
       setIsValidating(true);
-      
+
       try {
         let result: ValidationResult;
-        
+
         switch (field) {
           case "idea":
             result = validateIdea(value);
@@ -77,7 +77,7 @@ export const useFormValidation = () => {
         setIsValidating(false);
       }
     },
-    [validateIdea, setFieldError]
+    [validateIdea, setFieldError],
   );
 
   return {

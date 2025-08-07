@@ -20,16 +20,16 @@ const IdeaForm = memo(function IdeaForm() {
   const [improvedIdea, setImprovedIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
-  
+
   const { errors, validateField, clearErrors } = useFormValidation();
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
-      
+
       // Clear previous errors
       clearErrors();
-      
+
       // Validate the idea input
       const validation = validateField("idea", idea);
       if (!validation.isValid) {
@@ -64,7 +64,10 @@ const IdeaForm = memo(function IdeaForm() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ idea: sanitizedIdea, similarProjects: data.projects }),
+          body: JSON.stringify({
+            idea: sanitizedIdea,
+            similarProjects: data.projects,
+          }),
         });
 
         if (!improvedResponse.ok) {
@@ -86,13 +89,16 @@ const IdeaForm = memo(function IdeaForm() {
     [idea, validateField, clearErrors],
   );
 
-  const handleIdeaChange = useCallback((value: string) => {
-    setIdea(value);
-    // Clear error when user starts typing
-    if (errors.idea) {
-      clearErrors();
-    }
-  }, [errors.idea, clearErrors]);
+  const handleIdeaChange = useCallback(
+    (value: string) => {
+      setIdea(value);
+      // Clear error when user starts typing
+      if (errors.idea) {
+        clearErrors();
+      }
+    },
+    [errors.idea, clearErrors],
+  );
 
   return (
     <div className="container mx-auto px-4">
@@ -166,7 +172,8 @@ const IdeaForm = memo(function IdeaForm() {
                 id="idea-input-description"
                 className={`text-sm ${errors.idea ? "text-red-500" : "text-gray-500"}`}
               >
-                {errors.idea || "Describe your project idea, target audience, and key features. The more detail you provide, the better suggestions you'll receive."}
+                {errors.idea ||
+                  "Describe your project idea, target audience, and key features. The more detail you provide, the better suggestions you'll receive."}
               </div>
             </div>
             <Button
@@ -243,7 +250,10 @@ const IdeaForm = memo(function IdeaForm() {
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       <a
-                        href={sanitizeUrl(`https://ethglobal.com${result.link}`) || "#"}
+                        href={
+                          sanitizeUrl(`https://ethglobal.com${result.link}`) ||
+                          "#"
+                        }
                         className="text-blue-600 underline hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
                         target="_blank"
                         rel="noopener noreferrer"

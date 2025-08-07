@@ -1,11 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getCSRFTokenForClient } from "@/lib/csrf";
 import { validateMethod } from "@/lib/errorHandler";
-import { applyApiRateLimit, setRateLimitHeaders, createRateLimitError } from "@/lib/rateLimit";
+import {
+  applyApiRateLimit,
+  setRateLimitHeaders,
+  createRateLimitError,
+} from "@/lib/rateLimit";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   try {
     // Only allow GET requests
@@ -14,7 +18,7 @@ export default async function handler(
     // Apply rate limiting
     const rateLimitResult = applyApiRateLimit(req);
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
-    
+
     if (!rateLimitResult.success) {
       return res.status(429).json(createRateLimitError(rateLimitResult));
     }

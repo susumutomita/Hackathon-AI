@@ -3,7 +3,8 @@ import { NextApiRequest } from "next";
 // In-memory rate limiter (for development/demo purposes)
 // In production, use Redis or a proper distributed cache
 class InMemoryRateLimit {
-  private requests: Map<string, { count: number; resetTime: number }> = new Map();
+  private requests: Map<string, { count: number; resetTime: number }> =
+    new Map();
   private readonly windowMs: number;
   private readonly maxRequests: number;
 
@@ -83,7 +84,9 @@ export interface RateLimitResult {
 function getClientIdentifier(req: NextApiRequest): string {
   // Use IP address as identifier
   const forwarded = req.headers["x-forwarded-for"];
-  const ip = forwarded ? forwarded.toString().split(",")[0] : req.socket.remoteAddress;
+  const ip = forwarded
+    ? forwarded.toString().split(",")[0]
+    : req.socket.remoteAddress;
   return ip || "unknown";
 }
 
@@ -93,14 +96,14 @@ function getClientIdentifier(req: NextApiRequest): string {
 export function applyRateLimit(
   req: NextApiRequest,
   limiter: InMemoryRateLimit,
-  limitType: string
+  limitType: string,
 ): RateLimitResult {
   const identifier = getClientIdentifier(req);
   const isAllowed = limiter.isAllowed(identifier);
   const remaining = limiter.getRemainingRequests(identifier);
   const resetTime = limiter.getResetTime(identifier);
-  const limit = limiter instanceof InMemoryRateLimit ? 
-    (limiter as any).maxRequests : 0;
+  const limit =
+    limiter instanceof InMemoryRateLimit ? (limiter as any).maxRequests : 0;
 
   if (!isAllowed) {
     return {
@@ -146,7 +149,7 @@ export function applyCrawlRateLimit(req: NextApiRequest): RateLimitResult {
  */
 export function setRateLimitHeaders(
   headers: any,
-  result: RateLimitResult
+  result: RateLimitResult,
 ): void {
   headers["X-RateLimit-Limit"] = result.limit.toString();
   headers["X-RateLimit-Remaining"] = result.remaining.toString();

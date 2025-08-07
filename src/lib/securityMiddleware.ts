@@ -1,6 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { applyCSRFProtection } from "./csrf";
-import { applyApiRateLimit, setRateLimitHeaders, createRateLimitError } from "./rateLimit";
+import {
+  applyApiRateLimit,
+  setRateLimitHeaders,
+  createRateLimitError,
+} from "./rateLimit";
 import logger from "./logger";
 
 export interface SecurityMiddlewareOptions {
@@ -26,7 +30,7 @@ export interface SecurityCheckResult {
 export function applySecurityMiddleware(
   req: NextApiRequest,
   res: NextApiResponse,
-  options: SecurityMiddlewareOptions = {}
+  options: SecurityMiddlewareOptions = {},
 ): SecurityCheckResult {
   const {
     enableCSRF = false, // Disabled by default for compatibility
@@ -52,7 +56,7 @@ export function applySecurityMiddleware(
     // Rate limiting
     if (enableRateLimit) {
       let rateLimitResult;
-      
+
       switch (rateLimitType) {
         case "search":
           const { applySearchRateLimit } = require("./rateLimit");
@@ -151,12 +155,15 @@ export function secureApiResponse<T>(
   res: NextApiResponse,
   statusCode: number,
   data: T,
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
 ): void {
   // Add security headers to API responses
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate",
+  );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
 
@@ -173,7 +180,7 @@ export function secureApiResponse<T>(
  */
 export function handleSecurityError(
   res: NextApiResponse,
-  error: SecurityCheckResult["error"]
+  error: SecurityCheckResult["error"],
 ): void {
   if (!error) {
     return;

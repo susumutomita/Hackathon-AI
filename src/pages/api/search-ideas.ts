@@ -6,15 +6,20 @@ import {
   validateRequired,
   createAuthenticationError,
   createTimeoutError,
+  createValidationError,
 } from "@/lib/errorHandler";
 import logger from "@/lib/logger";
 import { PerformanceMonitor, timeOperation } from "@/lib/performance";
-import { 
-  SearchIdeasRequestSchema, 
+import {
+  SearchIdeasRequestSchema,
   validateInput,
-  sanitizeString 
+  sanitizeString,
 } from "@/lib/validation";
-import { applySearchRateLimit, setRateLimitHeaders, createRateLimitError } from "@/lib/rateLimit";
+import {
+  applySearchRateLimit,
+  setRateLimitHeaders,
+  createRateLimitError,
+} from "@/lib/rateLimit";
 
 export default async function handler(
   req: NextApiRequest,
@@ -29,7 +34,7 @@ export default async function handler(
     // Apply rate limiting
     const rateLimitResult = applySearchRateLimit(req);
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
-    
+
     if (!rateLimitResult.success) {
       return res.status(429).json(createRateLimitError(rateLimitResult));
     }
@@ -37,11 +42,11 @@ export default async function handler(
     // Validate and sanitize input using Zod schema
     const validation = validateInput(SearchIdeasRequestSchema, req.body);
     if (!validation.success) {
-      throw new Error(validation.error);
+      throw createValidationError(validation.error);
     }
 
     const { idea: rawIdea } = validation.data;
-    
+
     // Sanitize the idea input
     const idea = sanitizeString(rawIdea);
 

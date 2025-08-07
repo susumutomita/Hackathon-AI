@@ -7,10 +7,7 @@ export const IdeaSchema = z
   .string()
   .min(1, "アイデアは必須です")
   .max(5000, "アイデアは5000文字以内で入力してください")
-  .refine(
-    (value) => value.trim().length > 0,
-    "アイデアは空白のみにできません"
-  );
+  .refine((value) => value.trim().length > 0, "アイデアは空白のみにできません");
 
 export const SimilarProjectSchema = z.object({
   title: z.string().min(1, "プロジェクトタイトルは必須です"),
@@ -36,24 +33,21 @@ export const CrawlRequestSchema = z.object({
   url: z
     .string()
     .url("有効なURLを入力してください")
-    .refine(
-      (url) => {
-        // Only allow specific domains for security
-        const allowedDomains = [
-          "ethglobal.com",
-          "github.com",
-          "devpost.com",
-          "hackathon.io",
-        ];
-        try {
-          const domain = new URL(url).hostname;
-          return allowedDomains.some((allowed) => domain.includes(allowed));
-        } catch {
-          return false;
-        }
-      },
-      "許可されていないドメインです"
-    ),
+    .refine((url) => {
+      // Only allow specific domains for security
+      const allowedDomains = [
+        "ethglobal.com",
+        "github.com",
+        "devpost.com",
+        "hackathon.io",
+      ];
+      try {
+        const domain = new URL(url).hostname;
+        return allowedDomains.some((allowed) => domain.includes(allowed));
+      } catch {
+        return false;
+      }
+    }, "許可されていないドメインです"),
 });
 
 // Sanitization functions
@@ -77,7 +71,7 @@ export function sanitizeUrl(url: string): string | null {
 // Input validation wrapper with error handling
 export function validateInput<T>(
   schema: z.ZodSchema<T>,
-  data: unknown
+  data: unknown,
 ): { success: true; data: T } | { success: false; error: string } {
   try {
     const result = schema.parse(data);

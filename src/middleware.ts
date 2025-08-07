@@ -43,7 +43,7 @@ export function middleware(request: NextRequest) {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  
+
   // Content Security Policy
   const csp = [
     "default-src 'self'",
@@ -55,14 +55,20 @@ export function middleware(request: NextRequest) {
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "upgrade-insecure-requests"
+    "upgrade-insecure-requests",
   ].join("; ");
-  
+
   response.headers.set("Content-Security-Policy", csp);
-  
+
   // Additional security headers
-  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains; preload",
+  );
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=()",
+  );
   response.headers.set("X-DNS-Prefetch-Control", "off");
   response.headers.set("X-Download-Options", "noopen");
   response.headers.set("X-Permitted-Cross-Domain-Policies", "none");

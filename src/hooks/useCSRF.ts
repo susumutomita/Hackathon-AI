@@ -14,7 +14,7 @@ export const useCSRF = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch("/api/csrf-token", {
         method: "GET",
         headers: {
@@ -57,7 +57,7 @@ export const useCSRF = () => {
 
       return headers;
     },
-    [csrfToken]
+    [csrfToken],
   );
 
   const makeSecureRequest = useCallback(
@@ -67,7 +67,7 @@ export const useCSRF = () => {
       }
 
       const headers = getHeaders(
-        (options.headers as Record<string, string>) || {}
+        (options.headers as Record<string, string>) || {},
       );
 
       return fetch(url, {
@@ -75,7 +75,7 @@ export const useCSRF = () => {
         headers,
       });
     },
-    [csrfToken, getHeaders]
+    [csrfToken, getHeaders],
   );
 
   return {

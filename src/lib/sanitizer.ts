@@ -3,8 +3,21 @@ import DOMPurify from "isomorphic-dompurify";
 // XSS protection and HTML sanitization configuration
 const DOMPURIFY_CONFIG = {
   ALLOWED_TAGS: [
-    "p", "br", "strong", "em", "u", "ol", "ul", "li", 
-    "h1", "h2", "h3", "h4", "h5", "h6", "blockquote"
+    "p",
+    "br",
+    "strong",
+    "em",
+    "u",
+    "ol",
+    "ul",
+    "li",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "blockquote",
   ],
   ALLOWED_ATTR: [],
   KEEP_CONTENT: true,
@@ -13,14 +26,30 @@ const DOMPURIFY_CONFIG = {
   SANITIZE_NAMED_PROPS: true,
   FORBID_SCRIPTS: true,
   FORBID_TAGS: [
-    "script", "style", "iframe", "object", "embed", 
-    "form", "input", "textarea", "button", "select"
+    "script",
+    "style",
+    "iframe",
+    "object",
+    "embed",
+    "form",
+    "input",
+    "textarea",
+    "button",
+    "select",
   ],
   FORBID_ATTR: [
-    "onclick", "onload", "onerror", "onmouseover", 
-    "onfocus", "onblur", "onchange", "onsubmit",
-    "style", "class", "id"
-  ]
+    "onclick",
+    "onload",
+    "onerror",
+    "onmouseover",
+    "onfocus",
+    "onblur",
+    "onchange",
+    "onsubmit",
+    "style",
+    "class",
+    "id",
+  ],
 };
 
 // Strict configuration for display content that shouldn't contain any HTML
@@ -74,7 +103,7 @@ export function sanitizeUrl(url: string): string | null {
 
   try {
     const parsed = new URL(url.trim());
-    
+
     // Only allow http and https protocols
     if (!["http:", "https:"].includes(parsed.protocol)) {
       return null;
@@ -86,10 +115,10 @@ export function sanitizeUrl(url: string): string | null {
       /data:/gi,
       /vbscript:/gi,
       /file:/gi,
-      /about:/gi
+      /about:/gi,
     ];
 
-    if (suspiciousPatterns.some(pattern => pattern.test(url))) {
+    if (suspiciousPatterns.some((pattern) => pattern.test(url))) {
       return null;
     }
 
@@ -143,5 +172,7 @@ export function escapeHtmlAttribute(str: string): string {
 export function generateNonce(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }

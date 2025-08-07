@@ -8,12 +8,16 @@ import {
   createValidationError,
 } from "@/lib/errorHandler";
 import logger from "@/lib/logger";
-import { 
-  ImproveIdeaRequestSchema, 
+import {
+  ImproveIdeaRequestSchema,
   validateInput,
-  sanitizeString 
+  sanitizeString,
 } from "@/lib/validation";
-import { applyApiRateLimit, setRateLimitHeaders, createRateLimitError } from "@/lib/rateLimit";
+import {
+  applyApiRateLimit,
+  setRateLimitHeaders,
+  createRateLimitError,
+} from "@/lib/rateLimit";
 
 export default async function handler(
   req: NextApiRequest,
@@ -28,7 +32,7 @@ export default async function handler(
     // Apply rate limiting
     const rateLimitResult = applyApiRateLimit(req);
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
-    
+
     if (!rateLimitResult.success) {
       return res.status(429).json(createRateLimitError(rateLimitResult));
     }
@@ -40,16 +44,18 @@ export default async function handler(
     }
 
     const { idea: rawIdea, similarProjects } = validation.data;
-    
+
     // Sanitize the idea input
     const idea = sanitizeString(rawIdea);
 
     // Sanitize similar projects data
-    const sanitizedSimilarProjects = similarProjects.map(project => ({
+    const sanitizedSimilarProjects = similarProjects.map((project) => ({
       ...project,
       title: sanitizeString(project.title),
       description: sanitizeString(project.description),
-      howItsMade: project.howItsMade ? sanitizeString(project.howItsMade) : undefined,
+      howItsMade: project.howItsMade
+        ? sanitizeString(project.howItsMade)
+        : undefined,
     }));
 
     logger.info("Improve idea request started", {

@@ -37,18 +37,18 @@ export function validateCSRFToken(signedToken: string): boolean {
   }
 
   const [token, signature] = signedToken.split(".");
-  
+
   if (!token || !signature) {
     return false;
   }
 
   const expectedSignature = createTokenSignature(token, CSRF_SECRET);
-  
+
   // Use timing-safe comparison to prevent timing attacks
   try {
     return crypto.timingSafeEqual(
       Buffer.from(signature, "hex"),
-      Buffer.from(expectedSignature, "hex")
+      Buffer.from(expectedSignature, "hex"),
     );
   } catch {
     return false;
@@ -77,19 +77,25 @@ function getCSRFTokenFromRequest(req: NextApiRequest): string | null {
 /**
  * CSRF protection middleware for API routes
  */
-export function applyCSRFProtection(req: NextApiRequest, res: NextApiResponse): boolean {
+export function applyCSRFProtection(
+  req: NextApiRequest,
+  res: NextApiResponse,
+): boolean {
   // Skip CSRF protection for GET requests (they should be idempotent)
   if (req.method === "GET") {
     return true;
   }
 
   // Skip for development environment (optional)
-  if (process.env.NODE_ENV === "development" && process.env.DISABLE_CSRF === "true") {
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.DISABLE_CSRF === "true"
+  ) {
     return true;
   }
 
   const token = getCSRFTokenFromRequest(req);
-  
+
   if (!token) {
     res.status(403).json({
       error: "CSRF token missing",
