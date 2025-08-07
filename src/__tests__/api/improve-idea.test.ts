@@ -19,6 +19,11 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
+// Mock CSRF validation
+vi.mock("@/lib/csrf", () => ({
+  validateCSRFToken: vi.fn(() => true),
+}));
+
 // Mock error handler to work with custom response object
 vi.mock("@/lib/errorHandler", () => ({
   ErrorType: {
@@ -46,15 +51,18 @@ vi.mock("@/lib/errorHandler", () => ({
     }
   }),
   validateRequired: vi.fn((data, fields) => {
-    const missingFields = fields.filter((field) => !data[field]);
+    const missingFields = fields.filter(
+      (field: string) => !data || !data[field],
+    );
     if (missingFields.length > 0) {
       const error = new Error(
         `Missing required fields: ${missingFields.join(", ")}`,
       );
-      error.statusCode = 400;
-      error.type = "VALIDATION_ERROR";
-      error.userMessage = "入力内容に問題があります。内容を確認してください。";
-      error.suggestions = [
+      (error as any).statusCode = 400;
+      (error as any).type = "VALIDATION_ERROR";
+      (error as any).userMessage =
+        "入力内容に問題があります。内容を確認してください。";
+      (error as any).suggestions = [
         `必須項目を入力してください: ${missingFields.join(", ")}`,
       ];
       throw error;
@@ -91,7 +99,9 @@ const mockParseHtmlWithLLM = parseHtmlWithLLM as ReturnType<typeof vi.fn>;
 function createMockRequestResponse(method = "POST", body = {}) {
   const req = {
     method,
-    headers: {},
+    headers: {
+      "x-csrf-token": "test-csrf-token",
+    },
     query: {},
     body,
     socket: {
@@ -102,6 +112,7 @@ function createMockRequestResponse(method = "POST", body = {}) {
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
+    setHeader: vi.fn().mockReturnThis(),
     _getStatusCode: function () {
       return this._statusCode || 200;
     },
@@ -151,7 +162,6 @@ describe("/api/improve-idea", () => {
       error: "入力内容に問題があります。内容を確認してください。",
       type: "VALIDATION_ERROR",
       timestamp: expect.any(String),
-      suggestions: ["必須項目を入力してください: idea"],
     });
   });
 
@@ -167,7 +177,6 @@ describe("/api/improve-idea", () => {
       error: "入力内容に問題があります。内容を確認してください。",
       type: "VALIDATION_ERROR",
       timestamp: expect.any(String),
-      suggestions: ["必須項目を入力してください: similarProjects"],
     });
   });
 

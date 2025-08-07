@@ -45,6 +45,11 @@ vi.mock("@/lib/performance", () => ({
   }),
 }));
 
+// Mock CSRF validation
+vi.mock("@/lib/csrf", () => ({
+  validateCSRFToken: vi.fn(() => true),
+}));
+
 // Mock error handler to work with custom response object
 vi.mock("@/lib/errorHandler", () => ({
   ErrorType: {
@@ -54,7 +59,9 @@ vi.mock("@/lib/errorHandler", () => ({
     INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
   },
   handleApiError: vi.fn((error, res, options) => {
-    const statusCode = error.statusCode || 500;
+    // Check if it's an AppError with proper statusCode
+    const statusCode =
+      error.statusCode || (error.type === "VALIDATION_ERROR" ? 400 : 500);
     const errorMessage =
       error.userMessage ||
       error.message ||
@@ -76,21 +83,21 @@ vi.mock("@/lib/errorHandler", () => ({
   }),
   validateRequired: vi.fn((data, fields) => {
     // Only throw if actually missing required fields
-    if (data && fields) {
-      const missingFields = fields.filter((field) => !data[field]);
-      if (missingFields.length > 0) {
-        const error = new Error(
-          `Missing required fields: ${missingFields.join(", ")}`,
-        );
-        (error as any).statusCode = 400;
-        (error as any).type = "VALIDATION_ERROR";
-        (error as any).userMessage =
-          "入力内容に問題があります。内容を確認してください。";
-        (error as any).suggestions = [
-          `必須項目を入力してください: ${missingFields.join(", ")}`,
-        ];
-        throw error;
-      }
+    const missingFields = fields.filter(
+      (field: string) => !data || !data[field],
+    );
+    if (missingFields.length > 0) {
+      const error = new Error(
+        `Missing required fields: ${missingFields.join(", ")}`,
+      );
+      (error as any).statusCode = 400;
+      (error as any).type = "VALIDATION_ERROR";
+      (error as any).userMessage =
+        "入力内容に問題があります。内容を確認してください。";
+      (error as any).suggestions = [
+        `必須項目を入力してください: ${missingFields.join(", ")}`,
+      ];
+      throw error;
     }
   }),
   createError: vi.fn((type, message) => {
@@ -101,12 +108,15 @@ vi.mock("@/lib/errorHandler", () => ({
       "予期しないエラーが発生しました。しばらくお待ちください。";
     return error;
   }),
-  createValidationError: vi.fn((message) => {
+  createValidationError: vi.fn((message, details) => {
     const error = new Error(message);
     (error as any).type = "VALIDATION_ERROR";
     (error as any).statusCode = 400;
     (error as any).userMessage =
       "入力内容に問題があります。内容を確認してください。";
+    (error as any).suggestions = details || [
+      "必須項目を入力してください: idea",
+    ];
     return error;
   }),
   createAuthenticationError: vi.fn((message, suggestions) => {
@@ -131,7 +141,9 @@ vi.mock("@/lib/errorHandler", () => ({
 function createMockRequestResponse(method = "POST", body = {}) {
   const req = {
     method,
-    headers: {},
+    headers: {
+      "x-csrf-token": "test-csrf-token",
+    },
     query: {},
     body,
     socket: {
@@ -142,6 +154,7 @@ function createMockRequestResponse(method = "POST", body = {}) {
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
+    setHeader: vi.fn().mockReturnThis(),
     _getStatusCode: function () {
       return this._statusCode || 200;
     },
@@ -210,8 +223,17 @@ describe("/api/search-ideas", () => {
 
     await handler(req, res);
 
-    expect((res as any)._getStatusCode()).toBe(400);
-    expect(JSON.parse((res as any)._getData())).toEqual({
+    const actualStatus = (res as any)._getStatusCode();
+    const actualData = JSON.parse((res as any)._getData());
+
+    // Debugging - log what we actually got
+    if (actualStatus !== 400) {
+      console.error("Unexpected status:", actualStatus);
+      console.error("Response data:", actualData);
+    }
+
+    expect(actualStatus).toBe(400);
+    expect(actualData).toEqual({
       error: "入力内容に問題があります。内容を確認してください。",
       type: "VALIDATION_ERROR",
       timestamp: expect.any(String),

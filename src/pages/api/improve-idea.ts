@@ -8,6 +8,16 @@ import {
   createValidationError,
 } from "@/lib/errorHandler";
 import logger from "@/lib/logger";
+import {
+  ImproveIdeaRequestSchema,
+  validateInput,
+  sanitizeString,
+} from "@/lib/validation";
+import {
+  applyApiRateLimit,
+  setRateLimitHeaders,
+  createRateLimitError,
+} from "@/lib/rateLimit";
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,42 +29,38 @@ export default async function handler(
     // Validate HTTP method
     validateMethod(req.method, ["POST"]);
 
-    // Validate required fields
-    validateRequired(req.body, ["idea", "similarProjects"]);
+    // Apply rate limiting
+    const rateLimitResult = applyApiRateLimit(req);
+    setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
 
-    const { idea, similarProjects } = req.body;
-
-    // Additional validation
-    if (typeof idea !== "string" || idea.trim().length === 0) {
-      throw createValidationError("Idea must be a non-empty string");
+    if (!rateLimitResult.success) {
+      return res.status(429).json(createRateLimitError(rateLimitResult));
     }
 
-    if (idea.length > 10000) {
-      throw createValidationError(
-        "Idea exceeds maximum length of 10000 characters",
-      );
+    // Validate and sanitize input using Zod schema
+    const validation = validateInput(ImproveIdeaRequestSchema, req.body);
+    if (!validation.success) {
+      throw createValidationError(validation.error);
     }
 
-    if (!Array.isArray(similarProjects)) {
-      throw createValidationError("Similar projects must be an array");
-    }
+    const { idea: rawIdea, similarProjects } = validation.data;
 
-    if (similarProjects.length === 0) {
-      throw createValidationError("At least one similar project is required");
-    }
+    // Sanitize the idea input
+    const idea = sanitizeString(rawIdea);
 
-    // Validate similar projects structure
-    for (const project of similarProjects) {
-      if (!project.title || !project.description) {
-        throw createValidationError(
-          "Each similar project must have title and description",
-        );
-      }
-    }
+    // Sanitize similar projects data
+    const sanitizedSimilarProjects = similarProjects.map((project) => ({
+      ...project,
+      title: sanitizeString(project.title),
+      description: sanitizeString(project.description),
+      howItsMade: project.howItsMade
+        ? sanitizeString(project.howItsMade)
+        : undefined,
+    }));
 
     logger.info("Improve idea request started", {
       ideaLength: idea.length,
-      similarProjectsCount: similarProjects.length,
+      similarProjectsCount: sanitizedSimilarProjects.length,
       userAgent: req.headers["user-agent"],
       ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
     });
@@ -73,7 +79,7 @@ export default async function handler(
       **アイデア**: ${idea}
 
       **類似プロジェクト**:
-      ${similarProjects.map((project: any) => `- ${project.title}: ${project.description}`).join("\n")}
+      ${sanitizedSimilarProjects.map((project: any) => `- ${project.title}: ${project.description}`).join("\n")}
 
       提案されたアイデアと類似プロジェクトを比較し、以下の形式で似ているプロジェクトの名前と類似点を説明してください。
 
@@ -95,7 +101,7 @@ export default async function handler(
     logger.performanceLog("Improve idea completed", duration, {
       ideaLength: idea.length,
       responseLength: response.length,
-      similarProjectsCount: similarProjects.length,
+      similarProjectsCount: sanitizedSimilarProjects.length,
     });
 
     res.status(200).json({
@@ -103,7 +109,7 @@ export default async function handler(
       metadata: {
         processingTime: duration,
         ideaLength: idea.length,
-        similarProjectsAnalyzed: similarProjects.length,
+        similarProjectsAnalyzed: sanitizedSimilarProjects.length,
       },
     });
   } catch (error: any) {

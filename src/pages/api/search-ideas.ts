@@ -6,9 +6,20 @@ import {
   validateRequired,
   createAuthenticationError,
   createTimeoutError,
+  createValidationError,
 } from "@/lib/errorHandler";
 import logger from "@/lib/logger";
 import { PerformanceMonitor, timeOperation } from "@/lib/performance";
+import {
+  SearchIdeasRequestSchema,
+  validateInput,
+  sanitizeString,
+} from "@/lib/validation";
+import {
+  applySearchRateLimit,
+  setRateLimitHeaders,
+  createRateLimitError,
+} from "@/lib/rateLimit";
 
 export default async function handler(
   req: NextApiRequest,
@@ -20,19 +31,24 @@ export default async function handler(
     // Validate HTTP method
     validateMethod(req.method, ["POST"]);
 
-    // Validate required fields
-    validateRequired(req.body, ["idea"]);
+    // Apply rate limiting
+    const rateLimitResult = applySearchRateLimit(req);
+    setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
 
-    const { idea } = req.body;
-
-    // Additional validation
-    if (typeof idea !== "string" || idea.trim().length === 0) {
-      throw new Error("Idea must be a non-empty string");
+    if (!rateLimitResult.success) {
+      return res.status(429).json(createRateLimitError(rateLimitResult));
     }
 
-    if (idea.length > 5000) {
-      throw new Error("Idea exceeds maximum length of 5000 characters");
+    // Validate and sanitize input using Zod schema
+    const validation = validateInput(SearchIdeasRequestSchema, req.body);
+    if (!validation.success) {
+      throw createValidationError(validation.error);
     }
+
+    const { idea: rawIdea } = validation.data;
+
+    // Sanitize the idea input
+    const idea = sanitizeString(rawIdea);
 
     logger.info("Search ideas request started", {
       ideaLength: idea.length,

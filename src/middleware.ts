@@ -38,11 +38,40 @@ export function middleware(request: NextRequest) {
   // Security headers
   const response = NextResponse.next();
 
-  // Add security headers
+  // Add comprehensive security headers
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https:",
+    "connect-src 'self' https://*.vercel.com https://*.anthropic.com https://api.groq.com https://ollama.ai https://ethglobal.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+
+  response.headers.set("Content-Security-Policy", csp);
+
+  // Additional security headers
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains; preload",
+  );
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=()",
+  );
+  response.headers.set("X-DNS-Prefetch-Control", "off");
+  response.headers.set("X-Download-Options", "noopen");
+  response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
 
   // CORS for API routes
   if (pathname.startsWith("/api/")) {
