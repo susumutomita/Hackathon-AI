@@ -9,14 +9,17 @@ export async function parseHtmlWithLLM(
   logger.info("Parsing idea with LLM...");
 
   const isProduction = process.env.NEXT_PUBLIC_ENVIRONMENT === "production";
+  // Allow custom model specification via environment variable
+  const localModel = process.env.OLLAMA_MODEL || "llama3.1";
+  const groqModel = process.env.GROQ_MODEL || "llama3-8b-8192";
 
   try {
     let response;
 
     if (!isProduction) {
-      logger.info("Using local LLM (Ollama) for idea parsing.");
+      logger.info(`Using local LLM (Ollama) with model: ${localModel}`);
       response = await ollama.chat({
-        model: "llama3.1",
+        model: localModel,
         messages: [
           {
             role: "user",
@@ -27,7 +30,7 @@ export async function parseHtmlWithLLM(
       logger.info("Local LLM response received:", { response });
       return response.message.content.trim();
     } else {
-      logger.info("Using cloud-based LLM (Groq) for idea parsing.");
+      logger.info(`Using cloud-based LLM (Groq) with model: ${groqModel}`);
       const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
       response = await groqClient.chat.completions.create({
@@ -37,7 +40,7 @@ export async function parseHtmlWithLLM(
             content: prompt,
           },
         ],
-        model: "llama3-8b-8192",
+        model: groqModel,
       });
 
       const fullResponse = response.choices[0]?.message?.content || "";

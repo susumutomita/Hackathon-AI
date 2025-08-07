@@ -40,13 +40,11 @@ export class QdrantHandlerFactory {
    */
   static create(config?: QdrantHandlerFactoryConfig): QdrantHandler {
     // Use custom instances if provided, otherwise create from config
-    const embeddingProvider = 
-      config?.embeddingProvider || 
-      EmbeddingFactory.create(config?.embedding);
+    const embeddingProvider =
+      config?.embeddingProvider || EmbeddingFactory.create(config?.embedding);
 
-    const vectorDBClient = 
-      config?.vectorDBClient || 
-      new QdrantAdapter(config?.vectorDB);
+    const vectorDBClient =
+      config?.vectorDBClient || new QdrantAdapter(config?.vectorDB);
 
     return new QdrantHandler(embeddingProvider, vectorDBClient);
   }

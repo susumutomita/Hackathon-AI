@@ -25,6 +25,8 @@ describe("parseHtmlWithLLM", () => {
   describe("development environment (Ollama)", () => {
     beforeEach(() => {
       process.env.NEXT_PUBLIC_ENVIRONMENT = "development";
+      // Clear any model environment variables for testing
+      delete process.env.OLLAMA_MODEL;
     });
 
     it("should parse idea using Ollama in development", async () => {
@@ -39,7 +41,7 @@ describe("parseHtmlWithLLM", () => {
       const result = await parseHtmlWithLLM("Test idea", "Parse this idea");
 
       expect(ollama.chat).toHaveBeenCalledWith({
-        model: "llama3.1",
+        model: "llama3.1", // Default model when OLLAMA_MODEL is not set
         messages: [
           {
             role: "user",
@@ -51,7 +53,7 @@ describe("parseHtmlWithLLM", () => {
       expect(result).toBe("This is a parsed response");
       expect(logger.info).toHaveBeenCalledWith("Parsing idea with LLM...");
       expect(logger.info).toHaveBeenCalledWith(
-        "Using local LLM (Ollama) for idea parsing.",
+        "Using local LLM (Ollama) with model: llama3.1",
       );
       expect(logger.info).toHaveBeenCalledWith("Local LLM response received:", {
         response: mockResponse,
@@ -72,6 +74,35 @@ describe("parseHtmlWithLLM", () => {
         expect.any(Error),
       );
     });
+
+    it("should use custom model when OLLAMA_MODEL is set", async () => {
+      process.env.OLLAMA_MODEL = "gpt-oss:20b";
+
+      const mockResponse = {
+        message: {
+          content: "Custom model response",
+        },
+      };
+
+      vi.mocked(ollama.chat).mockResolvedValue(mockResponse as any);
+
+      const result = await parseHtmlWithLLM("Test idea", "Parse this idea");
+
+      expect(ollama.chat).toHaveBeenCalledWith({
+        model: "gpt-oss:20b",
+        messages: [
+          {
+            role: "user",
+            content: "Parse this idea",
+          },
+        ],
+      });
+
+      expect(result).toBe("Custom model response");
+      expect(logger.info).toHaveBeenCalledWith(
+        "Using local LLM (Ollama) with model: gpt-oss:20b",
+      );
+    });
   });
 
   describe("production environment (Groq)", () => {
@@ -80,6 +111,8 @@ describe("parseHtmlWithLLM", () => {
     beforeEach(() => {
       process.env.NEXT_PUBLIC_ENVIRONMENT = "production";
       process.env.GROQ_API_KEY = "test-groq-key";
+      // Clear any model environment variables for testing
+      delete process.env.GROQ_MODEL;
 
       mockGroqCreate = vi.fn();
       vi.mocked(Groq).mockImplementation(
@@ -126,7 +159,7 @@ describe("parseHtmlWithLLM", () => {
       expect(result).toBe("This is a Groq parsed response");
       expect(logger.info).toHaveBeenCalledWith("Parsing idea with LLM...");
       expect(logger.info).toHaveBeenCalledWith(
-        "Using cloud-based LLM (Groq) for idea parsing.",
+        "Using cloud-based LLM (Groq) with model: llama3-8b-8192",
       );
       expect(logger.info).toHaveBeenCalledWith("Groq LLM response received:", {
         response: "  This is a Groq parsed response  ",

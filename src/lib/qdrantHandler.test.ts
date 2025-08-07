@@ -33,18 +33,26 @@ vi.mock("uuid", () => ({
   v4: () => "test-uuid-123",
 }));
 
+// Mock the adapters and factories
+vi.mock("@/factories/embedding.factory");
+vi.mock("@/adapters/qdrant.adapter");
+
 describe("QdrantHandler", () => {
   let handler: QdrantHandler;
   let mockQdrantClient: any;
+  let mockEmbeddingProvider: any;
+  let mockVectorDB: any;
   const originalEnv = process.env;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     // Reset environment variables
     process.env = { ...originalEnv };
     // Clear specific env vars that might be set from other tests
     delete process.env.QD_URL;
     delete process.env.QD_API_KEY;
+    delete process.env.EMBEDDING_PROVIDER;
+    delete process.env.OLLAMA_MODEL;
 
     // Setup default mock implementations
     vi.mocked(getValidatedEnv).mockReturnValue({
@@ -55,6 +63,24 @@ describe("QdrantHandler", () => {
       NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT || "test",
     } as any);
     vi.mocked(isProduction).mockReturnValue(false);
+
+    // Setup mock embedding provider
+    mockEmbeddingProvider = {
+      createEmbedding: vi.fn(),
+    };
+
+    // Setup mock vector DB
+    mockVectorDB = {
+      upsert: vi.fn(),
+      search: vi.fn(),
+    };
+
+    // Mock the factories to return our mocks
+    const { EmbeddingFactory } = await import("@/factories/embedding.factory");
+    vi.mocked(EmbeddingFactory.create).mockReturnValue(mockEmbeddingProvider);
+
+    const { QdrantAdapter } = await import("@/adapters/qdrant.adapter");
+    vi.mocked(QdrantAdapter).mockImplementation(() => mockVectorDB);
 
     mockQdrantClient = {
       getCollection: vi.fn(),
@@ -159,13 +185,12 @@ describe("QdrantHandler", () => {
       process.env.NEXT_PUBLIC_ENVIRONMENT = "development";
       const mockEmbedding = Array(768).fill(0.1);
 
-      vi.mocked(ollama.embed).mockResolvedValue({
-        embeddings: [mockEmbedding],
-      } as any);
+      // Mock the embedding provider to return the mock embedding
+      mockEmbeddingProvider.createEmbedding.mockResolvedValue(mockEmbedding);
 
       // Mock findProjectByLink to return null (no existing project)
       mockQdrantClient.scroll.mockResolvedValue({ points: [] });
-      mockQdrantClient.upsert.mockResolvedValue({});
+      mockVectorDB.upsert.mockResolvedValue({});
 
       handler = new QdrantHandler();
       await handler.addProject(
@@ -177,27 +202,21 @@ describe("QdrantHandler", () => {
         "ETHGlobal 2024",
       );
 
-      expect(mockQdrantClient.upsert).toHaveBeenCalledWith(
-        "eth_global_showcase",
+      expect(mockVectorDB.upsert).toHaveBeenCalledWith("eth_global_showcase", [
         {
-          wait: true,
-          points: [
-            {
-              id: "test-uuid-123",
-              vector: mockEmbedding,
-              payload: {
-                title: "Test Project",
-                projectDescription: "Test Description",
-                howItsMade: "How its made",
-                sourceCode: "https://github.com/test",
-                link: "https://test.com",
-                hackathon: "ETHGlobal 2024",
-                lastUpdated: expect.any(String),
-              },
-            },
-          ],
+          id: "test-uuid-123",
+          vector: mockEmbedding,
+          payload: {
+            title: "Test Project",
+            projectDescription: "Test Description",
+            howItsMade: "How its made",
+            sourceCode: "https://github.com/test",
+            link: "https://test.com",
+            hackathon: "ETHGlobal 2024",
+            lastUpdated: expect.any(String),
+          },
         },
-      );
+      ]);
 
       expect(logger.info).toHaveBeenCalledWith(
         "Project 'Test Project' from event 'ETHGlobal 2024' upserted to the 'eth_global_showcase'.",
@@ -209,7 +228,9 @@ describe("QdrantHandler", () => {
 
       // Mock scroll to return no existing project
       mockQdrantClient.scroll.mockResolvedValue({ points: [] });
-      vi.mocked(ollama.embed).mockRejectedValue(new Error("Embedding failed"));
+      mockEmbeddingProvider.createEmbedding.mockRejectedValue(
+        new Error("Embedding failed"),
+      );
 
       handler = new QdrantHandler();
       await handler.addProject(
@@ -236,44 +257,39 @@ describe("QdrantHandler", () => {
     describe("development environment (Ollama)", () => {
       beforeEach(() => {
         process.env.NEXT_PUBLIC_ENVIRONMENT = "development";
+        process.env.EMBEDDING_PROVIDER = "ollama";
+        vi.mocked(isProduction).mockReturnValue(false);
       });
 
       it("should create embedding using Ollama in development", async () => {
         const mockEmbedding = Array(768).fill(0.1);
-        vi.mocked(ollama.embed).mockResolvedValue({
-          embeddings: [mockEmbedding],
-        } as any);
+        mockEmbeddingProvider.createEmbedding.mockResolvedValue(mockEmbedding);
 
         handler = new QdrantHandler();
         const result = await handler.createEmbedding("Test text");
 
-        expect(ollama.embed).toHaveBeenCalledWith({
-          model: "nomic-embed-text",
-          input: "Test text",
-        });
+        expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith(
+          "Test text",
+        );
         expect(result).toEqual(mockEmbedding);
-        expect(logger.info).toHaveBeenCalledWith(
-          "Using Ollama for local embeddings",
-        );
-        expect(logger.info).toHaveBeenCalledWith(
-          "Ollama embedding created successfully",
-        );
       });
 
       it("should handle Ollama connection refused error", async () => {
-        const error = new Error("connection refused");
-        error.code = "ECONNREFUSED";
-        vi.mocked(ollama.embed).mockRejectedValue(error);
+        const error = new Error(
+          "Ollama is not running at http://localhost:11434. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull nomic-embed-text'",
+        );
+        mockEmbeddingProvider.createEmbedding.mockRejectedValue(error);
 
         handler = new QdrantHandler();
 
         await expect(handler.createEmbedding("Test text")).rejects.toThrow(
-          "Ollama is not running. Please start Ollama with: 'ollama serve' and pull the model with: 'ollama pull nomic-embed-text'",
+          "Ollama is not running at http://localhost:11434",
         );
       });
 
       it("should handle other Ollama errors", async () => {
-        vi.mocked(ollama.embed).mockRejectedValue(new Error("Model not found"));
+        const error = new Error("Ollama embedding failed: Model not found");
+        mockEmbeddingProvider.createEmbedding.mockRejectedValue(error);
 
         handler = new QdrantHandler();
 
@@ -287,6 +303,7 @@ describe("QdrantHandler", () => {
       beforeEach(() => {
         process.env.NEXT_PUBLIC_ENVIRONMENT = "production";
         process.env.NOMIC_API_KEY = "test-nomic-key";
+        process.env.EMBEDDING_PROVIDER = "nomic";
         vi.mocked(isProduction).mockReturnValue(true);
         vi.mocked(getValidatedEnv).mockReturnValue({
           QD_URL: process.env.QD_URL || "http://localhost:6333",
@@ -299,40 +316,22 @@ describe("QdrantHandler", () => {
 
       it("should create embedding using Nomic API in production", async () => {
         const mockEmbedding = Array(768).fill(0.2);
-        vi.mocked(axios.post).mockResolvedValue({
-          status: 200,
-          data: { embeddings: [mockEmbedding] },
-        });
+        mockEmbeddingProvider.createEmbedding.mockResolvedValue(mockEmbedding);
 
         handler = new QdrantHandler();
         const result = await handler.createEmbedding("Test text");
 
-        expect(axios.post).toHaveBeenCalledWith(
-          "https://api-atlas.nomic.ai/v1/embedding/text",
-          {
-            model: "nomic-embed-text-v1",
-            texts: ["Test text"],
-          },
-          {
-            headers: {
-              Authorization: "Bearer test-nomic-key",
-              "Content-Type": "application/json",
-            },
-            timeout: 10000,
-          },
+        expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith(
+          "Test text",
         );
         expect(result).toEqual(mockEmbedding);
       });
 
       it("should handle 403 authentication error", async () => {
-        const mockError = {
-          response: {
-            status: 403,
-            data: { error: "Invalid API key" },
-          },
-        };
-        vi.mocked(axios.post).mockRejectedValue(mockError);
-        vi.mocked(axios.isAxiosError).mockReturnValue(true);
+        const mockError = new Error(
+          "Nomic API authentication failed (403): Invalid API key. Please check your NOMIC_API_KEY.",
+        );
+        mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
         handler = new QdrantHandler();
 
@@ -342,14 +341,10 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle 401 unauthorized error", async () => {
-        const mockError = {
-          response: {
-            status: 401,
-            data: { message: "Unauthorized" },
-          },
-        };
-        vi.mocked(axios.post).mockRejectedValue(mockError);
-        vi.mocked(axios.isAxiosError).mockReturnValue(true);
+        const mockError = new Error(
+          "Nomic API unauthorized (401): Unauthorized. API key may be invalid.",
+        );
+        mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
         handler = new QdrantHandler();
 
@@ -359,14 +354,10 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle 429 rate limit error", async () => {
-        const mockError = {
-          response: {
-            status: 429,
-            data: { error: "Rate limit exceeded" },
-          },
-        };
-        vi.mocked(axios.post).mockRejectedValue(mockError);
-        vi.mocked(axios.isAxiosError).mockReturnValue(true);
+        const mockError = new Error(
+          "Nomic API rate limit exceeded (429): Rate limit exceeded",
+        );
+        mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
         handler = new QdrantHandler();
 
@@ -376,14 +367,10 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle generic API errors", async () => {
-        const mockError = {
-          response: {
-            status: 500,
-            data: { error: "Internal server error" },
-          },
-        };
-        vi.mocked(axios.post).mockRejectedValue(mockError);
-        vi.mocked(axios.isAxiosError).mockReturnValue(true);
+        const mockError = new Error(
+          "Nomic API error (500): Internal server error",
+        );
+        mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
         handler = new QdrantHandler();
 
@@ -393,11 +380,8 @@ describe("QdrantHandler", () => {
       });
 
       it("should handle non-200 response status", async () => {
-        vi.mocked(axios.post).mockResolvedValue({
-          status: 500,
-          data: { error: "Server error" },
-          statusText: undefined,
-        });
+        const mockError = new Error("Failed to create embedding");
+        mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
         handler = new QdrantHandler();
 
@@ -406,11 +390,11 @@ describe("QdrantHandler", () => {
         );
 
         expect(logger.error).toHaveBeenCalledWith(
-          "Failed to create embedding: ",
+          "Error during embedding creation: ",
           {
-            status: 500,
-            statusText: undefined,
-            data: { error: "Server error" },
+            message: "Failed to create embedding",
+            code: undefined,
+            status: undefined,
           },
         );
       });
@@ -444,19 +428,16 @@ describe("QdrantHandler", () => {
         },
       ];
 
-      mockQdrantClient.search.mockResolvedValue(mockSearchResults);
+      mockVectorDB.search.mockResolvedValue(mockSearchResults);
 
       handler = new QdrantHandler();
       const embedding = Array(768).fill(0.1);
       const results = await handler.searchSimilarProjects(embedding, 10);
 
-      expect(mockQdrantClient.search).toHaveBeenCalledWith(
-        "eth_global_showcase",
-        {
-          vector: embedding,
-          limit: 10,
-        },
-      );
+      expect(mockVectorDB.search).toHaveBeenCalledWith("eth_global_showcase", {
+        vector: embedding,
+        limit: 10,
+      });
 
       expect(results).toEqual([
         {
@@ -477,23 +458,20 @@ describe("QdrantHandler", () => {
     });
 
     it("should use default limit of 5 when not specified", async () => {
-      mockQdrantClient.search.mockResolvedValue([]);
+      mockVectorDB.search.mockResolvedValue([]);
 
       handler = new QdrantHandler();
       const embedding = Array(768).fill(0.1);
       await handler.searchSimilarProjects(embedding);
 
-      expect(mockQdrantClient.search).toHaveBeenCalledWith(
-        "eth_global_showcase",
-        {
-          vector: embedding,
-          limit: 5,
-        },
-      );
+      expect(mockVectorDB.search).toHaveBeenCalledWith("eth_global_showcase", {
+        vector: embedding,
+        limit: 5,
+      });
     });
 
     it("should handle search errors and return empty array", async () => {
-      mockQdrantClient.search.mockRejectedValue(new Error("Search failed"));
+      mockVectorDB.search.mockRejectedValue(new Error("Search failed"));
 
       handler = new QdrantHandler();
       const embedding = Array(768).fill(0.1);
@@ -583,6 +561,7 @@ describe("QdrantHandler", () => {
       mockQdrantClient.getCollection.mockResolvedValue({});
       process.env.NEXT_PUBLIC_ENVIRONMENT = "production";
       process.env.NOMIC_API_KEY = "test-nomic-key";
+      process.env.EMBEDDING_PROVIDER = "nomic";
       // Setup production mocks
       vi.mocked(isProduction).mockReturnValue(true);
       vi.mocked(getValidatedEnv).mockReturnValue({
@@ -595,15 +574,8 @@ describe("QdrantHandler", () => {
     });
 
     it("should handle Nomic API error with unknown error fallback", async () => {
-      // Test line 181: "Unknown error" fallback
-      const mockError = {
-        response: {
-          status: 500,
-          data: {}, // No error or message field
-        },
-      };
-      vi.mocked(axios.post).mockRejectedValue(mockError);
-      vi.mocked(axios.isAxiosError).mockReturnValue(true);
+      const mockError = new Error("Nomic API error (500): Unknown error");
+      mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
       handler = new QdrantHandler();
 
@@ -613,14 +585,10 @@ describe("QdrantHandler", () => {
     });
 
     it("should handle Nomic API error with message field", async () => {
-      const mockError = {
-        response: {
-          status: 429,
-          data: { message: "Rate limit exceeded" },
-        },
-      };
-      vi.mocked(axios.post).mockRejectedValue(mockError);
-      vi.mocked(axios.isAxiosError).mockReturnValue(true);
+      const mockError = new Error(
+        "Nomic API rate limit exceeded (429): Rate limit exceeded",
+      );
+      mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
       handler = new QdrantHandler();
 
@@ -630,14 +598,8 @@ describe("QdrantHandler", () => {
     });
 
     it("should handle Nomic API error with error field", async () => {
-      const mockError = {
-        response: {
-          status: 400,
-          data: { error: "Invalid input" },
-        },
-      };
-      vi.mocked(axios.post).mockRejectedValue(mockError);
-      vi.mocked(axios.isAxiosError).mockReturnValue(true);
+      const mockError = new Error("Nomic API error (400): Invalid input");
+      mockEmbeddingProvider.createEmbedding.mockRejectedValue(mockError);
 
       handler = new QdrantHandler();
 
@@ -671,12 +633,16 @@ describe("QdrantHandler", () => {
 
     it("should use injected embedding provider for creating embeddings", async () => {
       const mockEmbedding = Array(768).fill(0.5);
-      vi.mocked(mockEmbeddingProvider.createEmbedding).mockResolvedValue(mockEmbedding);
+      vi.mocked(mockEmbeddingProvider.createEmbedding).mockResolvedValue(
+        mockEmbedding,
+      );
 
       const handler = new QdrantHandler(mockEmbeddingProvider, mockVectorDB);
       const result = await handler.createEmbedding("Test text");
 
-      expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith("Test text");
+      expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith(
+        "Test text",
+      );
       expect(result).toEqual(mockEmbedding);
     });
 
@@ -692,7 +658,7 @@ describe("QdrantHandler", () => {
           },
         },
       ];
-      
+
       vi.mocked(mockVectorDB.search).mockResolvedValue(mockSearchResults);
 
       const handler = new QdrantHandler(mockEmbeddingProvider, mockVectorDB);
@@ -717,21 +683,25 @@ describe("QdrantHandler", () => {
 
     it("should use injected vector database for upserting projects", async () => {
       const mockEmbedding = Array(768).fill(0.3);
-      vi.mocked(mockEmbeddingProvider.createEmbedding).mockResolvedValue(mockEmbedding);
+      vi.mocked(mockEmbeddingProvider.createEmbedding).mockResolvedValue(
+        mockEmbedding,
+      );
       vi.mocked(mockVectorDB.upsert).mockResolvedValue();
 
       const handler = new QdrantHandler(mockEmbeddingProvider, mockVectorDB);
-      
+
       await handler.addProject(
         "New Project",
-        "New Description", 
+        "New Description",
         "How it's made",
         "https://github.com/new",
         "https://newproject.com",
-        "ETHGlobal 2024"
+        "ETHGlobal 2024",
       );
 
-      expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith("New Description");
+      expect(mockEmbeddingProvider.createEmbedding).toHaveBeenCalledWith(
+        "New Description",
+      );
       expect(mockVectorDB.upsert).toHaveBeenCalledWith("eth_global_showcase", [
         {
           id: expect.any(String),

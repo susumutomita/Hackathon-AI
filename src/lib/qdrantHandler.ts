@@ -22,7 +22,10 @@ export class QdrantHandler {
   private embeddingProvider: EmbeddingProvider;
   private vectorDB: VectorDBClient;
 
-  constructor(embeddingProvider?: EmbeddingProvider, vectorDB?: VectorDBClient) {
+  constructor(
+    embeddingProvider?: EmbeddingProvider,
+    vectorDB?: VectorDBClient,
+  ) {
     if (embeddingProvider && vectorDB) {
       // New constructor injection pattern
       this.embeddingProvider = embeddingProvider;

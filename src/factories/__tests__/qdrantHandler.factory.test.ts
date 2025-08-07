@@ -37,13 +37,16 @@ describe("QdrantHandlerFactory", () => {
 
       expect(EmbeddingFactory.create).toHaveBeenCalledWith(undefined);
       expect(QdrantAdapter).toHaveBeenCalledWith(undefined);
-      expect(QdrantHandler).toHaveBeenCalledWith(mockEmbeddingProvider, mockVectorDBClient);
+      expect(QdrantHandler).toHaveBeenCalledWith(
+        mockEmbeddingProvider,
+        mockVectorDBClient,
+      );
     });
 
     it("should create QdrantHandler with embedding config", () => {
       const embeddingConfig = {
         provider: "ollama",
-        config: { model: "custom-model" }
+        config: { model: "custom-model" },
       };
 
       vi.mocked(EmbeddingFactory.create).mockReturnValue(mockEmbeddingProvider);
@@ -52,13 +55,16 @@ describe("QdrantHandlerFactory", () => {
       QdrantHandlerFactory.create({ embedding: embeddingConfig });
 
       expect(EmbeddingFactory.create).toHaveBeenCalledWith(embeddingConfig);
-      expect(QdrantHandler).toHaveBeenCalledWith(mockEmbeddingProvider, mockVectorDBClient);
+      expect(QdrantHandler).toHaveBeenCalledWith(
+        mockEmbeddingProvider,
+        mockVectorDBClient,
+      );
     });
 
     it("should create QdrantHandler with vector DB config", () => {
       const vectorDBConfig = {
         url: "http://custom-qdrant:6333",
-        apiKey: "custom-key"
+        apiKey: "custom-key",
       };
 
       vi.mocked(EmbeddingFactory.create).mockReturnValue(mockEmbeddingProvider);
@@ -67,7 +73,10 @@ describe("QdrantHandlerFactory", () => {
       QdrantHandlerFactory.create({ vectorDB: vectorDBConfig });
 
       expect(QdrantAdapter).toHaveBeenCalledWith(vectorDBConfig);
-      expect(QdrantHandler).toHaveBeenCalledWith(mockEmbeddingProvider, mockVectorDBClient);
+      expect(QdrantHandler).toHaveBeenCalledWith(
+        mockEmbeddingProvider,
+        mockVectorDBClient,
+      );
     });
 
     it("should use custom embedding provider when provided", () => {
@@ -77,10 +86,15 @@ describe("QdrantHandlerFactory", () => {
 
       (QdrantAdapter as any).mockImplementation(() => mockVectorDBClient);
 
-      QdrantHandlerFactory.create({ embeddingProvider: customEmbeddingProvider });
+      QdrantHandlerFactory.create({
+        embeddingProvider: customEmbeddingProvider,
+      });
 
       expect(EmbeddingFactory.create).not.toHaveBeenCalled();
-      expect(QdrantHandler).toHaveBeenCalledWith(customEmbeddingProvider, mockVectorDBClient);
+      expect(QdrantHandler).toHaveBeenCalledWith(
+        customEmbeddingProvider,
+        mockVectorDBClient,
+      );
     });
 
     it("should use custom vector DB client when provided", () => {
@@ -95,7 +109,10 @@ describe("QdrantHandlerFactory", () => {
       QdrantHandlerFactory.create({ vectorDBClient: customVectorDBClient });
 
       expect(QdrantAdapter).not.toHaveBeenCalled();
-      expect(QdrantHandler).toHaveBeenCalledWith(mockEmbeddingProvider, customVectorDBClient);
+      expect(QdrantHandler).toHaveBeenCalledWith(
+        mockEmbeddingProvider,
+        customVectorDBClient,
+      );
     });
 
     it("should use both custom instances when provided", () => {
@@ -116,7 +133,10 @@ describe("QdrantHandlerFactory", () => {
 
       expect(EmbeddingFactory.create).not.toHaveBeenCalled();
       expect(QdrantAdapter).not.toHaveBeenCalled();
-      expect(QdrantHandler).toHaveBeenCalledWith(customEmbeddingProvider, customVectorDBClient);
+      expect(QdrantHandler).toHaveBeenCalledWith(
+        customEmbeddingProvider,
+        customVectorDBClient,
+      );
     });
   });
 
@@ -129,7 +149,10 @@ describe("QdrantHandlerFactory", () => {
 
       expect(EmbeddingFactory.create).toHaveBeenCalledWith(undefined);
       expect(QdrantAdapter).toHaveBeenCalledWith(undefined);
-      expect(QdrantHandler).toHaveBeenCalledWith(mockEmbeddingProvider, mockVectorDBClient);
+      expect(QdrantHandler).toHaveBeenCalledWith(
+        mockEmbeddingProvider,
+        mockVectorDBClient,
+      );
     });
   });
 });
