@@ -34,8 +34,12 @@ export class OllamaAdapter implements EmbeddingProvider {
   private readonly timeout?: number;
 
   constructor(config?: OllamaConfig) {
+    // Use OLLAMA_EMBED_MODEL specifically for embeddings, fallback to OLLAMA_MODEL, then default
     this.model =
-      config?.model || process.env.OLLAMA_MODEL || "nomic-embed-text";
+      config?.model ||
+      process.env.OLLAMA_EMBED_MODEL ||
+      process.env.OLLAMA_MODEL ||
+      "nomic-embed-text";
     this.baseUrl = config?.baseUrl || process.env.OLLAMA_URL;
     this.timeout = config?.timeout;
   }
