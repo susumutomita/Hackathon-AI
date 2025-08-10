@@ -1,6 +1,7 @@
 import ollama from "ollama";
 import logger from "@/lib/logger";
 import Groq from "groq-sdk";
+import { isProduction as isProdEnv } from "@/lib/env";
 
 export async function parseHtmlWithLLM(
   idea: string,
@@ -8,7 +9,8 @@ export async function parseHtmlWithLLM(
 ): Promise<string> {
   logger.info("Parsing idea with LLM...");
 
-  const isProduction = process.env.NEXT_PUBLIC_ENVIRONMENT === "production";
+  // Use shared environment detection to align server behavior with deployment
+  const isProduction = isProdEnv();
   // Allow custom model specification via environment variable
   const localModel = process.env.OLLAMA_MODEL || "llama3.1";
   const groqModel = process.env.GROQ_MODEL || "llama3-8b-8192";
