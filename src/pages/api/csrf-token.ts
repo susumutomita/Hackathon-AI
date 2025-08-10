@@ -7,14 +7,34 @@ import {
   createRateLimitError,
 } from "@/lib/rateLimit";
 
+// Ensure Node.js runtime on Vercel/Next
+export const config = {
+  runtime: "nodejs",
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  try {
-    // Only allow GET requests
-    validateMethod(req.method, ["GET"]);
+  // Set CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  // Handle OPTIONS request for CORS preflight
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // Check if method is GET
+  if (req.method !== "GET") {
+    return res.status(405).json({
+      error: "Method Not Allowed",
+      message: "Only GET method is allowed",
+    });
+  }
+
+  try {
     // Apply rate limiting
     const rateLimitResult = applyApiRateLimit(req);
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);

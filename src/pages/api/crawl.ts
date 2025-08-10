@@ -8,16 +8,36 @@ import {
 } from "@/lib/errorHandler";
 import logger from "@/lib/logger";
 
+// Ensure Node.js runtime on Vercel/Next
+export const config = {
+  runtime: "nodejs",
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
   const startTime = Date.now();
 
-  try {
-    // Validate HTTP method
-    validateMethod(req.method, ["GET"]);
+  // Set CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  // Handle OPTIONS request for CORS preflight
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // Check if method is GET
+  if (req.method !== "GET") {
+    return res.status(405).json({
+      error: "Method Not Allowed",
+      message: "Only GET method is allowed",
+    });
+  }
+
+  try {
     // Check environment restriction
     if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
       throw createError(

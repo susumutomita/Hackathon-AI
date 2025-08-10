@@ -79,6 +79,8 @@ function createMockRequestResponse(method = "GET") {
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
+    setHeader: vi.fn(),
+    end: vi.fn(),
     _getStatusCode: function () {
       return this._statusCode || 200;
     },

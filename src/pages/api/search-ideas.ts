@@ -22,16 +22,36 @@ import {
   createRateLimitError,
 } from "@/lib/rateLimit";
 
+// Ensure Node.js runtime on Vercel/Next
+export const config = {
+  runtime: "nodejs",
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
   const startTime = Date.now();
 
-  try {
-    // Validate HTTP method
-    validateMethod(req.method, ["POST"]);
+  // Set CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  // Handle OPTIONS request for CORS preflight
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  // Check if method is POST
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      error: "Method Not Allowed",
+      message: "Only POST method is allowed",
+    });
+  }
+
+  try {
     // Apply rate limiting
     const rateLimitResult = applySearchRateLimit(req);
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);

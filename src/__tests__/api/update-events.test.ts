@@ -97,6 +97,8 @@ function createMocks(
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn(),
+    setHeader: vi.fn(),
+    end: vi.fn(),
   } as unknown as NextApiResponse;
 
   return { req, res };
@@ -186,20 +188,40 @@ describe("/api/update-events", () => {
 
   describe("HTTP Methods", () => {
     test("should reject non-POST requests", async () => {
-      const methods = ["GET", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
+      const methods = ["GET", "PUT", "DELETE", "PATCH", "HEAD"];
 
       for (const method of methods) {
         const { req, res } = createMocks(method);
         await handler(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.status).toHaveBeenCalledWith(405);
         expect(res.json).toHaveBeenCalledWith({
-          error: "入力内容に問題があります。内容を確認してください。",
-          type: "VALIDATION_ERROR",
-          timestamp: expect.any(String),
+          error: "Method Not Allowed",
+          message: "Only POST method is allowed",
         });
         expect(mockCheckAndUpdateEvents).not.toHaveBeenCalled();
       }
+    });
+
+    test("should handle OPTIONS request for CORS preflight", async () => {
+      const { req, res } = createMocks("OPTIONS");
+      await handler(req, res);
+
+      expect(res.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Origin",
+        "*",
+      );
+      expect(res.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Methods",
+        "POST, OPTIONS",
+      );
+      expect(res.setHeader).toHaveBeenCalledWith(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization",
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.end).toHaveBeenCalled();
+      expect(mockCheckAndUpdateEvents).not.toHaveBeenCalled();
     });
   });
 

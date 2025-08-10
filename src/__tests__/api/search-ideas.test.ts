@@ -220,11 +220,10 @@ describe("/api/search-ideas", () => {
 
     await handler(req, res);
 
-    expect((res as any)._getStatusCode()).toBe(400);
+    expect((res as any)._getStatusCode()).toBe(405);
     expect(JSON.parse((res as any)._getData())).toEqual({
-      error: expect.stringContaining("Method"),
-      type: "INTERNAL_SERVER_ERROR",
-      timestamp: expect.any(String),
+      error: "Method Not Allowed",
+      message: "Only POST method is allowed",
     });
   });
 
