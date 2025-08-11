@@ -181,8 +181,8 @@ importers:
   mcp-server:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^0.5.0
-        version: 0.5.0
+        specifier: ^1.17.2
+        version: 1.17.2
       '@qdrant/js-client-rest':
         specifier: ^1.11.0
         version: 1.15.0(typescript@5.8.3)
@@ -925,11 +925,8 @@ packages:
   '@kvs/types@2.1.4':
     resolution: {integrity: sha512-XtTOUatnJrDcuYNPfN+9x1xuVp11IuyPi9zOLVJPpfnKp+vUCatka/Crp2cfz0uKt4QE1Pb4Dg/TNYgVYA2Org==}
 
-  '@modelcontextprotocol/sdk@0.5.0':
-    resolution: {integrity: sha512-RXgulUX6ewvxjAG0kOpLMEdXXWkzWgaoCGaA2CwNW7cQCIphjpJhjpHSiaPdVCnisjRF/0Cm9KWHUuIoeiAblQ==}
-
-  '@modelcontextprotocol/sdk@1.17.0':
-    resolution: {integrity: sha512-qFfbWFA7r1Sd8D697L7GkTd36yqDuTkvz0KfOGkgXR8EUhQn3/EDNIR/qUdQNMT8IjmasBvHWuXeisxtXTQT2g==}
+  '@modelcontextprotocol/sdk@1.17.2':
+    resolution: {integrity: sha512-EFLRNXR/ixpXQWu6/3Cu30ndDFIFNaqUXcTqsGebujeMan9FzhAaFFswLRiFj61rgygDRr8WO1N+UijjgRxX9g==}
     engines: {node: '>=18'}
 
   '@napi-rs/wasm-runtime@0.2.12':
@@ -6745,13 +6742,7 @@ snapshots:
 
   '@kvs/types@2.1.4': {}
 
-  '@modelcontextprotocol/sdk@0.5.0':
-    dependencies:
-      content-type: 1.0.5
-      raw-body: 3.0.0
-      zod: 3.25.76
-
-  '@modelcontextprotocol/sdk@1.17.0':
+  '@modelcontextprotocol/sdk@1.17.2':
     dependencies:
       ajv: 6.12.6
       content-type: 1.0.5
@@ -12211,7 +12202,7 @@ snapshots:
 
   textlint@14.8.4:
     dependencies:
-      '@modelcontextprotocol/sdk': 1.17.0
+      '@modelcontextprotocol/sdk': 1.17.2
       '@textlint/ast-node-types': 14.8.4
       '@textlint/ast-traverse': 14.8.4
       '@textlint/config-loader': 14.8.4
