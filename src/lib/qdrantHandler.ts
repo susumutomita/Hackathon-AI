@@ -257,6 +257,74 @@ export class QdrantHandler {
     }
   }
 
+  public async getAllProjects(
+    limit: number = 1000,
+    hackathonFilter?: string,
+  ): Promise<Project[]> {
+    try {
+      const filter = hackathonFilter
+        ? {
+            must: [
+              {
+                key: "hackathon",
+                match: {
+                  value: hackathonFilter,
+                },
+              },
+            ],
+          }
+        : undefined;
+
+      const response = await this.client.scroll("eth_global_showcase", {
+        limit,
+        with_payload: true,
+        filter,
+      });
+
+      if (!response.points) {
+        return [];
+      }
+
+      return response.points
+        .filter((point: any) => point.payload != null)
+        .map((point: any) => ({
+          title: String(point.payload?.title || ""),
+          description: String(point.payload?.projectDescription || ""),
+          link: point.payload?.link as string | undefined,
+          howItsMade: point.payload?.howItsMade as string | undefined,
+          sourceCode: point.payload?.sourceCode as string | undefined,
+          hackathon: point.payload?.hackathon as string | undefined,
+        }));
+    } catch (error) {
+      logger.error("Failed to get all projects:", error);
+      return [];
+    }
+  }
+
+  public async getProjectsByHackathons(
+    hackathons: string[],
+    limit: number = 100,
+  ): Promise<Project[]> {
+    try {
+      const allProjects: Project[] = [];
+
+      for (const hackathon of hackathons) {
+        const projects = await this.getAllProjects(limit, hackathon);
+        allProjects.push(...projects);
+      }
+
+      // 重複を除去（タイトルベース）
+      const uniqueProjects = Array.from(
+        new Map(allProjects.map((p) => [p.title, p])).values(),
+      );
+
+      return uniqueProjects;
+    } catch (error) {
+      logger.error("Failed to get projects by hackathons:", error);
+      return [];
+    }
+  }
+
   // Performance monitoring methods
   public getCacheStats() {
     return {
