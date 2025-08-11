@@ -16,7 +16,7 @@ vi.mock("@/factories/qdrantHandler.factory", () => ({
   QdrantHandlerFactory: {
     createDefault: vi.fn(() => ({
       createEmbedding: vi.fn(async () => new Array(768).fill(0.1)),
-      searchSimilarProjects: vi.fn(async (embedding, limit = 5) => 
+      searchSimilarProjects: vi.fn(async (embedding, limit = 5) =>
         [
           {
             title: "Mock Project 1",
@@ -32,7 +32,7 @@ vi.mock("@/factories/qdrantHandler.factory", () => ({
             howItsMade: "Also made with mock technology",
             sourceCode: "https://github.com/example/project2",
           },
-        ].slice(0, limit)
+        ].slice(0, limit),
       ),
     })),
   },
