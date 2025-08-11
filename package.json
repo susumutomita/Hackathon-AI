@@ -21,7 +21,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "mcp:build": "cd mcp-server && pnpm run build",
-    "mcp:install": "cd mcp-server && pnpm install"
+    "mcp:install": "cd mcp-server && pnpm install",
+    "remove-duplicates": "tsx src/scripts/removeDuplicates.ts"
   },
   "keywords": [],
   "author": "Susumu Tomita <oyter880@gmail.com> (https://susumutomita.netlify.app/)",
@@ -65,7 +66,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.6",
     "husky": "^9.1.4",
@@ -83,6 +84,7 @@
     "textlint-rule-preset-ja-spacing": "^2.2.0",
     "textlint-rule-preset-ja-technical-writing": "^10.0.1",
     "textlint-rule-spellcheck-tech-word": "^5.0.0",
+    "tsx": "^4.7.0",
     "vitest": "^3.2.4"
   },
   "engines": {

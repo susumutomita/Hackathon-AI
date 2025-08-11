@@ -75,21 +75,27 @@ export class QdrantHandler {
     hackathon: string,
   ) {
     try {
-      // 既存のプロジェクトをリンクで検索
-      const existingProject = await this.findProjectByLink(link);
+      // 既存のプロジェクトをリンクとタイトル+ハッカソンの組み合わせで検索
+      const existingProject = await this.findExistingProject(
+        link,
+        title,
+        hackathon,
+      );
 
       let projectId: string;
       if (existingProject) {
         // 既存のプロジェクトが見つかった場合、そのIDを使用
         projectId = String(existingProject.id);
         logger.info(
-          `Found existing project '${title}' with ID: ${projectId}. Updating...`,
+          `Found existing project '${title}' (${hackathon}) with ID: ${projectId}. Updating...`,
         );
       } else {
         // 新規プロジェクトの場合
         // 後方互換性のため、UUIDを使用（既存システムとの互換性維持）
         projectId = uuidv4();
-        logger.info(`Creating new project '${title}' with ID: ${projectId}`);
+        logger.info(
+          `Creating new project '${title}' (${hackathon}) with ID: ${projectId}`,
+        );
       }
 
       const embedding = await this.createEmbedding(projectDescription);
@@ -125,32 +131,87 @@ export class QdrantHandler {
     }
   }
 
-  private async findProjectByLink(link: string): Promise<QdrantPoint | null> {
+  private normalizeLink(link: string): string {
+    // URLを正規化（末尾のスラッシュ削除、小文字化、プロトコル除去）
+    return link
+      .toLowerCase()
+      .replace(/^https?:\/\//, "") // プロトコル除去
+      .replace(/\/$/, "") // 末尾のスラッシュ削除
+      .replace(/^www\./, ""); // www除去
+  }
+
+  private async findExistingProject(
+    link: string | undefined,
+    title: string,
+    hackathon: string,
+  ): Promise<QdrantPoint | null> {
     try {
-      // ペイロードフィルターを使用してリンクで検索
-      const searchResult = await this.client.scroll("eth_global_showcase", {
-        filter: {
-          must: [
-            {
-              key: "link",
-              match: {
-                value: link,
-              },
+      // 1. リンクベースの検索（リンクがある場合）
+      if (link) {
+        const normalizedLink = this.normalizeLink(link);
+
+        // すべてのプロジェクトを取得してリンクを正規化して比較
+        const scrollResult = await this.client.scroll("eth_global_showcase", {
+          limit: 10000,
+          with_payload: true,
+        });
+
+        if (scrollResult.points) {
+          for (const point of scrollResult.points) {
+            const payload = point.payload as any;
+            if (payload?.link) {
+              const existingNormalizedLink = this.normalizeLink(payload.link);
+              if (existingNormalizedLink === normalizedLink) {
+                logger.info(
+                  `Found existing project by normalized link: ${link}`,
+                );
+                return point as unknown as QdrantPoint;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. タイトル+ハッカソンベースの検索
+      const titleHackathonFilter = {
+        must: [
+          {
+            key: "title",
+            match: {
+              value: title,
             },
-          ],
-        },
+          },
+          {
+            key: "hackathon",
+            match: {
+              value: hackathon,
+            },
+          },
+        ],
+      };
+
+      const searchResult = await this.client.scroll("eth_global_showcase", {
+        filter: titleHackathonFilter,
         limit: 1,
       });
 
       if (searchResult.points && searchResult.points.length > 0) {
+        logger.info(
+          `Found existing project by title+hackathon: ${title} (${hackathon})`,
+        );
         return searchResult.points[0] as unknown as QdrantPoint;
       }
 
       return null;
     } catch (error) {
-      logger.error("Failed to find project by link:", error);
+      logger.error("Failed to find existing project:", error);
       return null;
     }
+  }
+
+  private async findProjectByLink(link: string): Promise<QdrantPoint | null> {
+    // 後方互換性のために残す（既存のコードが使用している可能性があるため）
+    return this.findExistingProject(link, "", "");
   }
 
   public async createEmbedding(text: string): Promise<number[]> {
