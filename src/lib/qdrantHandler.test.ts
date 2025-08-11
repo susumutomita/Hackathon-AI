@@ -498,20 +498,13 @@ describe("QdrantHandler", () => {
       );
 
       expect(result).toBeNull();
+      // The new implementation calls findExistingProject which first tries to find by link
+      // by getting all projects and normalizing links
       expect(mockQdrantClient.scroll).toHaveBeenCalledWith(
         "eth_global_showcase",
         {
-          filter: {
-            must: [
-              {
-                key: "link",
-                match: {
-                  value: "https://nonexistent.com",
-                },
-              },
-            ],
-          },
-          limit: 1,
+          limit: 10000,
+          with_payload: true,
         },
       );
     });
@@ -528,8 +521,9 @@ describe("QdrantHandler", () => {
       );
 
       expect(result).toBeNull();
+      // The new implementation logs a different error message
       expect(logger.error).toHaveBeenCalledWith(
-        "Failed to find project by link:",
+        "Failed to find existing project:",
         expect.any(Error),
       );
     });
