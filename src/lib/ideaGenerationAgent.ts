@@ -33,19 +33,19 @@ export class IdeaGenerationAgent {
       const prizeAnalysis = await prizeAnalyzer.analyzePrize(prizeInfo);
       const searchQuery = prizeAnalyzer.generateSearchQuery(prizeAnalysis);
 
-      // Step 2: 関連プロジェクトの検索
-      const embedding = await this.qdrantHandler.createEmbedding(searchQuery);
-      const relatedProjects = await this.qdrantHandler.searchSimilarProjects(
-        embedding,
-        20, // より多くのプロジェクトを分析
-      );
+      // Step 2 & 3: 並列処理で関連プロジェクトとトレンドプロジェクトを同時取得
+      const [embedding, latestHackathons] = await Promise.all([
+        this.qdrantHandler.createEmbedding(searchQuery),
+        Promise.resolve(["unite", "cannes", "prague", "bangkok"]),
+      ]);
 
-      // Step 3: 最新トレンドのプロジェクトを取得
-      const latestHackathons = ["unite", "cannes", "prague", "bangkok"];
-      const trendingProjects = await this.qdrantHandler.getProjectsByHackathons(
-        latestHackathons,
-        10,
-      );
+      const [relatedProjects, trendingProjects] = await Promise.all([
+        this.qdrantHandler.searchSimilarProjects(
+          embedding,
+          20, // より多くのプロジェクトを分析
+        ),
+        this.qdrantHandler.getProjectsByHackathons(latestHackathons, 10),
+      ]);
 
       // Step 4: アイデア生成プロンプトの構築
       const ideaPrompt = this.buildIdeaGenerationPrompt(
