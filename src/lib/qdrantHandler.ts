@@ -24,7 +24,8 @@ interface CacheEntry<T> {
 export class QdrantHandler {
   private client: QdrantClient;
   private embeddingCache: Map<string, CacheEntry<number[]>> = new Map();
-  private searchCache: Map<string, CacheEntry<QdrantSearchResult[]>> = new Map();
+  private searchCache: Map<string, CacheEntry<QdrantSearchResult[]>> =
+    new Map();
   private projectsCache: Map<string, CacheEntry<Project[]>> = new Map();
   private prizeAnalysisCache: Map<string, CacheEntry<any>> = new Map();
   private embeddingProvider: EmbeddingProvider;
@@ -240,7 +241,10 @@ export class QdrantHandler {
     });
   }
 
-  private getCache<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null {
+  private getCache<T>(
+    cache: Map<string, CacheEntry<T>>,
+    key: string,
+  ): T | null {
     const entry = cache.get(key);
     if (entry && this.isValidCache(entry)) {
       return entry.data;
@@ -263,11 +267,11 @@ export class QdrantHandler {
 
       // Use injected embedding provider
       const result = await this.embeddingProvider.createEmbedding(text);
-      
+
       // 結果をキャッシュ
       this.setCache(this.embeddingCache, cacheKey, result);
       logger.debug("Embedding cached", { cacheKey });
-      
+
       return result;
     } catch (error) {
       // For backward compatibility, preserve the existing error handling structure
@@ -290,7 +294,7 @@ export class QdrantHandler {
       // キャッシュキーを生成（embeddingのハッシュとlimitを使用）
       const embeddingHash = embedding.slice(0, 10).join(","); // 最初の10要素でハッシュ生成
       const cacheKey = `search:${embeddingHash}:${limit}`;
-      
+
       // キャッシュをチェック
       const cached = this.getCache(this.projectsCache, cacheKey);
       if (cached) {
@@ -316,7 +320,10 @@ export class QdrantHandler {
 
       // 結果をキャッシュ
       this.setCache(this.projectsCache, cacheKey, result);
-      logger.debug("Similar projects cached", { cacheKey, count: result.length });
+      logger.debug("Similar projects cached", {
+        cacheKey,
+        count: result.length,
+      });
 
       return result;
     } catch (error) {
@@ -376,7 +383,7 @@ export class QdrantHandler {
     try {
       // キャッシュキーを生成
       const cacheKey = `hackathons:${hackathons.sort().join(",")}:${limitPerHackathon}`;
-      
+
       // キャッシュをチェック
       const cached = this.getCache(this.projectsCache, cacheKey);
       if (cached) {
@@ -385,15 +392,15 @@ export class QdrantHandler {
       }
 
       // 並列処理でプロジェクトを取得（メモリ使用量を制限）
-      const projectPromises = hackathons.map(hackathon => 
-        this.getAllProjects(limitPerHackathon, hackathon)
+      const projectPromises = hackathons.map((hackathon) =>
+        this.getAllProjects(limitPerHackathon, hackathon),
       );
-      
+
       const projectArrays = await Promise.all(projectPromises);
-      
+
       // フラット化とストリーミング処理で重複除去
       const projectMap = new Map<string, Project>();
-      
+
       for (const projects of projectArrays) {
         for (const project of projects) {
           if (!projectMap.has(project.title)) {
@@ -403,13 +410,18 @@ export class QdrantHandler {
       }
 
       const uniqueProjects = Array.from(projectMap.values());
-      
+
       // 結果をキャッシュ（短い TTL で重複計算を避ける）
-      this.setCache(this.projectsCache, cacheKey, uniqueProjects, 5 * 60 * 1000); // 5分
-      logger.debug("Hackathon projects cached", { 
-        cacheKey, 
+      this.setCache(
+        this.projectsCache,
+        cacheKey,
+        uniqueProjects,
+        5 * 60 * 1000,
+      ); // 5分
+      logger.debug("Hackathon projects cached", {
+        cacheKey,
         hackathons: hackathons.length,
-        totalProjects: uniqueProjects.length
+        totalProjects: uniqueProjects.length,
       });
 
       return uniqueProjects;
@@ -426,8 +438,11 @@ export class QdrantHandler {
       searchCacheSize: this.searchCache.size,
       projectsCacheSize: this.projectsCache.size,
       prizeAnalysisCacheSize: this.prizeAnalysisCache.size,
-      totalCacheSize: this.embeddingCache.size + this.searchCache.size + 
-                     this.projectsCache.size + this.prizeAnalysisCache.size,
+      totalCacheSize:
+        this.embeddingCache.size +
+        this.searchCache.size +
+        this.projectsCache.size +
+        this.prizeAnalysisCache.size,
     };
   }
 
@@ -441,35 +456,35 @@ export class QdrantHandler {
 
   public clearExpiredCache() {
     const now = Date.now();
-    
+
     // Embedding cache cleanup
     for (const [key, entry] of this.embeddingCache.entries()) {
       if (!this.isValidCache(entry)) {
         this.embeddingCache.delete(key);
       }
     }
-    
+
     // Search cache cleanup
     for (const [key, entry] of this.searchCache.entries()) {
       if (!this.isValidCache(entry)) {
         this.searchCache.delete(key);
       }
     }
-    
+
     // Projects cache cleanup
     for (const [key, entry] of this.projectsCache.entries()) {
       if (!this.isValidCache(entry)) {
         this.projectsCache.delete(key);
       }
     }
-    
+
     // Prize analysis cache cleanup
     for (const [key, entry] of this.prizeAnalysisCache.entries()) {
       if (!this.isValidCache(entry)) {
         this.prizeAnalysisCache.delete(key);
       }
     }
-    
+
     logger.info("Expired cache entries cleared");
   }
 }
