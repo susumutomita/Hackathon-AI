@@ -26,9 +26,22 @@ export default async function handler(
   const startTime = Date.now();
 
   // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // 安全なCORS設定 - 本番環境では特定のオリジンのみ許可
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"];
+const origin = req.headers.origin;
+if (origin && allowedOrigins.includes(origin)) {
+  res.setHeader("Access-Control-Allow-Origin", origin);
+} else {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+}
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  
+  // セキュリティヘッダー
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") {
