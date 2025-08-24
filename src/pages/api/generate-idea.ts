@@ -27,16 +27,18 @@ export default async function handler(
 
   // CORS
   // 安全なCORS設定 - 本番環境では特定のオリジンのみ許可
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"];
-const origin = req.headers.origin;
-if (origin && allowedOrigins.includes(origin)) {
-  res.setHeader("Access-Control-Allow-Origin", origin);
-} else {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-}
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+    "http://localhost:3000",
+  ];
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  }
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  
+
   // セキュリティヘッダー
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
