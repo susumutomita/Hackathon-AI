@@ -1,4 +1,4 @@
-.PHONY: help install setup_husky clean lint lint_text format format_check before_commit start test test_coverage dev build crawl
+.PHONY: help install setup_husky clean lint lint_text format format_check before_commit before-commit start test test_coverage dev build crawl
 
 # デフォルトターゲットはhelp
 default: help
@@ -19,6 +19,9 @@ setup_husky:
 	pnpm run husky
 
 before_commit: lint_text lint typecheck format_check build test
+
+# ハイフン付きのエイリアス（打ち間違え対策）
+before-commit: before_commit
 
 start:
 	pnpm start

@@ -2,6 +2,7 @@ import { QdrantHandlerFactory } from "@/factories/qdrantHandler.factory";
 import { parseHtmlWithLLM } from "@/lib/llmParser";
 import logger from "@/lib/logger";
 import type { Project } from "@/types";
+import { buildSecurePrompt } from "./promptSecurityGuard";
 
 export type GeneratedIdeaResult = {
   content: string;
@@ -22,7 +23,7 @@ function buildTrendsSummary(): string {
   return trends.map((t) => `- ${t}`).join("\n");
 }
 
-function buildPrompt(prize: string, projects: Project[]): string {
+function buildPromptTemplate(projects: Project[]): string {
   const trends = buildTrendsSummary();
   const projectLines = projects
     .map((p, i) => `- [${i + 1}] ${p.title}: ${p.description}`)
@@ -31,7 +32,7 @@ function buildPrompt(prize: string, projects: Project[]): string {
   return `あなたはETHGlobal常勝の創造的ハッカー。以下のプライズ説明を読み、最新トレンドと過去ファイナリスト事例から勝てるアイデアを日本語で具体化してください。
 
 【プライズ説明】
-${prize}
+[[USER_INPUT]]
 
 【最近のトレンド（参考）】
 ${trends}
@@ -39,7 +40,7 @@ ${trends}
 【参考となる類似ファイナリスト（簡易要約）】
 ${projectLines}
 
-出力は次の構成で、審査で刺さる“完成度の高い”案にしてください：
+出力は次の構成で、審査で刺さる"完成度の高い"案にしてください：
 1. タイトル: 一行で魅力を伝える
 2. One-liner: 120文字以内の要約
 3. 何が新しいか: 独自性と驚きの要素
@@ -66,9 +67,10 @@ export async function generateIdeaFromPrize(
   const embedding = await qdrant.createEmbedding(prize);
   const similarProjects = await qdrant.searchSimilarProjects(embedding, 12);
 
-  // 2) Build synthesis prompt and call LLM
-  const prompt = buildPrompt(prize, similarProjects);
-  const content = await parseHtmlWithLLM(prize, prompt);
+  // 2) Build secure synthesis prompt and call LLM
+  const promptTemplate = buildPromptTemplate(similarProjects);
+  const securePrompt = buildSecurePrompt(promptTemplate, prize);
+  const content = await parseHtmlWithLLM(prize, securePrompt);
 
   return { content, similarProjects };
 }
