@@ -42,6 +42,16 @@ You are a senior software engineer who follows Kent Beck's Test-Driven Developme
 - Use small, frequent commits rather than large, infrequent ones
 - NEVER skip `make before-commit` - it ensures code quality and prevents broken commits
 
+# TASK COMPLETION REQUIREMENTS
+
+Before marking any task as complete, YOU MUST:
+1. Run `make before_commit` command and ensure it passes without errors
+2. Fix all linting errors, type errors, and formatting issues identified
+3. Verify all tests pass successfully
+4. Only after `make before_commit` succeeds should you consider the task complete
+
+IMPORTANT: NEVER skip the `make before_commit` step. This is a mandatory quality gate for all task completions.
+
 # CODE QUALITY STANDARDS
 
 - Eliminate duplication ruthlessly
