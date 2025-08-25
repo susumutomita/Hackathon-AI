@@ -666,7 +666,7 @@ logger.performanceLog('Operation', Date.now() - startTime);
 ```
 
 ### Q6: メモリリークが発生する
-**A:** リソースの適切なクリーンアップを実装してください。
+**A:** メモリリークを防ぐため、使用済みリソースのクリーンアップを実装してください。
 ```typescript
 // cleanup関数の実装
 const cleanup = () => {
@@ -682,8 +682,8 @@ process.on('SIGINT', cleanup);
 ## サポートとヘルプ
 
 ### 技術サポート
-- **GitHub Issues**: [プロジェクトのIssues](https://github.com/susumutomita/Hackathon-AI/issues)
-- **ドキュメント**: [docs/](./docs/)フォルダ内の関連ドキュメント
+- GitHub Issues: [プロジェクトのIssues](https://github.com/susumutomita/Hackathon-AI/issues)
+- ドキュメント: [docs/](./docs/)フォルダ内の関連ドキュメント
 
 ### 緊急時の対応
 1. **サービス停止**: `docker-compose down && docker-compose up -d`
@@ -695,4 +695,4 @@ process.on('SIGINT', cleanup);
 - ユーザーフィードバックの収集と対応
 - セキュリティパッチの適用とアップデート
 
-このトラブルシューティングガイドを参考に、問題の迅速な特定と解決を行ってください。新しい問題が発見された場合は、このドキュメントの更新もお願いします。
+このトラブルシューティングガイドを参考に、問題の迅速な特定と解決をしてください。新しい問題が発見された場合は、このドキュメントの更新もお願いします。

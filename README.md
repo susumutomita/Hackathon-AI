@@ -111,17 +111,17 @@ curl http://localhost:3000/api/crawl
 
 ## ドキュメント
 
-詳細なドキュメントについては、以下をご参照ください：
+詳細なドキュメントについては、以下をご参照ください。
 
-- **[API ドキュメント](docs/API.md)** - APIエンドポイントの詳細仕様
+- **[API ドキュメント](docs/API.md)** - API エンドポイントの詳細仕様
 - **[アーキテクチャドキュメント](docs/ARCHITECTURE.md)** - システム設計とアーキテクチャ
 - **[開発者ガイド](docs/DEVELOPER_GUIDE.md)** - 開発環境構築とコーディング規約
 - **[トラブルシューティング](docs/TROUBLESHOOTING.md)** - よくある問題と解決方法
-- **[コンポーネントカタログ](docs/COMPONENTS.md)** - UIコンポーネントの使用方法
+- **[コンポーネントカタログ](docs/COMPONENTS.md)** - UI コンポーネントの使用方法
 
-追加のドキュメント：
+追加のドキュメントは以下のとおりです。
 - **[UX仕様](docs/UX_SPEC.md)** - ユーザーエクスペリエンス設計
-- **[MCP設定](docs/mcp-setup.md)** - MCPサーバーのセットアップ方法
+- **[MCP設定](docs/mcp-setup.md)** - MCP サーバーのセットアップ方法
 - **[自動クローリング設定](docs/auto-crawl-setup.md)** - データクローリングの設定
 
 ## License
