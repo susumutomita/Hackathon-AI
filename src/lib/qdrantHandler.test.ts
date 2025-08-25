@@ -21,6 +21,8 @@ vi.mock("@/lib/logger", () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -34,8 +36,14 @@ vi.mock("uuid", () => ({
 }));
 
 // Mock the adapters and factories
-vi.mock("@/factories/embedding.factory");
-vi.mock("@/adapters/qdrant.adapter");
+vi.mock("@/factories/embedding.factory", () => ({
+  EmbeddingFactory: {
+    create: vi.fn(),
+  },
+}));
+vi.mock("@/adapters/qdrant.adapter", () => ({
+  QdrantAdapter: vi.fn(),
+}));
 
 describe("QdrantHandler", () => {
   let handler: QdrantHandler;

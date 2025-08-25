@@ -32,12 +32,25 @@ You are a senior software engineer who follows Kent Beck's Test-Driven Developme
 
 # COMMIT DISCIPLINE
 
+- MANDATORY: Run `make before-commit` before ANY commit and ensure it passes completely
 - Only commit when:
-  1. ALL tests are passing
-  2. ALL compiler/linter warnings have been resolved
-  3. The change represents a single logical unit of work
-  4. Commit messages clearly state whether the commit contains structural or behavioral changes
+  1. `make before-commit` passes without any errors.
+  2. ALL tests are passing
+  3. ALL compiler/linter warnings have been resolved
+  4. The change represents a single logical unit of work
+  5. Commit messages clearly state whether the commit contains structural or behavioral changes
 - Use small, frequent commits rather than large, infrequent ones
+- NEVER skip `make before-commit` - it ensures code quality and prevents broken commits
+
+# TASK COMPLETION REQUIREMENTS
+
+Before marking any task as complete, YOU MUST:
+1. Run `make before_commit` command and ensure it passes without errors
+2. Fix all linting errors, type errors, and formatting issues identified
+3. Verify all tests pass successfully
+4. Only after `make before_commit` succeeds should you consider the task complete
+
+IMPORTANT: NEVER skip the `make before_commit` step. This is a mandatory quality gate for all task completions.
 
 # CODE QUALITY STANDARDS
 
@@ -71,6 +84,18 @@ When approaching a new feature:
 Follow this process precisely, always prioritizing clean, well-tested code over quick implementation.
 
 Always write one test at a time, make it run, then improve structure. Always run all the tests (except long-running tests) each time.
+
+# PRE-COMMIT VERIFICATION
+
+CRITICAL: Always run `make before-commit` (or `make before_commit`) before creating any commit. This command runs:
+1. `lint_text` - Text linting for markdown files
+2. `lint` - ESLint for code quality
+3. `typecheck` - TypeScript type checking
+4. `format_check` - Prettier formatting verification
+5. `build` - Production build
+6. `test` - All test suites
+
+If ANY of these checks fail, DO NOT commit. Fix all issues first.
 
 
 # Claude Code Spec-Driven Development

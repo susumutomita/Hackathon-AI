@@ -2,6 +2,12 @@ import ollama from "ollama";
 import logger from "@/lib/logger";
 import Groq from "groq-sdk";
 import { isProduction as isProdEnv } from "@/lib/env";
+import { validateLLMResponse } from "./llmResponseValidator";
+import { safeJsonParseWithFallback } from "./safeJsonParser";
+import {
+  handleIdeaGenerationFallback,
+  sanitizeErrorForLogging,
+} from "./fallbackHandler";
 
 export async function parseHtmlWithLLM(
   idea: string,
@@ -29,8 +35,16 @@ export async function parseHtmlWithLLM(
           },
         ],
       });
-      logger.info("Local LLM response received:", { response });
-      return response.message.content.trim();
+      logger.info("Local LLM response received");
+
+      const rawContent = response.message.content;
+      if (!rawContent) {
+        throw new Error("LLMからの応答が空です");
+      }
+
+      // LLMレスポンスを検証・サニタイズ
+      const validatedContent = validateLLMResponse(rawContent);
+      return validatedContent;
     } else {
       logger.info(`Using cloud-based LLM (Groq) with model: ${groqModel}`);
       const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -45,12 +59,31 @@ export async function parseHtmlWithLLM(
         model: groqModel,
       });
 
-      const fullResponse = response.choices[0]?.message?.content || "";
-      logger.info("Groq LLM response received:", { response: fullResponse });
-      return fullResponse.trim();
+      const rawContent = response.choices[0]?.message?.content;
+      if (!rawContent) {
+        throw new Error("LLMからの応答が空です");
+      }
+
+      logger.info("Groq LLM response received");
+
+      // LLMレスポンスを検証・サニタイズ
+      const validatedContent = validateLLMResponse(rawContent);
+      return validatedContent;
     }
   } catch (error) {
-    logger.error("Failed to parse LLM response:", error);
-    throw new Error("Failed to parse LLM response");
+    const sanitizedError = sanitizeErrorForLogging(error as Error, true);
+    logger.error("Failed to parse LLM response:", sanitizedError);
+
+    // フォールバック処理を実行
+    try {
+      logger.info("Attempting fallback for LLM parsing failure");
+      return await handleIdeaGenerationFallback(error as Error, idea);
+    } catch (fallbackError) {
+      logger.error(
+        "Fallback also failed:",
+        sanitizeErrorForLogging(fallbackError as Error),
+      );
+      throw new Error("LLMの処理とフォールバック処理の両方が失敗しました");
+    }
   }
 }

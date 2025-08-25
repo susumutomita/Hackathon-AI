@@ -15,12 +15,22 @@ import type { VectorDBClient } from "@/interfaces/vectordb.interface";
 import { EmbeddingFactory } from "@/factories/embedding.factory";
 import { QdrantAdapter } from "@/adapters/qdrant.adapter";
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
 export class QdrantHandler {
   private client: QdrantClient;
-  private embeddingCache: Map<string, number[]> = new Map();
-  private searchCache: Map<string, QdrantSearchResult[]> = new Map();
+  private embeddingCache: Map<string, CacheEntry<number[]>> = new Map();
+  private searchCache: Map<string, CacheEntry<QdrantSearchResult[]>> =
+    new Map();
+  private projectsCache: Map<string, CacheEntry<Project[]>> = new Map();
+  private prizeAnalysisCache: Map<string, CacheEntry<any>> = new Map();
   private embeddingProvider: EmbeddingProvider;
   private vectorDB: VectorDBClient;
+  private readonly DEFAULT_TTL = 15 * 60 * 1000; // 15分
 
   constructor(
     embeddingProvider?: EmbeddingProvider,
@@ -214,10 +224,55 @@ export class QdrantHandler {
     return this.findExistingProject(link, "", "");
   }
 
+  private isValidCache<T>(entry: CacheEntry<T>): boolean {
+    return Date.now() - entry.timestamp < entry.ttl;
+  }
+
+  private setCache<T>(
+    cache: Map<string, CacheEntry<T>>,
+    key: string,
+    data: T,
+    ttl: number = this.DEFAULT_TTL,
+  ): void {
+    cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl,
+    });
+  }
+
+  private getCache<T>(
+    cache: Map<string, CacheEntry<T>>,
+    key: string,
+  ): T | null {
+    const entry = cache.get(key);
+    if (entry && this.isValidCache(entry)) {
+      return entry.data;
+    }
+    if (entry) {
+      cache.delete(key); // 期限切れのエントリを削除
+    }
+    return null;
+  }
+
   public async createEmbedding(text: string): Promise<number[]> {
     try {
+      // キャッシュをチェック
+      const cacheKey = `embedding:${text}`;
+      const cached = this.getCache(this.embeddingCache, cacheKey);
+      if (cached) {
+        logger.debug("Embedding cache hit", { cacheKey });
+        return cached;
+      }
+
       // Use injected embedding provider
-      return await this.embeddingProvider.createEmbedding(text);
+      const result = await this.embeddingProvider.createEmbedding(text);
+
+      // 結果をキャッシュ
+      this.setCache(this.embeddingCache, cacheKey, result);
+      logger.debug("Embedding cached", { cacheKey });
+
+      return result;
     } catch (error) {
       // For backward compatibility, preserve the existing error handling structure
       const errorDetails = {
@@ -236,13 +291,24 @@ export class QdrantHandler {
     limit: number = 5,
   ): Promise<Project[]> {
     try {
+      // キャッシュキーを生成（embeddingのハッシュとlimitを使用）
+      const embeddingHash = embedding.slice(0, 10).join(","); // 最初の10要素でハッシュ生成
+      const cacheKey = `search:${embeddingHash}:${limit}`;
+
+      // キャッシュをチェック
+      const cached = this.getCache(this.projectsCache, cacheKey);
+      if (cached) {
+        logger.debug("Similar projects cache hit", { cacheKey });
+        return cached;
+      }
+
       const response = await this.vectorDB.search("eth_global_showcase", {
         vector: embedding,
         limit,
       });
 
       console.log("Full response object:", JSON.stringify(response, null, 2));
-      return response
+      const result = response
         .filter((item: any) => item.payload != null)
         .map((item: any) => ({
           title: String(item.payload?.title || ""),
@@ -251,8 +317,116 @@ export class QdrantHandler {
           howItsMade: item.payload?.howItsMade as string | undefined,
           sourceCode: item.payload?.sourceCode as string | undefined,
         }));
+
+      // 結果をキャッシュ
+      this.setCache(this.projectsCache, cacheKey, result);
+      logger.debug("Similar projects cached", {
+        cacheKey,
+        count: result.length,
+      });
+
+      return result;
     } catch (error) {
       logger.error("Failed to search for similar projects:", error);
+      return [];
+    }
+  }
+
+  public async getAllProjects(
+    limit: number = 1000,
+    hackathonFilter?: string,
+  ): Promise<Project[]> {
+    try {
+      const filter = hackathonFilter
+        ? {
+            must: [
+              {
+                key: "hackathon",
+                match: {
+                  value: hackathonFilter,
+                },
+              },
+            ],
+          }
+        : undefined;
+
+      const response = await this.client.scroll("eth_global_showcase", {
+        limit,
+        with_payload: true,
+        filter,
+      });
+
+      if (!response.points) {
+        return [];
+      }
+
+      return response.points
+        .filter((point: any) => point.payload != null)
+        .map((point: any) => ({
+          title: String(point.payload?.title || ""),
+          description: String(point.payload?.projectDescription || ""),
+          link: point.payload?.link as string | undefined,
+          howItsMade: point.payload?.howItsMade as string | undefined,
+          sourceCode: point.payload?.sourceCode as string | undefined,
+          hackathon: point.payload?.hackathon as string | undefined,
+        }));
+    } catch (error) {
+      logger.error("Failed to get all projects:", error);
+      return [];
+    }
+  }
+
+  public async getProjectsByHackathons(
+    hackathons: string[],
+    limitPerHackathon: number = 100,
+  ): Promise<Project[]> {
+    try {
+      // キャッシュキーを生成
+      const cacheKey = `hackathons:${hackathons.sort().join(",")}:${limitPerHackathon}`;
+
+      // キャッシュをチェック
+      const cached = this.getCache(this.projectsCache, cacheKey);
+      if (cached) {
+        logger.debug("Hackathon projects cache hit", { cacheKey });
+        return cached;
+      }
+
+      // 並列処理でプロジェクトを取得（メモリ使用量を制限）
+      const projectPromises = hackathons.map((hackathon) =>
+        this.getAllProjects(limitPerHackathon, hackathon),
+      );
+
+      const projectArrays = await Promise.all(projectPromises);
+
+      // フラット化とストリーミング処理で重複除去
+      const projectMap = new Map<string, Project>();
+
+      for (const projects of projectArrays) {
+        for (const project of projects) {
+          if (!projectMap.has(project.title)) {
+            projectMap.set(project.title, project);
+          }
+        }
+      }
+
+      const uniqueProjects = Array.from(projectMap.values());
+
+      // 結果をキャッシュ（短い TTL で重複計算を避ける）
+      this.setCache(
+        this.projectsCache,
+        cacheKey,
+        uniqueProjects,
+        5 * 60 * 1000,
+      ); // 5分
+      logger.debug("Hackathon projects cached", {
+        cacheKey,
+        hackathons: hackathons.length,
+        totalProjects: uniqueProjects.length,
+      });
+
+      return uniqueProjects;
+    } catch (error) {
+      logger.error("Failed to get projects by hackathons:", error);
       return [];
     }
   }
@@ -262,12 +436,55 @@ export class QdrantHandler {
     return {
       embeddingCacheSize: this.embeddingCache.size,
       searchCacheSize: this.searchCache.size,
+      projectsCacheSize: this.projectsCache.size,
+      prizeAnalysisCacheSize: this.prizeAnalysisCache.size,
+      totalCacheSize:
+        this.embeddingCache.size +
+        this.searchCache.size +
+        this.projectsCache.size +
+        this.prizeAnalysisCache.size,
     };
   }
 
   public clearCache() {
     this.embeddingCache.clear();
     this.searchCache.clear();
+    this.projectsCache.clear();
+    this.prizeAnalysisCache.clear();
     logger.info("All caches cleared");
+  }
+
+  public clearExpiredCache() {
+    const now = Date.now();
+
+    // Embedding cache cleanup
+    for (const [key, entry] of this.embeddingCache.entries()) {
+      if (!this.isValidCache(entry)) {
+        this.embeddingCache.delete(key);
+      }
+    }
+
+    // Search cache cleanup
+    for (const [key, entry] of this.searchCache.entries()) {
+      if (!this.isValidCache(entry)) {
+        this.searchCache.delete(key);
+      }
+    }
+
+    // Projects cache cleanup
+    for (const [key, entry] of this.projectsCache.entries()) {
+      if (!this.isValidCache(entry)) {
+        this.projectsCache.delete(key);
+      }
+    }
+
+    // Prize analysis cache cleanup
+    for (const [key, entry] of this.prizeAnalysisCache.entries()) {
+      if (!this.isValidCache(entry)) {
+        this.prizeAnalysisCache.delete(key);
+      }
+    }
+
+    logger.info("Expired cache entries cleared");
   }
 }

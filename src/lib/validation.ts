@@ -29,6 +29,33 @@ export const ImproveIdeaRequestSchema = z.object({
     .max(20, "類似プロジェクトは20件以内にしてください"),
 });
 
+// Generate idea from prize brief (simple version)
+export const GenerateIdeaRequestSchema = z.object({
+  prize: z
+    .string()
+    .min(10, "プライズの説明は10文字以上で入力してください")
+    .max(8000, "プライズの説明は8000文字以内で入力してください")
+    .refine((v) => v.trim().length > 0, "プライズの説明は空白のみにできません"),
+});
+
+// Generate winning idea from detailed prize info
+export const GenerateWinningIdeaRequestSchema = z.object({
+  prizeInfo: z.object({
+    sponsor: z.string().min(1, "Sponsor name is required"),
+    prizeName: z.string().min(1, "Prize name is required"),
+    prizeAmount: z.string().optional(),
+    requirements: z
+      .string()
+      .min(10, "Requirements must be at least 10 characters"),
+    technologies: z.array(z.string()).optional(),
+    judgingCriteria: z.array(z.string()).optional(),
+    additionalInfo: z.string().optional(),
+  }),
+  focusArea: z.string().optional(),
+  constraints: z.array(z.string()).optional(),
+  preferredTech: z.array(z.string()).optional(),
+});
+
 export const CrawlRequestSchema = z.object({
   url: z
     .string()
