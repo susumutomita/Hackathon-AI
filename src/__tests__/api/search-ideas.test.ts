@@ -15,13 +15,15 @@ vi.mock("@/lib/qdrantHandler", () => ({
 }));
 
 // Mock QdrantHandlerFactory
+const mockQdrantHandler = {
+  createEmbedding: vi.fn(),
+  searchSimilarProjects: vi.fn(),
+  getCacheStats: vi.fn(() => ({ embeddingCacheSize: 0, searchCacheSize: 0 })),
+};
+
 vi.mock("@/factories/qdrantHandler.factory", () => ({
   QdrantHandlerFactory: {
-    createDefault: vi.fn(() => ({
-      createEmbedding: mockCreateEmbedding,
-      searchSimilarProjects: mockSearchSimilarProjects,
-      getCacheStats: mockGetCacheStats,
-    })),
+    createDefault: vi.fn(() => mockQdrantHandler),
   },
 }));
 
@@ -37,28 +39,58 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 // Mock PerformanceMonitor
+const mockPerformanceMonitor = {
+  recordMetrics: vi.fn(),
+  getAverageMetrics: vi.fn().mockReturnValue({
+    apiResponseTime: 0,
+    vectorSearchTime: 0,
+    embeddingTime: 0,
+    totalRequestTime: 0,
+    cacheHitRate: 0,
+  }),
+};
+
 vi.mock("@/lib/performance", () => ({
   PerformanceMonitor: {
-    getInstance: vi.fn().mockReturnValue({
-      recordMetrics: vi.fn(),
-      getAverageMetrics: vi.fn().mockReturnValue({
-        apiResponseTime: 0,
-        vectorSearchTime: 0,
-        embeddingTime: 0,
-        totalRequestTime: 0,
-        cacheHitRate: 0,
-      }),
-    }),
+    getInstance: vi.fn(() => mockPerformanceMonitor),
   },
   timeOperation: vi.fn(async (name, fn) => {
     const result = await fn();
-    return { result, duration: 0 };
+    return { result, duration: 100 };
   }),
 }));
 
 // Mock CSRF validation
 vi.mock("@/lib/csrf", () => ({
   validateCSRFToken: vi.fn(() => true),
+}));
+
+// Mock rate limiting
+vi.mock("@/lib/rateLimit", () => ({
+  applySearchRateLimit: vi.fn(() => ({
+    success: true,
+    limit: 100,
+    remaining: 99,
+    reset: Date.now() + 3600000,
+  })),
+  setRateLimitHeaders: vi.fn(),
+  createRateLimitError: vi.fn((result) => ({
+    error: "Rate limit exceeded",
+    retryAfter: result.reset,
+  })),
+}));
+
+// Mock validation
+vi.mock("@/lib/validation", () => ({
+  validateInput: vi.fn((schema, data) => {
+    if (!data || !data.idea || data.idea.trim() === "") {
+      return { success: false, error: "idea is required" };
+    }
+    return { success: true, data: { idea: data.idea } };
+  }),
+  sanitizeString: vi.fn((str) => str),
+  SearchIdeasRequestSchema: {},
+  validateLength: vi.fn(() => true),
 }));
 
 // Mock error handler to work with custom response object
@@ -195,11 +227,18 @@ function createMockRequestResponse(method = "POST", body = {}) {
 describe("/api/search-ideas", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockCreateEmbedding = vi.fn();
-    mockSearchSimilarProjects = vi.fn();
-    mockGetCacheStats = vi
-      .fn()
-      .mockReturnValue({ embeddingCacheSize: 0, searchCacheSize: 0 });
+    // Reset mockQdrantHandler methods
+    mockQdrantHandler.createEmbedding.mockReset();
+    mockQdrantHandler.searchSimilarProjects.mockReset();
+    mockQdrantHandler.getCacheStats.mockReset();
+    mockQdrantHandler.getCacheStats.mockReturnValue({
+      embeddingCacheSize: 0,
+      searchCacheSize: 0,
+    });
+
+    mockCreateEmbedding = mockQdrantHandler.createEmbedding;
+    mockSearchSimilarProjects = mockQdrantHandler.searchSimilarProjects;
+    mockGetCacheStats = mockQdrantHandler.getCacheStats;
 
     // Reset QdrantHandler mock
     const { QdrantHandler } = await import("@/lib/qdrantHandler");
@@ -251,7 +290,7 @@ describe("/api/search-ideas", () => {
     });
   });
 
-  it.skip("should successfully search for similar projects", async () => {
+  it("should successfully search for similar projects", async () => {
     const handler = (await import("@/pages/api/search-ideas")).default;
     const idea = "NFT marketplace for digital art";
     const mockEmbedding = [0.1, 0.2, 0.3, 0.4, 0.5];
@@ -265,20 +304,36 @@ describe("/api/search-ideas", () => {
       },
     ];
 
-    mockCreateEmbedding.mockResolvedValue(mockEmbedding);
-    mockSearchSimilarProjects.mockResolvedValue(mockSimilarProjects);
+    mockQdrantHandler.createEmbedding.mockResolvedValue(mockEmbedding);
+    mockQdrantHandler.searchSimilarProjects.mockResolvedValue(
+      mockSimilarProjects,
+    );
 
     const { req, res } = createMockRequestResponse("POST", { idea });
 
     try {
       await handler(req, res);
     } catch (error) {
-      console.log("Handler threw error:", error);
+      console.error("Handler error:", error);
       throw error;
     }
 
     const statusCode = (res as any)._getStatusCode();
-    const responseData = JSON.parse((res as any)._getData());
+    const responseData = (res as any)._jsonData;
+
+    // Debug output if test fails
+    if (statusCode !== 200) {
+      console.error("Test failed with status:", statusCode);
+      console.error("Response data:", responseData);
+      console.error(
+        "MockCreateEmbedding called:",
+        mockQdrantHandler.createEmbedding.mock.calls,
+      );
+      console.error(
+        "MockSearchSimilarProjects called:",
+        mockQdrantHandler.searchSimilarProjects.mock.calls,
+      );
+    }
 
     expect(statusCode).toBe(200);
     expect(responseData.message).toBe("検索が正常に完了しました");
@@ -286,8 +341,11 @@ describe("/api/search-ideas", () => {
     expect(responseData.metadata.resultsCount).toBe(2);
     expect(responseData.metadata.searchTime).toEqual(expect.any(Number));
 
-    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
-    expect(mockSearchSimilarProjects).toHaveBeenCalledWith(mockEmbedding, 10);
+    expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockQdrantHandler.searchSimilarProjects).toHaveBeenCalledWith(
+      mockEmbedding,
+      10,
+    );
   });
 
   it("should handle authentication errors (403)", async () => {
@@ -308,8 +366,8 @@ describe("/api/search-ideas", () => {
       "NOMIC_API_KEYが正しく設定されているか確認してください",
     );
 
-    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
-    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
+    expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockQdrantHandler.searchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle generic authentication errors", async () => {
@@ -327,8 +385,8 @@ describe("/api/search-ideas", () => {
     expect(responseData.error).toBe("認証に失敗しました。再度お試しください。");
     expect(responseData.type).toBe("AUTHENTICATION_ERROR");
 
-    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
-    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
+    expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockQdrantHandler.searchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle general errors and return 500", async () => {
@@ -348,8 +406,8 @@ describe("/api/search-ideas", () => {
       timestamp: expect.any(String),
     });
 
-    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
-    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
+    expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockQdrantHandler.searchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle unknown errors", async () => {
@@ -368,8 +426,8 @@ describe("/api/search-ideas", () => {
       timestamp: expect.any(String),
     });
 
-    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
-    expect(mockSearchSimilarProjects).not.toHaveBeenCalled();
+    expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockQdrantHandler.searchSimilarProjects).not.toHaveBeenCalled();
   });
 
   it("should handle errors during embedding search", async () => {
@@ -392,8 +450,11 @@ describe("/api/search-ideas", () => {
       timestamp: expect.any(String),
     });
 
-    expect(mockCreateEmbedding).toHaveBeenCalledWith(idea);
-    expect(mockSearchSimilarProjects).toHaveBeenCalledWith(mockEmbedding, 10);
+    expect(mockQdrantHandler.createEmbedding).toHaveBeenCalledWith(idea);
+    expect(mockQdrantHandler.searchSimilarProjects).toHaveBeenCalledWith(
+      mockEmbedding,
+      10,
+    );
   });
 
   it("should handle empty idea string", async () => {
@@ -411,7 +472,7 @@ describe("/api/search-ideas", () => {
     });
   });
 
-  it.skip("should work with complex idea descriptions", async () => {
+  it("should work with complex idea descriptions", async () => {
     const handler = (await import("@/pages/api/search-ideas")).default;
     const complexIdea =
       "A decentralized autonomous organization (DAO) that manages cross-chain liquidity pools using automated market makers (AMMs) with dynamic fee structures based on volatility and liquidity depth metrics.";
@@ -427,14 +488,20 @@ describe("/api/search-ideas", () => {
       },
     ];
 
-    mockCreateEmbedding.mockResolvedValue(mockEmbedding);
-    mockSearchSimilarProjects.mockResolvedValue(mockResults);
+    mockQdrantHandler.createEmbedding.mockResolvedValue(mockEmbedding);
+    mockQdrantHandler.searchSimilarProjects.mockResolvedValue(mockResults);
 
     const { req, res } = createMockRequestResponse("POST", {
       idea: complexIdea,
     });
 
     await handler(req, res);
+
+    const statusCodeComplex = (res as any)._getStatusCode();
+    if (statusCodeComplex !== 200) {
+      const responseDataComplex = JSON.parse((res as any)._getData());
+      console.log("Complex test error response:", responseDataComplex);
+    }
 
     expect((res as any)._getStatusCode()).toBe(200);
     const responseData = JSON.parse((res as any)._getData());

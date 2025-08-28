@@ -94,16 +94,7 @@ describeIfNotCI("QdrantHandler Extended Error Tests", () => {
       }
     });
 
-    it.skip("should handle timeout errors gracefully", async () => {
-      // Skip this test as it's difficult to reliably simulate timeouts
-      // Using a non-routable IP to simulate timeout
-      process.env.OLLAMA_URL = "http://192.0.2.1:11434";
-      process.env.NODE_ENV = "development";
-      const handler = new QdrantHandler();
-
-      // This will timeout or fail to connect
-      await expect(handler.createEmbedding("test text")).rejects.toThrow();
-    });
+    // Removed timeout test: not reliably reproducible locally or in CI
   });
 
   describe("QdrantClient Error Handling", () => {
