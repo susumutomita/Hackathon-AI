@@ -116,36 +116,7 @@ describe("QdrantHandler Integration Tests", () => {
     });
   });
 
-  describe("Ollama provider errors", () => {
-    // These tests are commented out because they require Ollama to not be running
-    // which is difficult to guarantee in a test environment
-
-    it.skip("should throw detailed error when Ollama is not running in development", async () => {
-      process.env.EMBEDDING_PROVIDER = "ollama";
-      process.env.NODE_ENV = "development";
-      process.env.OLLAMA_URL = "http://localhost:11434";
-      process.env.OLLAMA_MODEL = "nomic-embed-text";
-
-      const handler = new QdrantHandler();
-
-      // This test requires Ollama to not be running
-      await expect(handler.createEmbedding("test")).rejects.toThrow(
-        ERROR_MESSAGES.OLLAMA_NOT_RUNNING_DEV,
-      );
-    });
-
-    it.skip("should throw sanitized error when Ollama is not running in production", async () => {
-      process.env.EMBEDDING_PROVIDER = "ollama";
-      process.env.NODE_ENV = "production";
-
-      const handler = new QdrantHandler();
-
-      // This test requires Ollama to not be running
-      await expect(handler.createEmbedding("test")).rejects.toThrow(
-        ERROR_MESSAGES.OLLAMA_NOT_RUNNING_PROD,
-      );
-    });
-  });
+  // Removed flaky Ollama-not-running tests: not reliable locally or in CI
 
   describe("HTTP error responses", () => {
     // These tests demonstrate proper error message checking patterns
@@ -169,18 +140,7 @@ describe("QdrantHandler Integration Tests", () => {
       },
     );
 
-    it.skip("should handle 429 rate limit error", async () => {
-      process.env.EMBEDDING_PROVIDER = "nomic";
-      process.env.NOMIC_API_KEY = "valid-key-but-rate-limited";
-
-      const handler = new QdrantHandler();
-
-      // This test would need mocking of axios to simulate 429 response
-      // Skipped because it requires specific API conditions
-      await expect(handler.createEmbedding("test")).rejects.toThrow(
-        ERROR_MESSAGES.RATE_LIMIT_429,
-      );
-    });
+    // Removed 429 rate limit test: requires external API behavior; not runnable deterministically
   });
 
   describe("searchSimilarProjects error handling", () => {
