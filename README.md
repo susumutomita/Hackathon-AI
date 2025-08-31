@@ -109,20 +109,20 @@ curl http://localhost:3000/api/crawl
 - Qdrant: A vector database used for searching similar projects.
 - Ollama: A local LLM tool used to analyze ideas and generate improvement suggestions.
 
-## ドキュメント
+## Documentation
 
-詳細なドキュメントについては、以下をご参照ください。
+For detailed documentation, see the following:
 
-- **[API ドキュメント](docs/API.md)** - API エンドポイントの詳細仕様
-- **[アーキテクチャドキュメント](docs/ARCHITECTURE.md)** - システム設計とアーキテクチャ
-- **[開発者ガイド](docs/DEVELOPER_GUIDE.md)** - 開発環境構築とコーディング規約
-- **[トラブルシューティング](docs/TROUBLESHOOTING.md)** - よくある問題と解決方法
-- **[コンポーネントカタログ](docs/COMPONENTS.md)** - UI コンポーネントの使用方法
+- **[API Documentation](docs/API.md)** - Detailed specifications of API endpoints
+- **[Architecture](docs/ARCHITECTURE.md)** - System design and architecture
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Development setup and coding conventions
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Component Catalog](docs/COMPONENTS.md)** - UI component usage
 
-追加のドキュメントは以下のとおりです。
-- **[UX仕様](docs/UX_SPEC.md)** - ユーザーエクスペリエンス設計
-- **[MCP設定](docs/mcp-setup.md)** - MCP サーバーのセットアップ方法
-- **[自動クローリング設定](docs/auto-crawl-setup.md)** - データクローリングの設定
+Additional documents:
+- **[UX Spec](docs/UX_SPEC.md)** - User experience design
+- **[MCP Setup](docs/mcp-setup.md)** - How to set up the MCP server
+- **[Auto-Crawl Setup](docs/auto-crawl-setup.md)** - Data crawling configuration
 
 ## License
 
