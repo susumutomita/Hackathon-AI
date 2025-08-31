@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useMemo, memo } from "react";
+import React, { useState, useCallback, useMemo, memo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,6 +13,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { sanitizeString } from "@/lib/validation";
 import { sanitizeUrl, escapeHtmlAttribute } from "@/lib/sanitizer";
+import { useLlmProgress } from "@/hooks/use-llm-progress";
 
 const IdeaForm = memo(function IdeaForm() {
   const [idea, setIdea] = useState("");
@@ -20,6 +21,16 @@ const IdeaForm = memo(function IdeaForm() {
   const [improvedIdea, setImprovedIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
+  const streamingEnabled =
+    typeof process !== "undefined" &&
+    process.env.NEXT_PUBLIC_STREAM_IMPROVEMENT === "1";
+  const {
+    phase,
+    partial,
+    error,
+    start: startStream,
+    reset: resetStream,
+  } = useLlmProgress();
 
   const { errors, validateField, clearErrors } = useFormValidation();
 
@@ -59,23 +70,47 @@ const IdeaForm = memo(function IdeaForm() {
         setResults(data.projects);
         setSearchStatus("改善されたアイデアを生成中...");
 
-        const improvedResponse = await fetch("/api/improve-idea", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            idea: sanitizedIdea,
-            similarProjects: data.projects,
-          }),
-        });
-
-        if (!improvedResponse.ok) {
-          throw new Error("Failed to generate improved idea");
+        if (streamingEnabled) {
+          // Streaming path (live progress and partial output)
+          try {
+            await startStream({
+              idea: sanitizedIdea,
+              similarProjects: data.projects,
+            });
+            setImprovedIdea(partial);
+          } catch (e) {
+            // Fallback to non-streaming if streaming fails
+            const improvedResponse = await fetch("/api/improve-idea", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                idea: sanitizedIdea,
+                similarProjects: data.projects,
+              }),
+            });
+            if (!improvedResponse.ok) {
+              throw new Error("Failed to generate improved idea");
+            }
+            const improvedData = await improvedResponse.json();
+            setImprovedIdea(improvedData.improvedIdea);
+          }
+        } else {
+          // Existing non-streaming behavior
+          const improvedResponse = await fetch("/api/improve-idea", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              idea: sanitizedIdea,
+              similarProjects: data.projects,
+            }),
+          });
+          if (!improvedResponse.ok) {
+            throw new Error("Failed to generate improved idea");
+          }
+          const improvedData = await improvedResponse.json();
+          setImprovedIdea(improvedData.improvedIdea);
         }
 
-        const improvedData = await improvedResponse.json();
-        setImprovedIdea(improvedData.improvedIdea);
         setSearchStatus(
           `検索完了: ${data.projects.length}件の類似プロジェクトが見つかりました`,
         );
@@ -86,7 +121,7 @@ const IdeaForm = memo(function IdeaForm() {
         setLoading(false);
       }
     },
-    [idea, validateField, clearErrors],
+    [idea, validateField, clearErrors, startStream, partial, streamingEnabled],
   );
 
   const handleIdeaChange = useCallback(
@@ -99,6 +134,13 @@ const IdeaForm = memo(function IdeaForm() {
     },
     [errors.idea, clearErrors],
   );
+
+  // When streaming finishes, persist final text into editable state
+  useEffect(() => {
+    if (streamingEnabled && phase === "done" && partial) {
+      setImprovedIdea(partial);
+    }
+  }, [streamingEnabled, phase, partial]);
 
   return (
     <div className="container mx-auto px-4">
@@ -200,6 +242,18 @@ const IdeaForm = memo(function IdeaForm() {
           <h2 id="improved-idea-heading" className="text-xl font-bold mb-4">
             Improved Idea
           </h2>
+          {streamingEnabled && (
+            <div className="mb-2 text-sm text-gray-600" aria-live="polite">
+              {phase !== "idle" && phase !== "done" && !error && (
+                <span>LLM is reviewing... ({phase.replaceAll("_", " ")})</span>
+              )}
+              {error && (
+                <span className="text-red-600">
+                  An error occurred. Falling back.
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <label
               htmlFor="improved-idea-input"
@@ -209,7 +263,7 @@ const IdeaForm = memo(function IdeaForm() {
             </label>
             <TextareaAutosize
               id="improved-idea-input"
-              value={improvedIdea}
+              value={streamingEnabled && partial ? partial : improvedIdea}
               onChange={(e) => setImprovedIdea(e.target.value)}
               placeholder="あなたのアイデアの改善版がここに表示されます..."
               className="resize-none overflow-auto w-full p-3 border border-gray-300 rounded-md h-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900"
