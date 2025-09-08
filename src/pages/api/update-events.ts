@@ -27,15 +27,17 @@ export default async function handler(
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Check if method is POST
   if (req.method !== "POST") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only POST method is allowed",
     });
+    return;
   }
 
   try {

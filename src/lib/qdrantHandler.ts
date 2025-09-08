@@ -31,6 +31,7 @@ export class QdrantHandler {
   private embeddingProvider: EmbeddingProvider;
   private vectorDB: VectorDBClient;
   private readonly DEFAULT_TTL = 15 * 60 * 1000; // 15分
+  private collectionInitialized = false;
 
   constructor(
     embeddingProvider?: EmbeddingProvider,
@@ -59,22 +60,36 @@ export class QdrantHandler {
       this.embeddingProvider = EmbeddingFactory.create();
       this.vectorDB = new QdrantAdapter();
     }
-    this.ensureCollectionExists();
+    // Collection will be initialized lazily on first use
   }
 
   private async ensureCollectionExists() {
+    if (this.collectionInitialized) {
+      return;
+    }
+
     try {
       await this.client.getCollection("eth_global_showcase");
       logger.info("Collection 'eth_global_showcase' exists.");
+      this.collectionInitialized = true;
     } catch (e) {
       logger.info("Collection not found, creating a new one.");
-      await this.client.createCollection("eth_global_showcase", {
-        vectors: {
-          size: 768,
-          distance: "Cosine",
-        },
-      });
-      logger.info("Collection 'eth_global_showcase' created successfully.");
+      try {
+        await this.client.createCollection("eth_global_showcase", {
+          vectors: {
+            size: 768,
+            distance: "Cosine",
+          },
+        });
+        logger.info("Collection 'eth_global_showcase' created successfully.");
+        this.collectionInitialized = true;
+      } catch (createError) {
+        logger.error("Failed to create collection:", createError);
+        // Graceful fallback - collection may exist but getCollection failed
+        // We'll continue with a warning rather than crash
+        logger.warn("Continuing without collection verification");
+        this.collectionInitialized = true; // Prevent repeated attempts
+      }
     }
   }
 
@@ -293,6 +308,9 @@ export class QdrantHandler {
     limit: number = 5,
   ): Promise<Project[]> {
     try {
+      // Ensure collection exists before performing search
+      await this.ensureCollectionExists();
+
       // キャッシュキーを生成（embeddingのハッシュとlimitを使用）
       const embeddingHash = embedding.slice(0, 10).join(","); // 最初の10要素でハッシュ生成
       const cacheKey = `search:${embeddingHash}:${limit}`;

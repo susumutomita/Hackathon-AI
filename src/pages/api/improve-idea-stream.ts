@@ -21,7 +21,7 @@ import Groq from "groq-sdk";
 
 export const config = {
   runtime: "nodejs",
-  maxDuration: 300, // 5 minutes for Pro/Enterprise plans (streaming can be long-running)
+  maxDuration: 60, // 1 minute for Hobby plan compatibility
 };
 
 export default async function handler(
@@ -50,14 +50,16 @@ export default async function handler(
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only POST method is allowed",
     });
+    return;
   }
 
   // SSE headers
@@ -79,7 +81,8 @@ export default async function handler(
     setRateLimitHeaders(res.setHeader.bind(res), rate);
     if (!rate.success) {
       send("error", createRateLimitError(rate));
-      return res.end();
+      res.end();
+      return;
     }
 
     // Validate input

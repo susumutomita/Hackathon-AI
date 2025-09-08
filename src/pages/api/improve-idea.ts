@@ -22,7 +22,7 @@ import {
 // Ensure Node.js runtime on Vercel/Next with extended timeout
 export const config = {
   runtime: "nodejs",
-  maxDuration: 300, // 5 minutes for Pro/Enterprise plans, 10 seconds for Hobby
+  maxDuration: 60, // 1 minute for Hobby plan compatibility
 };
 
 export default async function handler(
@@ -52,15 +52,17 @@ export default async function handler(
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Check if method is POST
   if (req.method !== "POST") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only POST method is allowed",
     });
+    return;
   }
 
   try {
@@ -69,7 +71,8 @@ export default async function handler(
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
 
     if (!rateLimitResult.success) {
-      return res.status(429).json(createRateLimitError(rateLimitResult));
+      res.status(429).json(createRateLimitError(rateLimitResult));
+      return;
     }
 
     // Validate and sanitize input using Zod schema
@@ -195,10 +198,11 @@ export default async function handler(
       error.message?.includes("ETIMEDOUT")
     ) {
       const timeoutError = createTimeoutError(error.message);
-      return handleApiError(timeoutError, res, {
+      handleApiError(timeoutError, res, {
         endpoint: "/api/improve-idea",
         duration,
       });
+      return;
     }
 
     // Handle general errors

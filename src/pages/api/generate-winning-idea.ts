@@ -17,7 +17,7 @@ import { GenerateWinningIdeaRequestSchema } from "@/lib/validation";
 // Ensure Node.js runtime
 export const config = {
   runtime: "nodejs",
-  maxDuration: 300, // 5 minutes for Pro/Enterprise plans (AI generation is time-consuming)
+  maxDuration: 60, // 1 minute for Hobby plan compatibility
 };
 
 export default async function handler(
@@ -47,15 +47,17 @@ export default async function handler(
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Check if method is POST
   if (req.method !== "POST") {
-    return res.status(405).json({
+    res.status(405).json({
       success: false,
       error: "Method Not Allowed - Only POST method is allowed",
     });
+    return;
   }
 
   try {
@@ -64,10 +66,11 @@ export default async function handler(
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
 
     if (!rateLimitResult.success) {
-      return res.status(429).json({
+      res.status(429).json({
         success: false,
         error: "Too many requests. Please try again later.",
       });
+      return;
     }
 
     // Validate request body
@@ -143,7 +146,7 @@ export default async function handler(
       const timeoutError = createTimeoutError(
         "Idea generation took too long. Please try again.",
       );
-      return res.status(504).json({
+      res.status(504).json({
         success: false,
         error: timeoutError.message,
         metadata: {
@@ -152,11 +155,12 @@ export default async function handler(
           trendsIdentified: [],
         },
       });
+      return;
     }
 
     // Handle validation errors
     if (error.type === "VALIDATION_ERROR") {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: error.message,
         metadata: {
@@ -165,6 +169,7 @@ export default async function handler(
           trendsIdentified: [],
         },
       });
+      return;
     }
 
     // Handle general errors
