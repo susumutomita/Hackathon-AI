@@ -16,7 +16,7 @@ export const config = {
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-) {
+): Promise<void> {
   const startTime = Date.now();
 
   // Set CORS headers
@@ -26,15 +26,17 @@ export default async function handler(
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Check if method is GET
   if (req.method !== "GET") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only GET method is allowed",
     });
+    return;
   }
 
   try {
@@ -68,6 +70,7 @@ export default async function handler(
         projectsFound: projects?.length || 0,
       },
     });
+    return;
   } catch (error: any) {
     const duration = Date.now() - startTime;
     logger.performanceLog("Crawl failed", duration, {
@@ -78,5 +81,6 @@ export default async function handler(
       endpoint: "/api/crawl",
       duration,
     });
+    return;
   }
 }

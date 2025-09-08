@@ -25,7 +25,7 @@ export const config = {
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-) {
+): Promise<void> {
   const startTime = Date.now();
 
   // CORS
@@ -48,19 +48,26 @@ export default async function handler(
   res.setHeader("X-XSS-Protection", "1; mode=block");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
   if (req.method !== "POST") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only POST method is allowed",
     });
+    return;
   }
 
   try {
     // Rate limit
     const rate = applyApiRateLimit(req);
     setRateLimitHeaders(res.setHeader.bind(res), rate);
-    if (!rate.success) return res.status(429).json(createRateLimitError(rate));
+    if (!rate.success) {
+      res.status(429).json(createRateLimitError(rate));
+      return;
+    }
 
     // Validate
     const validation = validateInput(GenerateIdeaRequestSchema, req.body);
@@ -81,7 +88,7 @@ export default async function handler(
       refs: similarProjects.length,
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       idea: content,
       similarProjects,
       metadata: {
@@ -89,6 +96,7 @@ export default async function handler(
         refsCount: similarProjects.length,
       },
     });
+    return;
   } catch (error: any) {
     const duration = Date.now() - startTime;
 
@@ -97,15 +105,17 @@ export default async function handler(
       error?.message?.includes("timeout") ||
       error?.message?.includes("ETIMEDOUT")
     ) {
-      return handleApiError(createTimeoutError(error.message), res, {
+      handleApiError(createTimeoutError(error.message), res, {
         endpoint: "/api/generate-idea",
         duration,
       });
+      return;
     }
 
-    return handleApiError(error, res, {
+    handleApiError(error, res, {
       endpoint: "/api/generate-idea",
       duration,
     });
+    return;
   }
 }

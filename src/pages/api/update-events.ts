@@ -17,7 +17,7 @@ export const config = {
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-) {
+): Promise<void> {
   const startTime = Date.now();
 
   // Set CORS headers
@@ -27,15 +27,17 @@ export default async function handler(
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Check if method is POST
   if (req.method !== "POST") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only POST method is allowed",
     });
+    return;
   }
 
   try {
@@ -82,6 +84,7 @@ export default async function handler(
           updateTime: duration,
         },
       });
+      return;
     } else {
       logger.error("Update events failed", {
         error: result.error,
@@ -105,5 +108,6 @@ export default async function handler(
       endpoint: "/api/update-events",
       duration,
     });
+    return;
   }
 }

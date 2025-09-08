@@ -15,7 +15,7 @@ export const config = {
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
-) {
+): Promise<void> {
   // Set CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -23,15 +23,17 @@ export default async function handler(
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Check if method is GET
   if (req.method !== "GET") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only GET method is allowed",
     });
+    return;
   }
 
   try {
@@ -40,7 +42,8 @@ export default async function handler(
     setRateLimitHeaders(res.setHeader.bind(res), rateLimitResult);
 
     if (!rateLimitResult.success) {
-      return res.status(429).json(createRateLimitError(rateLimitResult));
+      res.status(429).json(createRateLimitError(rateLimitResult));
+      return;
     }
 
     // Generate and return CSRF token
@@ -50,10 +53,12 @@ export default async function handler(
       csrfToken,
       message: "CSRF token generated successfully",
     });
+    return;
   } catch (error: any) {
     res.status(500).json({
       error: "Internal server error",
       message: error.message || "Failed to generate CSRF token",
     });
+    return;
   }
 }
