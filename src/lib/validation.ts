@@ -25,8 +25,8 @@ export const ImproveIdeaRequestSchema = z.object({
   idea: IdeaSchema,
   similarProjects: z
     .array(SimilarProjectSchema)
-    .min(1, "少なくとも1つの類似プロジェクトが必要です")
-    .max(20, "類似プロジェクトは20件以内にしてください"),
+    .max(20, "類似プロジェクトは20件以内にしてください")
+    .default([]),
 });
 
 // Generate idea from prize brief (simple version)

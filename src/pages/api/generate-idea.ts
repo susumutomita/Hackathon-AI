@@ -17,7 +17,10 @@ import {
   createValidationError,
 } from "@/lib/errorHandler";
 
-export const config = { runtime: "nodejs" };
+export const config = {
+  runtime: "nodejs",
+  maxDuration: 300, // 5 minutes for Pro/Enterprise plans, 10 seconds for Hobby
+};
 
 export default async function handler(
   req: NextApiRequest,

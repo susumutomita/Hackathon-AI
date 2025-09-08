@@ -120,6 +120,7 @@ export class QdrantHandler {
     this.client = new QdrantClient({
       url: this.env.QD_URL,
       apiKey: this.env.QD_API_KEY,
+      checkCompatibility: false,
     });
   }
 

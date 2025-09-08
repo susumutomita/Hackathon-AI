@@ -17,7 +17,7 @@ import { GenerateWinningIdeaRequestSchema } from "@/lib/validation";
 // Ensure Node.js runtime
 export const config = {
   runtime: "nodejs",
-  maxDuration: 60, // 60秒のタイムアウト（アイデア生成は時間がかかる）
+  maxDuration: 300, // 5 minutes for Pro/Enterprise plans (AI generation is time-consuming)
 };
 
 export default async function handler(

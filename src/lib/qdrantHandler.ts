@@ -45,6 +45,7 @@ export class QdrantHandler {
       this.client = new QdrantClient({
         url: env.QD_URL,
         apiKey: env.QD_API_KEY,
+        checkCompatibility: false,
       });
     } else {
       // Legacy constructor pattern for backward compatibility
@@ -52,6 +53,7 @@ export class QdrantHandler {
       this.client = new QdrantClient({
         url: env.QD_URL,
         apiKey: env.QD_API_KEY,
+        checkCompatibility: false,
       });
       // Initialize with default adapters
       this.embeddingProvider = EmbeddingFactory.create();

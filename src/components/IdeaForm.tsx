@@ -21,6 +21,8 @@ const IdeaForm = memo(function IdeaForm() {
   const [improvedIdea, setImprovedIdea] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
+  const [diagnostics, setDiagnostics] = useState<any>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const streamingEnabled =
     typeof process !== "undefined" &&
     process.env.NEXT_PUBLIC_STREAM_IMPROVEMENT === "1";
@@ -68,7 +70,13 @@ const IdeaForm = memo(function IdeaForm() {
 
         const data = await response.json();
         setResults(data.projects);
-        setSearchStatus("改善されたアイデアを生成中...");
+        const projectsFoundText =
+          data.projects.length > 0
+            ? `${data.projects.length}件の類似プロジェクトを参考に改善版を生成中...`
+            : "類似プロジェクトは見つかりませんでしたが、専門知識を活用してアイデアを改善中...";
+        setSearchStatus(
+          `${projectsFoundText} (AI処理には最大2分程度かかることがあります)`,
+        );
 
         if (streamingEnabled) {
           // Streaming path (live progress and partial output)
@@ -105,15 +113,24 @@ const IdeaForm = memo(function IdeaForm() {
             }),
           });
           if (!improvedResponse.ok) {
-            throw new Error("Failed to generate improved idea");
+            const errorData = await improvedResponse.text();
+            console.error(
+              `Improve idea API error (${improvedResponse.status}):`,
+              errorData,
+            );
+            throw new Error(
+              `Failed to generate improved idea (${improvedResponse.status}): ${errorData}`,
+            );
           }
           const improvedData = await improvedResponse.json();
           setImprovedIdea(improvedData.improvedIdea);
         }
 
-        setSearchStatus(
-          `検索完了: ${data.projects.length}件の類似プロジェクトが見つかりました`,
-        );
+        const completionText =
+          data.projects.length > 0
+            ? `検索完了: ${data.projects.length}件の類似プロジェクトが見つかりました`
+            : "検索完了: 類似プロジェクトは見つかりませんでしたが、改善されたアイデアを生成しました";
+        setSearchStatus(completionText);
       } catch (error: any) {
         console.error("Error during search:", error);
         setSearchStatus("エラーが発生しました。もう一度お試しください。");
@@ -134,6 +151,25 @@ const IdeaForm = memo(function IdeaForm() {
     },
     [errors.idea, clearErrors],
   );
+
+  const checkLLMStatus = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/debug/llm-status");
+      const data = await response.json();
+      setDiagnostics(data);
+      setShowDiagnostics(true);
+    } catch (error) {
+      console.error("Failed to check LLM status:", error);
+      setDiagnostics({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+      setShowDiagnostics(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // When streaming finishes, persist final text into editable state
   useEffect(() => {
@@ -233,6 +269,140 @@ const IdeaForm = memo(function IdeaForm() {
             )}
           </form>
         </section>
+
+        {/* Diagnostics Section */}
+        {showDiagnostics && diagnostics && (
+          <section className="mb-8 p-4 border rounded-lg bg-gray-50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">LLM Service Diagnostics</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDiagnostics(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <strong>Environment:</strong>{" "}
+                  {diagnostics.diagnostics?.environment}
+                </div>
+                <div>
+                  <strong>Mode:</strong>{" "}
+                  {diagnostics.diagnostics?.isProduction
+                    ? "Production"
+                    : "Development"}
+                </div>
+              </div>
+
+              {diagnostics.diagnostics?.ollama && (
+                <div className="border rounded p-3 bg-white">
+                  <h3 className="font-semibold text-blue-600 mb-2">
+                    Ollama (Development)
+                  </h3>
+                  <div className="text-sm space-y-1">
+                    <div>
+                      <strong>Status:</strong>
+                      <span
+                        className={`ml-2 px-2 py-1 rounded text-xs ${
+                          diagnostics.diagnostics.ollama.status === "connected"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {diagnostics.diagnostics.ollama.status}
+                      </span>
+                    </div>
+                    {diagnostics.diagnostics.ollama.targetModel && (
+                      <div>
+                        <strong>Target Model:</strong>{" "}
+                        {diagnostics.diagnostics.ollama.targetModel}
+                      </div>
+                    )}
+                    {diagnostics.diagnostics.ollama.targetModelExists !==
+                      undefined && (
+                      <div>
+                        <strong>Model Available:</strong>
+                        <span
+                          className={`ml-2 ${
+                            diagnostics.diagnostics.ollama.targetModelExists
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {diagnostics.diagnostics.ollama.targetModelExists
+                            ? "✓"
+                            : "✗"}
+                        </span>
+                      </div>
+                    )}
+                    {diagnostics.diagnostics.ollama.error && (
+                      <div className="text-red-600">
+                        <strong>Error:</strong>{" "}
+                        {diagnostics.diagnostics.ollama.error}
+                      </div>
+                    )}
+                    {diagnostics.diagnostics.ollama.warning && (
+                      <div className="text-yellow-600">
+                        <strong>Warning:</strong>{" "}
+                        {diagnostics.diagnostics.ollama.warning}
+                      </div>
+                    )}
+                    {diagnostics.diagnostics.ollama.suggestion && (
+                      <div className="text-blue-600">
+                        <strong>Suggestion:</strong>{" "}
+                        {diagnostics.diagnostics.ollama.suggestion}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {diagnostics.diagnostics?.groq && (
+                <div className="border rounded p-3 bg-white">
+                  <h3 className="font-semibold text-purple-600 mb-2">
+                    Groq (Production)
+                  </h3>
+                  <div className="text-sm space-y-1">
+                    <div>
+                      <strong>Status:</strong>
+                      <span
+                        className={`ml-2 px-2 py-1 rounded text-xs ${
+                          diagnostics.diagnostics.groq.status === "connected"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {diagnostics.diagnostics.groq.status}
+                      </span>
+                    </div>
+                    {diagnostics.diagnostics.groq.model && (
+                      <div>
+                        <strong>Model:</strong>{" "}
+                        {diagnostics.diagnostics.groq.model}
+                      </div>
+                    )}
+                    {diagnostics.diagnostics.groq.error && (
+                      <div className="text-red-600">
+                        <strong>Error:</strong>{" "}
+                        {diagnostics.diagnostics.groq.error}
+                      </div>
+                    )}
+                    {diagnostics.diagnostics.groq.suggestion && (
+                      <div className="text-blue-600">
+                        <strong>Suggestion:</strong>{" "}
+                        {diagnostics.diagnostics.groq.suggestion}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Improved Idea Section */}
         <section
@@ -366,6 +536,22 @@ const IdeaForm = memo(function IdeaForm() {
           )
         )}
       </section>
+
+      {/* Footer with diagnostic button - subtle placement */}
+      <footer className="mt-12 pt-6 border-t border-gray-200">
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={checkLLMStatus}
+            className="text-xs text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1"
+            disabled={loading}
+          >
+            {loading ? "Checking..." : "System Status"}
+          </Button>
+        </div>
+      </footer>
     </div>
   );
 });

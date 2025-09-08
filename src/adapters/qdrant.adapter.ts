@@ -49,6 +49,7 @@ export class QdrantAdapter implements VectorDBClient {
       url,
       apiKey,
       timeout: config?.timeout,
+      checkCompatibility: false,
     });
   }
 

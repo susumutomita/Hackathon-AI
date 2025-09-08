@@ -68,6 +68,7 @@ describe("QdrantAdapter", () => {
         url: "http://localhost:6333",
         apiKey: "",
         timeout: undefined,
+        checkCompatibility: false,
       });
     });
 
@@ -84,6 +85,7 @@ describe("QdrantAdapter", () => {
         url: "http://custom:6333",
         apiKey: "test-key",
         timeout: 5000,
+        checkCompatibility: false,
       });
     });
 
@@ -106,6 +108,7 @@ describe("QdrantAdapter", () => {
         url: "http://env-url:6333",
         apiKey: "env-api-key",
         timeout: undefined,
+        checkCompatibility: false,
       });
     });
 
@@ -133,6 +136,7 @@ describe("QdrantAdapter", () => {
         url: "http://config-url:6333",
         apiKey: "config-api-key",
         timeout: undefined,
+        checkCompatibility: false,
       });
     });
   });

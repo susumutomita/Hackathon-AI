@@ -11,6 +11,7 @@ async function testConnection() {
     url: env.QD_URL,
     apiKey: env.QD_API_KEY,
     timeout: 10000, // 10秒のタイムアウト
+    checkCompatibility: false,
   });
 
   try {
