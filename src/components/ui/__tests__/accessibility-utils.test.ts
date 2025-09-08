@@ -10,10 +10,11 @@ describe("Accessibility Testing Utilities", () => {
         "aria-labelledby"?: string;
         "aria-describedby"?: string;
       }) => {
-        const hasAccessibleName = 
-          element["aria-label"] || 
-          element["aria-labelledby"] || 
-          element.role === "button";
+        const hasAccessibleName = !!(
+          element["aria-label"] ||
+          element["aria-labelledby"] ||
+          element.role === "button"
+        );
         return hasAccessibleName;
       };
 
@@ -24,20 +25,22 @@ describe("Accessibility Testing Utilities", () => {
 
     test("should validate dropdown menu accessibility", () => {
       const validateDropdownAria = (trigger: any, content: any) => {
-        const hasProperTrigger = 
+        const hasProperTrigger =
           trigger["aria-haspopup"] === "menu" ||
           trigger["aria-expanded"] !== undefined;
-        
-        const hasProperContent = 
-          content.role === "menu" ||
-          content["aria-labelledby"];
+
+        const hasProperContent =
+          content.role === "menu" || content["aria-labelledby"];
 
         return hasProperTrigger && hasProperContent;
       };
 
-      const validTrigger = { "aria-haspopup": "menu", "aria-expanded": "false" };
+      const validTrigger = {
+        "aria-haspopup": "menu",
+        "aria-expanded": "false",
+      };
       const validContent = { role: "menu", "aria-labelledby": "trigger-id" };
-      
+
       expect(validateDropdownAria(validTrigger, validContent)).toBe(true);
       expect(validateDropdownAria({}, {})).toBe(false);
     });
@@ -45,26 +48,25 @@ describe("Accessibility Testing Utilities", () => {
     test("should validate tabs accessibility", () => {
       const validateTabsAria = (tablist: any, tab: any, panel: any) => {
         const hasValidTablist = tablist.role === "tablist";
-        const hasValidTab = 
-          tab.role === "tab" && 
+        const hasValidTab =
+          tab.role === "tab" &&
           tab["aria-selected"] !== undefined &&
-          tab["aria-controls"];
-        const hasValidPanel = 
-          panel.role === "tabpanel" &&
-          panel["aria-labelledby"];
+          !!tab["aria-controls"];
+        const hasValidPanel =
+          panel.role === "tabpanel" && !!panel["aria-labelledby"];
 
         return hasValidTablist && hasValidTab && hasValidPanel;
       };
 
       const validTablist = { role: "tablist" };
-      const validTab = { 
-        role: "tab", 
-        "aria-selected": "true", 
-        "aria-controls": "panel-1" 
+      const validTab = {
+        role: "tab",
+        "aria-selected": "true",
+        "aria-controls": "panel-1",
       };
-      const validPanel = { 
-        role: "tabpanel", 
-        "aria-labelledby": "tab-1" 
+      const validPanel = {
+        role: "tabpanel",
+        "aria-labelledby": "tab-1",
       };
 
       expect(validateTabsAria(validTablist, validTab, validPanel)).toBe(true);
@@ -73,20 +75,18 @@ describe("Accessibility Testing Utilities", () => {
 
     test("should validate tooltip accessibility", () => {
       const validateTooltipAria = (trigger: any, tooltip: any) => {
-        const hasProperTrigger = 
-          trigger["aria-describedby"] || 
-          trigger["aria-labelledby"];
-        
-        const hasProperTooltip = 
-          tooltip.role === "tooltip" ||
-          tooltip.id;
+        const hasProperTrigger = !!(
+          trigger["aria-describedby"] || trigger["aria-labelledby"]
+        );
+
+        const hasProperTooltip = !!(tooltip.role === "tooltip" || tooltip.id);
 
         return hasProperTrigger && hasProperTooltip;
       };
 
       const validTrigger = { "aria-describedby": "tooltip-1" };
       const validTooltip = { role: "tooltip", id: "tooltip-1" };
-      
+
       expect(validateTooltipAria(validTrigger, validTooltip)).toBe(true);
       expect(validateTooltipAria({}, {})).toBe(false);
     });
@@ -94,9 +94,13 @@ describe("Accessibility Testing Utilities", () => {
 
   describe("Keyboard Navigation Validators", () => {
     test("should validate focusable elements have proper tabindex", () => {
-      const validateTabindex = (element: { tabIndex?: number; disabled?: boolean }) => {
-        if (element.disabled) return element.tabIndex === -1 || element.tabIndex === undefined;
-        return element.tabIndex === undefined || element.tabIndex >= 0;
+      const validateTabindex = (element: {
+        tabIndex?: number;
+        disabled?: boolean;
+      }) => {
+        if (element.disabled)
+          return element.tabIndex === -1 || element.tabIndex === undefined;
+        return element.tabIndex === undefined || element.tabIndex >= -1;
       };
 
       expect(validateTabindex({})).toBe(true); // Default tabindex behavior
@@ -115,23 +119,32 @@ describe("Accessibility Testing Utilities", () => {
         role?: string;
       }) => {
         // Interactive elements should handle both mouse and keyboard
-        if (element.onClick && (element.role === "button" || element.role === "link")) {
-          return element.onKeyDown !== undefined || element.onKeyUp !== undefined;
+        if (
+          element.onClick &&
+          (element.role === "button" || element.role === "link")
+        ) {
+          return (
+            element.onKeyDown !== undefined || element.onKeyUp !== undefined
+          );
         }
         return true;
       };
 
-      expect(validateKeyboardHandlers({ 
-        onClick: () => {}, 
-        onKeyDown: () => {}, 
-        role: "button" 
-      })).toBe(true);
-      
-      expect(validateKeyboardHandlers({ 
-        onClick: () => {}, 
-        role: "button" 
-      })).toBe(false);
-      
+      expect(
+        validateKeyboardHandlers({
+          onClick: () => {},
+          onKeyDown: () => {},
+          role: "button",
+        }),
+      ).toBe(true);
+
+      expect(
+        validateKeyboardHandlers({
+          onClick: () => {},
+          role: "button",
+        }),
+      ).toBe(false);
+
       expect(validateKeyboardHandlers({})).toBe(true);
     });
   });
@@ -140,13 +153,15 @@ describe("Accessibility Testing Utilities", () => {
     test("should validate color contrast ratios", () => {
       const calculateContrastRatio = (
         foreground: { r: number; g: number; b: number },
-        background: { r: number; g: number; b: number }
+        background: { r: number; g: number; b: number },
       ) => {
         // Simplified contrast ratio calculation for testing
         const getLuminance = (color: { r: number; g: number; b: number }) => {
           const sRGB = [color.r, color.g, color.b].map((c) => {
             c = c / 255;
-            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+            return c <= 0.03928
+              ? c / 12.92
+              : Math.pow((c + 0.055) / 1.055, 2.4);
           });
           return 0.2126 * sRGB[0] + 0.7152 * sRGB[1] + 0.0722 * sRGB[2];
         };
@@ -160,7 +175,7 @@ describe("Accessibility Testing Utilities", () => {
       const validateContrastRatio = (
         foreground: { r: number; g: number; b: number },
         background: { r: number; g: number; b: number },
-        level: "AA" | "AAA" = "AA"
+        level: "AA" | "AAA" = "AA",
       ) => {
         const ratio = calculateContrastRatio(foreground, background);
         const minRatio = level === "AAA" ? 7 : 4.5;
@@ -168,24 +183,30 @@ describe("Accessibility Testing Utilities", () => {
       };
 
       // Black on white should pass both AA and AAA
-      expect(validateContrastRatio(
-        { r: 0, g: 0, b: 0 },     // Black
-        { r: 255, g: 255, b: 255 }, // White
-        "AA"
-      )).toBe(true);
+      expect(
+        validateContrastRatio(
+          { r: 0, g: 0, b: 0 }, // Black
+          { r: 255, g: 255, b: 255 }, // White
+          "AA",
+        ),
+      ).toBe(true);
 
-      expect(validateContrastRatio(
-        { r: 0, g: 0, b: 0 },     // Black
-        { r: 255, g: 255, b: 255 }, // White
-        "AAA"
-      )).toBe(true);
+      expect(
+        validateContrastRatio(
+          { r: 0, g: 0, b: 0 }, // Black
+          { r: 255, g: 255, b: 255 }, // White
+          "AAA",
+        ),
+      ).toBe(true);
 
       // Light gray on white should fail
-      expect(validateContrastRatio(
-        { r: 200, g: 200, b: 200 }, // Light gray
-        { r: 255, g: 255, b: 255 }, // White
-        "AA"
-      )).toBe(false);
+      expect(
+        validateContrastRatio(
+          { r: 200, g: 200, b: 200 }, // Light gray
+          { r: 255, g: 255, b: 255 }, // White
+          "AA",
+        ),
+      ).toBe(false);
     });
   });
 
@@ -207,19 +228,25 @@ describe("Accessibility Testing Utilities", () => {
         return true;
       };
 
-      expect(validateScreenReaderText({ 
-        className: "sr-only", 
-        "aria-hidden": "false" 
-      })).toBe(true);
-      
-      expect(validateScreenReaderText({ 
-        className: "sr-only", 
-        "aria-hidden": "true" 
-      })).toBe(false);
-      
-      expect(validateScreenReaderText({ 
-        "aria-label": "Close button" 
-      })).toBe(true);
+      expect(
+        validateScreenReaderText({
+          className: "sr-only",
+          "aria-hidden": "false",
+        }),
+      ).toBe(true);
+
+      expect(
+        validateScreenReaderText({
+          className: "sr-only",
+          "aria-hidden": "true",
+        }),
+      ).toBe(false);
+
+      expect(
+        validateScreenReaderText({
+          "aria-label": "Close button",
+        }),
+      ).toBe(true);
     });
 
     test("should validate live regions", () => {
@@ -227,17 +254,20 @@ describe("Accessibility Testing Utilities", () => {
         "aria-live"?: "polite" | "assertive" | "off";
         role?: string;
       }) => {
-        const hasLiveRegion = 
-          element["aria-live"] === "polite" || 
+        const hasLiveRegion =
+          element["aria-live"] === "polite" ||
           element["aria-live"] === "assertive" ||
           element.role === "status" ||
           element.role === "alert";
 
         // For error messages, should be assertive or alert
         if (element.role === "alert") {
-          return element["aria-live"] === "assertive" || element["aria-live"] === undefined;
+          return (
+            element["aria-live"] === "assertive" ||
+            element["aria-live"] === undefined
+          );
         }
-        
+
         return hasLiveRegion;
       };
 
@@ -252,71 +282,74 @@ describe("Accessibility Testing Utilities", () => {
   describe("Form Accessibility Validators", () => {
     test("should validate form field associations", () => {
       const validateFormField = (
-        input: { id?: string; "aria-labelledby"?: string; "aria-describedby"?: string; },
-        label?: { htmlFor?: string; id?: string; },
-        description?: { id?: string; },
-        error?: { id?: string; }
+        input: {
+          id?: string;
+          "aria-labelledby"?: string;
+          "aria-describedby"?: string;
+        },
+        label?: { htmlFor?: string; id?: string },
+        description?: { id?: string },
+        error?: { id?: string },
       ) => {
-        const hasProperLabel = 
-          (label?.htmlFor === input.id) ||
-          (input["aria-labelledby"] && label?.id);
+        const hasProperLabel =
+          label?.htmlFor === input.id ||
+          !!(input["aria-labelledby"] && label?.id);
 
-        const hasProperDescription = 
-          !description || 
-          (description.id && input["aria-describedby"]?.includes(description.id));
+        const hasProperDescription =
+          !description ||
+          !!(
+            description.id &&
+            input["aria-describedby"]?.includes(description.id)
+          );
 
-        const hasProperError = 
-          !error || 
-          (error.id && input["aria-describedby"]?.includes(error.id));
+        const hasProperError =
+          !error ||
+          !!(error.id && input["aria-describedby"]?.includes(error.id));
 
         return hasProperLabel && hasProperDescription && hasProperError;
       };
 
-      const validInput = { 
-        id: "email", 
-        "aria-describedby": "email-help email-error" 
+      const validInput = {
+        id: "email",
+        "aria-describedby": "email-help email-error",
       };
       const validLabel = { htmlFor: "email" };
       const validDescription = { id: "email-help" };
       const validError = { id: "email-error" };
 
-      expect(validateFormField(
-        validInput, 
-        validLabel, 
-        validDescription, 
-        validError
-      )).toBe(true);
+      expect(
+        validateFormField(validInput, validLabel, validDescription, validError),
+      ).toBe(true);
 
       expect(validateFormField({ id: "email" }, {})).toBe(false);
     });
 
     test("should validate required field indicators", () => {
       const validateRequiredField = (
-        input: { required?: boolean; "aria-required"?: string; },
-        label?: { textContent?: string; }
+        input: { required?: boolean; "aria-required"?: string },
+        label?: { textContent?: string },
       ) => {
         if (input.required) {
           const hasAriaRequired = input["aria-required"] === "true";
-          const hasVisualIndicator = label?.textContent?.includes("*") || 
-                                    label?.textContent?.includes("required");
-          
+          const hasVisualIndicator = !!(
+            label?.textContent?.includes("*") ||
+            label?.textContent?.includes("required")
+          );
+
           return hasAriaRequired || hasVisualIndicator;
         }
         return true;
       };
 
-      expect(validateRequiredField(
-        { required: true, "aria-required": "true" }
-      )).toBe(true);
+      expect(
+        validateRequiredField({ required: true, "aria-required": "true" }),
+      ).toBe(true);
 
-      expect(validateRequiredField(
-        { required: true }, 
-        { textContent: "Email *" }
-      )).toBe(true);
+      expect(
+        validateRequiredField({ required: true }, { textContent: "Email *" }),
+      ).toBe(true);
 
-      expect(validateRequiredField(
-        { required: true }
-      )).toBe(false);
+      expect(validateRequiredField({ required: true })).toBe(false);
 
       expect(validateRequiredField({})).toBe(true);
     });
@@ -325,22 +358,26 @@ describe("Accessibility Testing Utilities", () => {
   describe("Focus Management Validators", () => {
     test("should validate focus trap implementation", () => {
       const validateFocusTrap = (modal: {
-        firstFocusable?: { focus: () => void; };
-        lastFocusable?: { focus: () => void; };
+        firstFocusable?: { focus: () => void };
+        lastFocusable?: { focus: () => void };
         onKeyDown?: (e: KeyboardEvent) => void;
       }) => {
         // Modal should have focusable elements and keyboard handler
-        const hasFocusableElements = modal.firstFocusable && modal.lastFocusable;
+        const hasFocusableElements = !!(
+          modal.firstFocusable && modal.lastFocusable
+        );
         const hasKeyboardHandler = modal.onKeyDown !== undefined;
-        
+
         return hasFocusableElements && hasKeyboardHandler;
       };
 
-      expect(validateFocusTrap({
-        firstFocusable: { focus: () => {} },
-        lastFocusable: { focus: () => {} },
-        onKeyDown: () => {}
-      })).toBe(true);
+      expect(
+        validateFocusTrap({
+          firstFocusable: { focus: () => {} },
+          lastFocusable: { focus: () => {} },
+          onKeyDown: () => {},
+        }),
+      ).toBe(true);
 
       expect(validateFocusTrap({})).toBe(false);
     });
@@ -352,16 +389,19 @@ describe("Accessibility Testing Utilities", () => {
         onUnmount?: () => void;
       }) => {
         // Should store previous active element and restore on unmount
-        const storesPreviousFocus = component.previousActiveElement !== undefined;
+        const storesPreviousFocus =
+          component.previousActiveElement !== undefined;
         const hasUnmountHandler = component.onUnmount !== undefined;
-        
+
         return storesPreviousFocus && hasUnmountHandler;
       };
 
-      expect(validateFocusRestoration({
-        previousActiveElement: null,
-        onUnmount: () => {}
-      })).toBe(true);
+      expect(
+        validateFocusRestoration({
+          previousActiveElement: null,
+          onUnmount: () => {},
+        }),
+      ).toBe(true);
 
       expect(validateFocusRestoration({})).toBe(false);
     });
@@ -383,19 +423,23 @@ describe("Accessibility Testing Utilities", () => {
         );
       };
 
-      expect(validateComposition({
-        hasProperHierarchy: true,
-        hasUniqueIds: true,
-        hasConsistentLabeling: true,
-        hasLogicalTabOrder: true
-      })).toBe(true);
+      expect(
+        validateComposition({
+          hasProperHierarchy: true,
+          hasUniqueIds: true,
+          hasConsistentLabeling: true,
+          hasLogicalTabOrder: true,
+        }),
+      ).toBe(true);
 
-      expect(validateComposition({
-        hasProperHierarchy: false,
-        hasUniqueIds: true,
-        hasConsistentLabeling: true,
-        hasLogicalTabOrder: true
-      })).toBe(false);
+      expect(
+        validateComposition({
+          hasProperHierarchy: false,
+          hasUniqueIds: true,
+          hasConsistentLabeling: true,
+          hasLogicalTabOrder: true,
+        }),
+      ).toBe(false);
     });
 
     test("should validate responsive accessibility", () => {
@@ -413,19 +457,23 @@ describe("Accessibility Testing Utilities", () => {
         );
       };
 
-      expect(validateResponsiveA11y({
-        hasResponsiveFocusManagement: true,
-        hasResponsiveLabeling: true,
-        hasTouchTargetSize: true,
-        hasResponsiveNavigation: true
-      })).toBe(true);
+      expect(
+        validateResponsiveA11y({
+          hasResponsiveFocusManagement: true,
+          hasResponsiveLabeling: true,
+          hasTouchTargetSize: true,
+          hasResponsiveNavigation: true,
+        }),
+      ).toBe(true);
 
-      expect(validateResponsiveA11y({
-        hasResponsiveFocusManagement: false,
-        hasResponsiveLabeling: true,
-        hasTouchTargetSize: true,
-        hasResponsiveNavigation: true
-      })).toBe(false);
+      expect(
+        validateResponsiveA11y({
+          hasResponsiveFocusManagement: false,
+          hasResponsiveLabeling: true,
+          hasTouchTargetSize: true,
+          hasResponsiveNavigation: true,
+        }),
+      ).toBe(false);
     });
   });
 });

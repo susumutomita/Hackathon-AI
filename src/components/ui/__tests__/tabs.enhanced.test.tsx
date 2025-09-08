@@ -87,29 +87,34 @@ expect.extend({
 
 // Enhanced mock for Radix UI tabs
 vi.mock("@radix-ui/react-tabs", () => {
-  const createMockElement = (testId: string, tag = "div") =>
-    React.forwardRef<any, any>(
-      ({ children, className, onValueChange, value, ...props }, ref) => {
-        const handleClick = () => {
-          if (onValueChange && value) {
-            onValueChange(value);
-          }
-        };
+  const createMockElement = (testId: string, tag = "div") => {
+    const Comp = React.forwardRef<any, any>(function MockComponent(
+      { children, className, onValueChange, value, ...props },
+      ref,
+    ) {
+      const handleClick = () => {
+        if (onValueChange && value) {
+          onValueChange(value);
+        }
+      };
 
-        return React.createElement(
-          tag,
-          {
-            ref,
-            "data-testid": testId,
-            className,
-            onClick: handleClick,
-            "data-value": value,
-            ...props,
-          },
-          children,
-        );
-      },
-    );
+      return React.createElement(
+        tag,
+        {
+          ref,
+          "data-testid": testId,
+          className,
+          onClick: handleClick,
+          "data-value": value,
+          ...props,
+        },
+        children,
+      );
+    });
+    // Satisfy react/display-name for mocked components
+    (Comp as any).displayName = `Mock-${testId}`;
+    return Comp;
+  };
 
   return {
     Root: createMockElement("tabs-root"),
@@ -128,10 +133,10 @@ vi.mock("@/lib/utils", () => ({
         typeof cls === "string"
           ? cls.split(" ")
           : typeof cls === "object" && cls !== null
-          ? Object.entries(cls)
-              .filter(([, value]) => value)
-              .map(([key]) => key)
-          : [],
+            ? Object.entries(cls)
+                .filter(([, value]) => value)
+                .map(([key]) => key)
+            : [],
       )
       .join(" "),
 }));
@@ -186,7 +191,7 @@ describe("Tabs Enhanced Tests", () => {
       );
 
       expect(CompleteTabs).toBeDefined();
-      expect(typeof Tabs).toBe("function");
+      expect(typeof Tabs).toBe("object");
       expect(typeof TabsList).toBe("object");
       expect(typeof TabsTrigger).toBe("object");
       expect(typeof TabsContent).toBe("object");
@@ -220,18 +225,28 @@ describe("Tabs Enhanced Tests", () => {
       const tabsModule = await import("../tabs");
       const { Tabs, TabsList, TabsTrigger, TabsContent } = tabsModule;
 
-      const [activeTab, setActiveTab] = React.useState("controlled-tab1");
+      const ControlledTabs = () => {
+        const [activeTab, setActiveTab] = React.useState("controlled-tab1");
 
-      const ControlledTabs = () => (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="controlled-tab1">Controlled Tab 1</TabsTrigger>
-            <TabsTrigger value="controlled-tab2">Controlled Tab 2</TabsTrigger>
-          </TabsList>
-          <TabsContent value="controlled-tab1">Controlled Content 1</TabsContent>
-          <TabsContent value="controlled-tab2">Controlled Content 2</TabsContent>
-        </Tabs>
-      );
+        return (
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="controlled-tab1">
+                Controlled Tab 1
+              </TabsTrigger>
+              <TabsTrigger value="controlled-tab2">
+                Controlled Tab 2
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="controlled-tab1">
+              Controlled Content 1
+            </TabsContent>
+            <TabsContent value="controlled-tab2">
+              Controlled Content 2
+            </TabsContent>
+          </Tabs>
+        );
+      };
 
       const UncontrolledTabs = () => (
         <Tabs defaultValue="uncontrolled-tab1">
@@ -254,7 +269,6 @@ describe("Tabs Enhanced Tests", () => {
 
       expect(ControlledTabs).toBeDefined();
       expect(UncontrolledTabs).toBeDefined();
-      expect(setActiveTab).toBeDefined();
     });
 
     test("should handle disabled tabs", async () => {
@@ -272,7 +286,9 @@ describe("Tabs Enhanced Tests", () => {
           </TabsList>
           <TabsContent value="enabled">Enabled content</TabsContent>
           <TabsContent value="disabled">Disabled content</TabsContent>
-          <TabsContent value="another-enabled">Another enabled content</TabsContent>
+          <TabsContent value="another-enabled">
+            Another enabled content
+          </TabsContent>
         </Tabs>
       );
 
@@ -436,7 +452,10 @@ describe("Tabs Enhanced Tests", () => {
               Code
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="styled-tab1" className="mt-4 p-4 border rounded-lg">
+          <TabsContent
+            value="styled-tab1"
+            className="mt-4 p-4 border rounded-lg"
+          >
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Design System</h3>
               <p className="text-muted-foreground">
@@ -444,7 +463,10 @@ describe("Tabs Enhanced Tests", () => {
               </p>
             </div>
           </TabsContent>
-          <TabsContent value="styled-tab2" className="mt-4 p-4 border rounded-lg">
+          <TabsContent
+            value="styled-tab2"
+            className="mt-4 p-4 border rounded-lg"
+          >
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Code Editor</h3>
               <p className="text-muted-foreground">
@@ -522,10 +544,18 @@ describe("Tabs Enhanced Tests", () => {
               Settings
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="responsive-tab1">Responsive content 1</TabsContent>
-          <TabsContent value="responsive-tab2">Responsive content 2</TabsContent>
-          <TabsContent value="responsive-tab3">Responsive content 3</TabsContent>
-          <TabsContent value="responsive-tab4">Responsive content 4</TabsContent>
+          <TabsContent value="responsive-tab1">
+            Responsive content 1
+          </TabsContent>
+          <TabsContent value="responsive-tab2">
+            Responsive content 2
+          </TabsContent>
+          <TabsContent value="responsive-tab3">
+            Responsive content 3
+          </TabsContent>
+          <TabsContent value="responsive-tab4">
+            Responsive content 4
+          </TabsContent>
         </Tabs>
       );
 
@@ -543,9 +573,7 @@ describe("Tabs Enhanced Tests", () => {
           <TabsList>
             <TabsTrigger value="">Empty Value</TabsTrigger>
             <TabsTrigger value={null as any}>Null Value</TabsTrigger>
-            <TabsTrigger value={undefined as any}>
-              Undefined Value
-            </TabsTrigger>
+            <TabsTrigger value={undefined as any}>Undefined Value</TabsTrigger>
             <TabsTrigger value="valid">Valid Value</TabsTrigger>
           </TabsList>
           <TabsContent value="">Empty content</TabsContent>
@@ -576,30 +604,31 @@ describe("Tabs Enhanced Tests", () => {
       const tabsModule = await import("../tabs");
       const { Tabs, TabsList, TabsTrigger, TabsContent } = tabsModule;
 
-      const [tabs, setTabs] = React.useState([
-        { id: "dynamic-1", label: "Tab 1", content: "Content 1" },
-        { id: "dynamic-2", label: "Tab 2", content: "Content 2" },
-      ]);
+      const DynamicTabs = () => {
+        const [tabs, setTabs] = React.useState([
+          { id: "dynamic-1", label: "Tab 1", content: "Content 1" },
+          { id: "dynamic-2", label: "Tab 2", content: "Content 2" },
+        ]);
 
-      const DynamicTabs = () => (
-        <Tabs defaultValue="dynamic-1">
-          <TabsList>
+        return (
+          <Tabs defaultValue="dynamic-1">
+            <TabsList>
+              {tabs.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id}>
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {tabs.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id}>
-                {tab.label}
-              </TabsTrigger>
+              <TabsContent key={tab.id} value={tab.id}>
+                {tab.content}
+              </TabsContent>
             ))}
-          </TabsList>
-          {tabs.map((tab) => (
-            <TabsContent key={tab.id} value={tab.id}>
-              {tab.content}
-            </TabsContent>
-          ))}
-        </Tabs>
-      );
+          </Tabs>
+        );
+      };
 
       expect(DynamicTabs).toBeDefined();
-      expect(setTabs).toBeDefined();
     });
 
     test("should handle content overflow scenarios", async () => {
@@ -708,7 +737,10 @@ describe("Tabs Enhanced Tests", () => {
             </TabsContent>
             <TabsContent value="form-tab3">
               <p>Review your information before submitting.</p>
-              <button type="submit" className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+              <button
+                type="submit"
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+              >
                 Submit
               </button>
             </TabsContent>

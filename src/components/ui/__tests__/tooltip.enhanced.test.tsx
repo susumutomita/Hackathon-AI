@@ -80,82 +80,92 @@ expect.extend({
     return {
       pass,
       message: () =>
-        pass ? "expected element not to be visible" : "expected element to be visible",
+        pass
+          ? "expected element not to be visible"
+          : "expected element to be visible",
     };
   },
 });
 
 // Enhanced mock for Radix UI tooltip
 vi.mock("@radix-ui/react-tooltip", () => {
-  const createMockElement = (testId: string, tag = "div") =>
-    React.forwardRef<any, any>(
-      (
-        {
-          children,
-          className,
-          sideOffset,
-          side,
-          align,
-          open,
-          delayDuration,
-          onOpenChange,
-          ...props
-        },
-        ref,
-      ) => {
-        const [isOpen, setIsOpen] = React.useState(open || false);
-
-        const handleMouseEnter = () => {
-          setIsOpen(true);
-          onOpenChange?.(true);
-        };
-
-        const handleMouseLeave = () => {
-          setIsOpen(false);
-          onOpenChange?.(false);
-        };
-
-        return React.createElement(
-          tag,
-          {
-            ref,
-            "data-testid": testId,
-            className,
-            "data-side-offset": sideOffset,
-            "data-side": side,
-            "data-align": align,
-            "data-open": isOpen,
-            onMouseEnter: handleMouseEnter,
-            onMouseLeave: handleMouseLeave,
-            style: { display: isOpen ? "block" : "none" },
-            ...props,
-          },
-          children,
-        );
+  const createMockElement = (testId: string, tag = "div") => {
+    const Comp = React.forwardRef<any, any>(function MockComponent(
+      {
+        children,
+        className,
+        sideOffset,
+        side,
+        align,
+        open,
+        delayDuration,
+        onOpenChange,
+        ...props
       },
+      ref,
+    ) {
+      const [isOpen, setIsOpen] = React.useState(open || false);
+
+      const handleMouseEnter = () => {
+        setIsOpen(true);
+        onOpenChange?.(true);
+      };
+
+      const handleMouseLeave = () => {
+        setIsOpen(false);
+        onOpenChange?.(false);
+      };
+
+      return React.createElement(
+        tag,
+        {
+          ref,
+          "data-testid": testId,
+          className,
+          "data-side-offset": sideOffset,
+          "data-side": side,
+          "data-align": align,
+          "data-open": isOpen,
+          onMouseEnter: handleMouseEnter,
+          onMouseLeave: handleMouseLeave,
+          style: { display: isOpen ? "block" : "none" },
+          ...props,
+        },
+        children,
+      );
+    });
+    // Satisfy react/display-name for mocked components
+    (Comp as any).displayName = `Mock-${testId}`;
+    return Comp;
+  };
+
+  const Provider = ({ children, delayDuration, skipDelayDuration }: any) =>
+    React.createElement(
+      "div",
+      {
+        "data-testid": "tooltip-provider",
+        "data-delay-duration": delayDuration,
+        "data-skip-delay-duration": skipDelayDuration,
+      },
+      children,
     );
+  (Provider as any).displayName = "Mock-Tooltip-Provider";
+
+  const Root = ({ children, open, onOpenChange, delayDuration }: any) =>
+    React.createElement(
+      "div",
+      {
+        "data-testid": "tooltip-root",
+        "data-open": open,
+        "data-delay-duration": delayDuration,
+      },
+      children,
+    );
+  (Root as any).displayName = "Mock-Tooltip-Root";
 
   return {
-    Provider: ({ children, delayDuration, skipDelayDuration }: any) =>
-      React.createElement(
-        "div",
-        {
-          "data-testid": "tooltip-provider",
-          "data-delay-duration": delayDuration,
-          "data-skip-delay-duration": skipDelayDuration,
-        },
-        children,
-      ),
-    Root: ({ children, open, onOpenChange, delayDuration }: any) =>
-      React.createElement(
-        "div",
-        {
-          "data-testid": "tooltip-root",
-          "data-open": open,
-          "data-delay-duration": delayDuration,
-        },
-        children,
-      ),
+    Provider,
+    Root,
     Trigger: createMockElement("tooltip-trigger", "button"),
     Content: createMockElement("tooltip-content"),
   };
@@ -170,10 +180,10 @@ vi.mock("@/lib/utils", () => ({
         typeof cls === "string"
           ? cls.split(" ")
           : typeof cls === "object" && cls !== null
-          ? Object.entries(cls)
-              .filter(([, value]) => value)
-              .map(([key]) => key)
-          : [],
+            ? Object.entries(cls)
+                .filter(([, value]) => value)
+                .map(([key]) => key)
+            : [],
       )
       .join(" "),
 }));
@@ -221,7 +231,7 @@ describe("Tooltip Enhanced Tests", () => {
 
       expect(CompleteTooltip).toBeDefined();
       expect(typeof Tooltip).toBe("function");
-      expect(typeof TooltipTrigger).toBe("function");
+      expect(typeof TooltipTrigger).toBe("object");
       expect(typeof TooltipContent).toBe("object");
       expect(typeof TooltipProvider).toBe("function");
     });
@@ -257,16 +267,17 @@ describe("Tooltip Enhanced Tests", () => {
       const { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } =
         tooltipModule;
 
-      const [isOpen, setIsOpen] = React.useState(false);
-
-      const ControlledTooltip = () => (
-        <TooltipProvider>
-          <Tooltip open={isOpen} onOpenChange={setIsOpen}>
-            <TooltipTrigger>Controlled trigger</TooltipTrigger>
-            <TooltipContent>Controlled content</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
+      const ControlledTooltip = () => {
+        const [isOpen, setIsOpen] = React.useState(false);
+        return (
+          <TooltipProvider>
+            <Tooltip open={isOpen} onOpenChange={setIsOpen}>
+              <TooltipTrigger>Controlled trigger</TooltipTrigger>
+              <TooltipContent>Controlled content</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      };
 
       const UncontrolledTooltip = () => (
         <TooltipProvider>
@@ -279,7 +290,6 @@ describe("Tooltip Enhanced Tests", () => {
 
       expect(ControlledTooltip).toBeDefined();
       expect(UncontrolledTooltip).toBeDefined();
-      expect(setIsOpen).toBeDefined();
     });
 
     test("should handle different positioning options", async () => {
@@ -435,11 +445,7 @@ describe("Tooltip Enhanced Tests", () => {
             >
               <span aria-hidden="true">✏️</span>
             </TooltipTrigger>
-            <TooltipContent
-              id="edit-tooltip"
-              role="tooltip"
-              aria-live="polite"
-            >
+            <TooltipContent id="edit-tooltip" role="tooltip" aria-live="polite">
               Click to edit your profile information
             </TooltipContent>
           </Tooltip>
@@ -584,8 +590,8 @@ describe("Tooltip Enhanced Tests", () => {
                 <div className="space-y-2">
                   <h4 className="font-semibold">Feature Information</h4>
                   <p className="text-sm text-muted-foreground">
-                    This feature allows you to perform advanced operations
-                    with enhanced security.
+                    This feature allows you to perform advanced operations with
+                    enhanced security.
                   </p>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
@@ -604,7 +610,9 @@ describe("Tooltip Enhanced Tests", () => {
                   </div>
                   <div>
                     <p className="font-medium">UI Component</p>
-                    <p className="text-xs text-muted-foreground">Version 2.1.0</p>
+                    <p className="text-xs text-muted-foreground">
+                      Version 2.1.0
+                    </p>
                   </div>
                 </div>
               </TooltipContent>
@@ -657,7 +665,7 @@ describe("Tooltip Enhanced Tests", () => {
 
             <Tooltip>
               <TooltipTrigger>Whitespace content</TooltipTrigger>
-              <TooltipContent>   </TooltipContent>
+              <TooltipContent> </TooltipContent>
             </Tooltip>
           </div>
         </TooltipProvider>
@@ -676,12 +684,16 @@ describe("Tooltip Enhanced Tests", () => {
           <div>
             <Tooltip>
               <TooltipTrigger>Extreme offset</TooltipTrigger>
-              <TooltipContent sideOffset={9999}>Far away tooltip</TooltipContent>
+              <TooltipContent sideOffset={9999}>
+                Far away tooltip
+              </TooltipContent>
             </Tooltip>
 
             <Tooltip>
               <TooltipTrigger>Negative offset</TooltipTrigger>
-              <TooltipContent sideOffset={-50}>Negative offset tooltip</TooltipContent>
+              <TooltipContent sideOffset={-50}>
+                Negative offset tooltip
+              </TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -762,11 +774,16 @@ describe("Tooltip Enhanced Tests", () => {
           <div className="space-y-4">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button onClick={onClick} className="px-4 py-2 bg-blue-500 text-white rounded">
+                <button
+                  onClick={onClick}
+                  className="px-4 py-2 bg-blue-500 text-white rounded"
+                >
                   Clickable button with tooltip
                 </button>
               </TooltipTrigger>
-              <TooltipContent>This button is clickable and has a tooltip</TooltipContent>
+              <TooltipContent>
+                This button is clickable and has a tooltip
+              </TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -775,7 +792,9 @@ describe("Tooltip Enhanced Tests", () => {
                   Link with tooltip
                 </a>
               </TooltipTrigger>
-              <TooltipContent>This is a link with additional information</TooltipContent>
+              <TooltipContent>
+                This is a link with additional information
+              </TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -801,53 +820,53 @@ describe("Tooltip Enhanced Tests", () => {
       const { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } =
         tooltipModule;
 
-      const [errors, setErrors] = React.useState({
-        email: "",
-        password: "",
-      });
+      const FormTooltips = () => {
+        const [errors, setErrors] = React.useState({
+          email: "",
+          password: "",
+        });
+        return (
+          <TooltipProvider>
+            <form className="space-y-4">
+              <div>
+                <label htmlFor="email">Email</label>
+                <Tooltip open={!!errors.email}>
+                  <TooltipTrigger asChild>
+                    <input
+                      id="email"
+                      type="email"
+                      className={`px-3 py-2 border rounded ${
+                        errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-red-50 text-red-800 border-red-200">
+                    {errors.email}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
 
-      const FormTooltips = () => (
-        <TooltipProvider>
-          <form className="space-y-4">
-            <div>
-              <label htmlFor="email">Email</label>
-              <Tooltip open={!!errors.email}>
-                <TooltipTrigger asChild>
-                  <input
-                    id="email"
-                    type="email"
-                    className={`px-3 py-2 border rounded ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent className="bg-red-50 text-red-800 border-red-200">
-                  {errors.email}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-
-            <div>
-              <label htmlFor="password">Password</label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <input
-                    id="password"
-                    type="password"
-                    className="px-3 py-2 border rounded"
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  Password must be at least 8 characters long
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </form>
-        </TooltipProvider>
-      );
+              <div>
+                <label htmlFor="password">Password</label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <input
+                      id="password"
+                      type="password"
+                      className="px-3 py-2 border rounded"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Password must be at least 8 characters long
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </form>
+          </TooltipProvider>
+        );
+      };
 
       expect(FormTooltips).toBeDefined();
-      expect(setErrors).toBeDefined();
     });
   });
 });

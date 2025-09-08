@@ -91,10 +91,10 @@ vi.mock("@/lib/utils", () => ({
         typeof cls === "string"
           ? cls.split(" ")
           : typeof cls === "object" && cls !== null
-          ? Object.entries(cls)
-              .filter(([, value]) => value)
-              .map(([key]) => key)
-          : [],
+            ? Object.entries(cls)
+                .filter(([, value]) => value)
+                .map(([key]) => key)
+            : [],
       )
       .join(" "),
 }));
@@ -176,9 +176,7 @@ describe("Card Enhanced Tests", () => {
             <CardHeader>
               <CardTitle>Basic Card</CardTitle>
             </CardHeader>
-            <CardContent>
-              Simple card content
-            </CardContent>
+            <CardContent>Simple card content</CardContent>
           </Card>
 
           {/* Card with description */}
@@ -187,16 +185,12 @@ describe("Card Enhanced Tests", () => {
               <CardTitle>Card with Description</CardTitle>
               <CardDescription>This card has a description</CardDescription>
             </CardHeader>
-            <CardContent>
-              Content with description above
-            </CardContent>
+            <CardContent>Content with description above</CardContent>
           </Card>
 
           {/* Card with footer */}
           <Card>
-            <CardContent>
-              Content with footer
-            </CardContent>
+            <CardContent>Content with footer</CardContent>
             <CardFooter>
               <button>Action</button>
             </CardFooter>
@@ -208,12 +202,8 @@ describe("Card Enhanced Tests", () => {
               <CardTitle>Full Structure</CardTitle>
               <CardDescription>Complete card example</CardDescription>
             </CardHeader>
-            <CardContent>
-              Main content area
-            </CardContent>
-            <CardFooter>
-              Footer actions
-            </CardFooter>
+            <CardContent>Main content area</CardContent>
+            <CardFooter>Footer actions</CardFooter>
           </Card>
         </div>
       );
@@ -225,7 +215,7 @@ describe("Card Enhanced Tests", () => {
       const onClick = vi.fn();
       const onMouseEnter = vi.fn();
       const onMouseLeave = vi.fn();
-      
+
       const cardModule = await import("../card");
       const { Card, CardHeader, CardTitle, CardContent } = cardModule;
 
@@ -240,9 +230,7 @@ describe("Card Enhanced Tests", () => {
             <CardHeader>
               <CardTitle>Clickable Card</CardTitle>
             </CardHeader>
-            <CardContent>
-              This entire card is clickable
-            </CardContent>
+            <CardContent>This entire card is clickable</CardContent>
           </Card>
 
           <Card className="group hover:bg-accent transition-colors">
@@ -251,9 +239,7 @@ describe("Card Enhanced Tests", () => {
                 Hoverable Card
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              This card changes appearance on hover
-            </CardContent>
+            <CardContent>This card changes appearance on hover</CardContent>
           </Card>
         </div>
       );
@@ -285,9 +271,7 @@ describe("Card Enhanced Tests", () => {
             <CardHeader>
               <CardTitle>Medium Card</CardTitle>
             </CardHeader>
-            <CardContent>
-              Standard size content
-            </CardContent>
+            <CardContent>Standard size content</CardContent>
           </Card>
 
           {/* Large card */}
@@ -355,7 +339,7 @@ describe("Card Enhanced Tests", () => {
       const onKeyDown = vi.fn();
       const onFocus = vi.fn();
       const onBlur = vi.fn();
-      
+
       const cardModule = await import("../card");
       const { Card, CardHeader, CardTitle, CardContent } = cardModule;
 
@@ -371,9 +355,7 @@ describe("Card Enhanced Tests", () => {
           <CardHeader>
             <CardTitle>Keyboard Accessible Card</CardTitle>
           </CardHeader>
-          <CardContent>
-            This card can be navigated with keyboard
-          </CardContent>
+          <CardContent>This card can be navigated with keyboard</CardContent>
         </Card>
       );
 
@@ -385,13 +367,8 @@ describe("Card Enhanced Tests", () => {
 
     test("should handle ARIA attributes properly", async () => {
       const cardModule = await import("../card");
-      const {
-        Card,
-        CardHeader,
-        CardTitle,
-        CardDescription,
-        CardContent,
-      } = cardModule;
+      const { Card, CardHeader, CardTitle, CardDescription, CardContent } =
+        cardModule;
 
       const AriaCard = () => (
         <Card
@@ -464,9 +441,7 @@ describe("Card Enhanced Tests", () => {
                 Outlined Card
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              Dashed border styling
-            </CardContent>
+            <CardContent>Dashed border styling</CardContent>
           </Card>
 
           {/* Compact card */}
@@ -521,7 +496,9 @@ describe("Card Enhanced Tests", () => {
         <Card className="w-full max-w-4xl">
           <CardHeader>
             <CardTitle>Parent Card</CardTitle>
-            <CardDescription>Container for multiple child cards</CardDescription>
+            <CardDescription>
+              Container for multiple child cards
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -529,21 +506,17 @@ describe("Card Enhanced Tests", () => {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Child Card 1</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  Nested card content
-                </CardContent>
+                <CardContent className="pt-0">Nested card content</CardContent>
               </Card>
-              
+
               <Card className="shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Child Card 2</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  Another nested card
-                </CardContent>
+                <CardContent className="pt-0">Another nested card</CardContent>
               </Card>
             </div>
-            
+
             <Card className="bg-muted/50">
               <CardContent className="pt-6">
                 <p className="text-center text-muted-foreground">
@@ -553,9 +526,7 @@ describe("Card Enhanced Tests", () => {
             </Card>
           </CardContent>
           <CardFooter>
-            <p className="text-sm text-muted-foreground">
-              Parent card footer
-            </p>
+            <p className="text-sm text-muted-foreground">Parent card footer</p>
           </CardFooter>
         </Card>
       );
@@ -579,9 +550,7 @@ describe("Card Enhanced Tests", () => {
             <CardHeader>
               <CardTitle>Card with Header Image</CardTitle>
             </CardHeader>
-            <CardContent>
-              Content below the header image
-            </CardContent>
+            <CardContent>Content below the header image</CardContent>
           </Card>
 
           {/* Card with inline image */}
@@ -680,7 +649,9 @@ describe("Card Enhanced Tests", () => {
           {/* Metric card */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Revenue
+              </CardTitle>
               <div className="h-4 w-4 bg-green-500 rounded-full"></div>
             </CardHeader>
             <CardContent>
@@ -750,13 +721,8 @@ describe("Card Enhanced Tests", () => {
   describe("Error Handling and Edge Cases", () => {
     test("should handle empty and null content", async () => {
       const cardModule = await import("../card");
-      const {
-        Card,
-        CardHeader,
-        CardTitle,
-        CardDescription,
-        CardContent,
-      } = cardModule;
+      const { Card, CardHeader, CardTitle, CardDescription, CardContent } =
+        cardModule;
 
       const EmptyContentCards = () => (
         <div className="space-y-4">
@@ -797,15 +763,13 @@ describe("Card Enhanced Tests", () => {
 
     test("should handle overflow and long content", async () => {
       const cardModule = await import("../card");
-      const {
-        Card,
-        CardHeader,
-        CardTitle,
-        CardDescription,
-        CardContent,
-      } = cardModule;
+      const { Card, CardHeader, CardTitle, CardDescription, CardContent } =
+        cardModule;
 
-      const LongContent = "This is a very long piece of content that might overflow the card boundaries and needs to be handled properly with text wrapping or truncation depending on the design requirements. ".repeat(5);
+      const LongContent =
+        "This is a very long piece of content that might overflow the card boundaries and needs to be handled properly with text wrapping or truncation depending on the design requirements. ".repeat(
+          5,
+        );
 
       const OverflowCards = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -819,9 +783,7 @@ describe("Card Enhanced Tests", () => {
                 Very long description that should also wrap properly
               </CardDescription>
             </CardHeader>
-            <CardContent className="break-words">
-              {LongContent}
-            </CardContent>
+            <CardContent className="break-words">{LongContent}</CardContent>
           </Card>
 
           {/* Card with truncation */}
@@ -831,13 +793,12 @@ describe("Card Enhanced Tests", () => {
                 Very Long Title That Should Be Truncated
               </CardTitle>
               <CardDescription className="line-clamp-2">
-                This description is limited to two lines and will be truncated if it exceeds that limit
+                This description is limited to two lines and will be truncated
+                if it exceeds that limit
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="line-clamp-3 text-sm">
-                {LongContent}
-              </p>
+              <p className="line-clamp-3 text-sm">{LongContent}</p>
             </CardContent>
           </Card>
 
@@ -918,70 +879,76 @@ describe("Card Enhanced Tests", () => {
       const cardModule = await import("../card");
       const { Card, CardHeader, CardTitle, CardContent } = cardModule;
 
-      const [cards, setCards] = React.useState([
-        { id: 1, title: "Dynamic Card 1", content: "Initial content 1" },
-        { id: 2, title: "Dynamic Card 2", content: "Initial content 2" },
-      ]);
+      const DynamicCards = () => {
+        const [cards, setCards] = React.useState([
+          { id: 1, title: "Dynamic Card 1", content: "Initial content 1" },
+          { id: 2, title: "Dynamic Card 2", content: "Initial content 2" },
+        ]);
 
-      const addCard = () => {
-        const newCard = {
-          id: cards.length + 1,
-          title: `Dynamic Card ${cards.length + 1}`,
-          content: `New content ${cards.length + 1}`,
+        const addCard = () => {
+          const newCard = {
+            id: cards.length + 1,
+            title: `Dynamic Card ${cards.length + 1}`,
+            content: `New content ${cards.length + 1}`,
+          };
+          setCards([...cards, newCard]);
         };
-        setCards([...cards, newCard]);
-      };
 
-      const removeCard = (id: number) => {
-        setCards(cards.filter(card => card.id !== id));
-      };
+        const removeCard = (id: number) => {
+          setCards(cards.filter((card) => card.id !== id));
+        };
 
-      const updateCard = (id: number, newContent: string) => {
-        setCards(cards.map(card => 
-          card.id === id ? { ...card, content: newContent } : card
-        ));
-      };
+        const updateCard = (id: number, newContent: string) => {
+          setCards(
+            cards.map((card) =>
+              card.id === id ? { ...card, content: newContent } : card,
+            ),
+          );
+        };
 
-      const DynamicCards = () => (
-        <div>
-          <div className="mb-4 space-x-2">
-            <button onClick={addCard} className="px-3 py-1 bg-blue-500 text-white rounded">
-              Add Card
-            </button>
+        return (
+          <div>
+            <div className="mb-4 space-x-2">
+              <button
+                onClick={addCard}
+                className="px-3 py-1 bg-blue-500 text-white rounded"
+              >
+                Add Card
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {cards.map((card) => (
+                <Card key={card.id}>
+                  <CardHeader>
+                    <CardTitle>{card.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{card.content}</p>
+                    <div className="mt-2 space-x-2">
+                      <button
+                        onClick={() =>
+                          updateCard(card.id, `Updated content ${card.id}`)
+                        }
+                        className="text-xs px-2 py-1 bg-yellow-500 text-white rounded"
+                      >
+                        Update
+                      </button>
+                      <button
+                        onClick={() => removeCard(card.id)}
+                        className="text-xs px-2 py-1 bg-red-500 text-white rounded"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {cards.map((card) => (
-              <Card key={card.id}>
-                <CardHeader>
-                  <CardTitle>{card.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>{card.content}</p>
-                  <div className="mt-2 space-x-2">
-                    <button
-                      onClick={() => updateCard(card.id, `Updated content ${card.id}`)}
-                      className="text-xs px-2 py-1 bg-yellow-500 text-white rounded"
-                    >
-                      Update
-                    </button>
-                    <button
-                      onClick={() => removeCard(card.id)}
-                      className="text-xs px-2 py-1 bg-red-500 text-white rounded"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      );
+        );
+      };
 
       expect(DynamicCards).toBeDefined();
-      expect(addCard).toBeDefined();
-      expect(removeCard).toBeDefined();
-      expect(updateCard).toBeDefined();
     });
   });
 });
