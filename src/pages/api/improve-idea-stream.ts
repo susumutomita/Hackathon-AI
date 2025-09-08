@@ -21,6 +21,7 @@ import Groq from "groq-sdk";
 
 export const config = {
   runtime: "nodejs",
+  maxDuration: 300, // 5 minutes for Pro/Enterprise plans (streaming can be long-running)
 };
 
 export default async function handler(
@@ -87,7 +88,7 @@ export default async function handler(
       throw createValidationError(validation.error);
     }
 
-    const { idea: rawIdea, similarProjects } = validation.data;
+    const { idea: rawIdea, similarProjects = [] } = validation.data;
     const idea = sanitizeString(rawIdea);
     const sanitizedSimilarProjects = similarProjects.map((project) => ({
       ...project,
@@ -102,9 +103,12 @@ export default async function handler(
     send("status", { phase: "queued" });
     send("status", { phase: "preparing_prompt" });
 
-    const prompt = `\n日本語で、以下の形式で応答してください。\n[出力形式]\n- プロジェクト名: {プロジェクト名}\n  アイデアへのフィードバック: {アイデアを改良するための説明}\n  類似点: {類似点の説明}\n\n**アイデア**: ${idea}\n\n**類似プロジェクト**:\n${sanitizedSimilarProjects
-      .map((p: any) => `- ${p.title}: ${p.description}`)
-      .join("\n")}`;
+    const prompt =
+      sanitizedSimilarProjects.length > 0
+        ? `\n日本語で、以下の形式で応答してください。\n[出力形式]\n- プロジェクト名: {プロジェクト名}\n  アイデアへのフィードバック: {アイデアを改良するための説明}\n  類似点: {類似点の説明}\n\n**アイデア**: ${idea}\n\n**類似プロジェクト**:\n${sanitizedSimilarProjects
+            .map((p: any) => `- ${p.title}: ${p.description}`)
+            .join("\n")}`
+        : `\nあなたは、ハッカソンで何度も勝利を収めた伝説のスーパーエンジニアです。以下のアイデアについて、ハッカソンで勝利するための改善提案を日本語で提供してください。\n\n**アイデア**: ${idea}\n\n[出力形式]\n**改良されたアイデア**\n1. **技術的改善点**: {技術面での具体的な改善提案}\n2. **独創性の向上**: {オリジナリティを高めるための提案}\n3. **実用性の強化**: {実装可能性を高めるアプローチ}\n4. **UX/UI改善**: {使いやすさを向上させる提案}\n5. **驚きの要素**: {審査員にインパクトを与える要素}\n6. **技術スタック**: {推奨する技術構成}\n7. **MVP実装計画**: {最小限の実装プラン}`;
 
     send("status", { phase: "calling_llm" });
 

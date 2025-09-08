@@ -165,18 +165,28 @@ describe("/api/improve-idea", () => {
     });
   });
 
-  it("should return 400 when similarProjects is missing", async () => {
+  it("should successfully process idea when similarProjects is missing", async () => {
+    const mockResponse = "Improved idea based on expert knowledge";
+    const idea = "My brilliant idea";
+
+    // Mock the parseHtmlWithLLM function to return success
+    vi.mocked(parseHtmlWithLLM).mockResolvedValue(mockResponse);
+
     const { req, res } = createMockRequestResponse("POST", {
-      idea: "My brilliant idea",
+      idea,
     });
 
     await handler(req, res);
 
-    expect((res as any)._getStatusCode()).toBe(400);
-    expect(JSON.parse((res as any)._getData())).toEqual({
-      error: "入力内容に問題があります。内容を確認してください。",
-      type: "VALIDATION_ERROR",
-      timestamp: expect.any(String),
+    expect((res as any)._getStatusCode()).toBe(200);
+    const responseData = JSON.parse((res as any)._getData());
+    expect(responseData).toEqual({
+      improvedIdea: mockResponse,
+      metadata: {
+        processingTime: expect.any(Number),
+        ideaLength: idea.length,
+        similarProjectsAnalyzed: 0, // Should be 0 when missing
+      },
     });
   });
 

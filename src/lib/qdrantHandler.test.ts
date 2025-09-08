@@ -124,6 +124,7 @@ describe("QdrantHandler", () => {
       expect(QdrantClient).toHaveBeenCalledWith({
         url: "http://test-qdrant:6333",
         apiKey: "test-api-key",
+        checkCompatibility: false,
       });
     });
 
@@ -142,6 +143,7 @@ describe("QdrantHandler", () => {
       expect(QdrantClient).toHaveBeenCalledWith({
         url: "http://localhost:6333",
         apiKey: "",
+        checkCompatibility: false,
       });
     });
 

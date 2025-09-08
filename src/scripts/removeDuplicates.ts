@@ -24,6 +24,7 @@ async function removeDuplicates() {
   const client = new QdrantClient({
     url: env.QD_URL,
     apiKey: env.QD_API_KEY,
+    checkCompatibility: false,
   });
 
   try {
