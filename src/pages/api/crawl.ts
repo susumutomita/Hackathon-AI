@@ -26,15 +26,17 @@ export default async function handler(
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   // Check if method is GET
   if (req.method !== "GET") {
-    return res.status(405).json({
+    res.status(405).json({
       error: "Method Not Allowed",
       message: "Only GET method is allowed",
     });
+    return;
   }
 
   try {

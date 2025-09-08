@@ -147,11 +147,15 @@ describe("QdrantHandler", () => {
       });
     });
 
-    it("should check if collection exists on initialization", async () => {
+    it("should check if collection exists on first search operation", async () => {
       mockQdrantClient.getCollection.mockResolvedValue({});
+      mockEmbeddingProvider.createEmbedding.mockResolvedValue([0.1, 0.2]);
+      mockVectorDB.search.mockResolvedValue([]);
 
       handler = new QdrantHandler();
-      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Trigger lazy initialization by calling searchSimilarProjects
+      await handler.searchSimilarProjects([0.1, 0.2], 5);
 
       expect(mockQdrantClient.getCollection).toHaveBeenCalledWith(
         "eth_global_showcase",
@@ -161,12 +165,16 @@ describe("QdrantHandler", () => {
       );
     });
 
-    it("should create collection if it does not exist", async () => {
+    it("should create collection if it does not exist on first search operation", async () => {
       mockQdrantClient.getCollection.mockRejectedValue(new Error("Not found"));
       mockQdrantClient.createCollection.mockResolvedValue({});
+      mockEmbeddingProvider.createEmbedding.mockResolvedValue([0.1, 0.2]);
+      mockVectorDB.search.mockResolvedValue([]);
 
       handler = new QdrantHandler();
-      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Trigger lazy initialization by calling searchSimilarProjects
+      await handler.searchSimilarProjects([0.1, 0.2], 5);
 
       expect(mockQdrantClient.createCollection).toHaveBeenCalledWith(
         "eth_global_showcase",
