@@ -54,7 +54,7 @@
     "typescript": "^5.5.4",
     "uuid": "^11.1.0",
     "winston": "^3.14.2",
-    "zod": "^3.22.4"
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@textlint-ja/textlint-rule-preset-ai-writing": "^1.6.1",
