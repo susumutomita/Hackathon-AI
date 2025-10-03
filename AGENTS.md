@@ -1,61 +1,19 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-
-- `src/app` and `src/pages/api`: Next.js routes (App Router + API).
-- `src/components`, `src/hooks`, `src/lib`: UI and utilities.
-- `src/adapters`, `src/factories`, `src/interfaces`: Domain modules.
-- Tests live in `**/__tests__` with mocks in `src/__mocks__`.
-- Static assets in `public/`. Config in root (e.g., `tsconfig.json`, `vitest.config.ts`, `tailwind.config.ts`).
+Source code lives under `src/`, with Next.js routes split between `src/app` (App Router) and `src/pages/api` for server handlers. Shared UI is under `src/components`. Hooks and utilities live in `src/hooks` and `src/lib`. Domain adapters reside in `src/adapters`. Factories and interfaces are in `src/factories` and `src/interfaces`. Tests sit in `**/__tests__` alongside related code, using mocks from `src/__mocks__`. Place static assets in `public/` and keep configuration files (e.g., `tsconfig.json`, `vitest.config.ts`) at the repo root.
 
 ## Build, Test, and Development Commands
-
-- `pnpm dev` / `make dev`: Run the app locally at `http://localhost:3000`.
-- `pnpm build` / `make build`: Production build via Next.js
-- `pnpm start` / `make start`: Start the built app.
-- `pnpm test` / `make test`: Run Vitest; `pnpm run test:coverage` for coverage.
-- `pnpm lint`: Run ESLint.
-- `pnpm run format_check`: Check formatting with Prettier.
-- `pnpm run typecheck`: TypeScript type-check.
-- Pre-commit hook runs `make before_commit`.
-- Sequence: lint → typecheck → format_check → build → test.
+Use `pnpm install` or `make install` once to set up dependencies. Run `pnpm dev` or `make dev` to start the app at http://localhost:3000. Ship builds with `pnpm build` (or `make build`) and serve production output via `pnpm start`. Execute `pnpm lint`, `pnpm run typecheck`, and `pnpm run format_check` before merging. Run tests with `pnpm test`; add coverage via `pnpm run test:coverage`.
 
 ## Coding Style & Naming Conventions
-
-- TypeScript with Next.js (ESLint extends `next/core-web-vitals`). Use Prettier for formatting.
-- Indentation/quotes handled by Prettier; do not hand-format.
-- React components/types: `PascalCase`. Files/dirs: `kebab-case`. Variables/functions: `camelCase`.
-- Keep modules focused; colocate tests next to code or under `__tests__`.
+Write all code in TypeScript and let Prettier handle formatting; do not manually adjust spacing or quotes. React components and types use PascalCase, files and directories use kebab-case, and variables/functions use camelCase. Keep modules focused and colocate related tests. Add brief comments only when intent is non-obvious.
 
 ## Testing Guidelines
-
-- Framework: Vitest with V8 coverage. Target coverage ≥ 90％
-- Test files: `*.test.ts` / `*.test.tsx` under `**/__tests__` (e.g., `src/lib/__tests__/foo.test.ts`).
-- Use `pnpm test:watch` during dev; `pnpm test:coverage` in CI.
-- Place shared fakes/stubs in `src/__mocks__`.
+Vitest with the V8 provider is the standard harness. Target ≥90％ coverage and prioritize meaningful assertions over snapshot churn. Name specs `*.test.ts` or `*.test.tsx` and keep them near the implementation (e.g., `src/lib/__tests__/formatter.test.ts`). Use `pnpm test:watch` during development and run `pnpm test:coverage` in CI or before PR submission.
 
 ## Commit & Pull Request Guidelines
-
-- Conventional Commits with optional emoji and scope (seen in history):
-  - Example: `feat(ui): add idea search (#123)` or `🐛 fix: improve error logging`.
-- PRs: clear description, linked issues, before/after screenshots for UI, and check that pre-commit passes.
+Follow Conventional Commits, optionally with emoji scopes (e.g., `feat(ui): add idea search (#123)` or `🐛 fix: improve error logging`). Craft PR descriptions that summarize intent, link relevant issues, and include before/after screenshots for UI changes. Ensure the pre-commit sequence passes (`make before_commit`) and note any follow-up work or known limitations in the PR body.
 
 ## Security & Configuration Tips
-
-- Secrets via `.env` / `.env.test`; never commit keys. Required examples: `QD_URL`, `QD_API_KEY`, `NOMIC_API_KEY`, model settings.
-- Node ≥ 18 and pnpm ≥ 8. Install with `make install` or `pnpm install`.
-- For MCP server: `pnpm run mcp:install` then `pnpm run mcp:build` (reads env from `.env`).
-
-## Spec‑Driven Development (Claude Code)
-
-- See `CLAUDE.md` for Kiro‑style Spec‑Driven Development. When using Claude Code, drive features via specs under `.kiro/`.
-- Core flow (three approvals):
-  1) Requirements → 2) Design → 3) Tasks. Approve each phase by updating `spec.json` flags.
-- Common slash commands:
-  - `/spec-init [feature]`
-  - `/spec-requirements [feature]`
-  - `/spec-design [feature]`
-  - `/spec-tasks [feature]`
-  - `/spec-status [feature]`
-- Steering docs (optional): `/steering-init`, `/steering-update` to keep product/tech/structure current under `.kiro/steering/`.
-- During implementation, update `tasks.md` checkboxes and ensure pre‑commit passes before opening a PR.
+Load secrets through `.env` or `.env.test`, never committing keys such as `QD_API_KEY` or `NOMIC_API_KEY`. Run on Node 18+ with pnpm 8+, and prefer `pnpm run mcp:install` followed by `pnpm run mcp:build` when working with the MCP server. Add new environment variables to `.env.example` and document required setup steps in the PR.
