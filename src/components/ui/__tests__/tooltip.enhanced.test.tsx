@@ -118,6 +118,7 @@ vi.mock("@radix-ui/react-tooltip", () => {
 
       return React.createElement(
         tag,
+        // eslint-disable-next-line react-hooks/refs -- Test mock forwarding refs
         {
           ref,
           "data-testid": testId,
