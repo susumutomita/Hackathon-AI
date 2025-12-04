@@ -42,7 +42,7 @@
     "dompurify": "^3.0.5",
     "groq-sdk": "^0.30.0",
     "isomorphic-dompurify": "^2.26.0",
-    "lucide-react": "^0.548.0",
+    "lucide-react": "^0.555.0",
     "next": "^16.0.7",
     "ollama": "^0.5.17",
     "react": "^18",
