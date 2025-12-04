@@ -79,8 +79,8 @@ export function validateEnv(): DevEnvironment | ProdEnvironment {
     return schema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errorMessage = error.errors
-        .map((err) => `${err.path.join(".")}: ${err.message}`)
+      const errorMessage = error.issues
+        .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
         .join(", ");
       throw new Error(`Environment validation failed: ${errorMessage}`);
     }

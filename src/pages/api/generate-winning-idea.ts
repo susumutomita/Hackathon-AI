@@ -76,8 +76,8 @@ export default async function handler(
     // Validate request body
     const validation = GenerateWinningIdeaRequestSchema.safeParse(req.body);
     if (!validation.success) {
-      const errorMessage = validation.error.errors
-        .map((e) => `${e.path.join(".")}: ${e.message}`)
+      const errorMessage = validation.error.issues
+        .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
         .join(", ");
       throw createValidationError(errorMessage);
     }

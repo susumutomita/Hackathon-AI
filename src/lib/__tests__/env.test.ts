@@ -40,7 +40,7 @@ describe("Environment Validation", () => {
       delete process.env.NOMIC_API_KEY;
 
       expect(() => validateEnv()).toThrow(
-        "Environment validation failed: NOMIC_API_KEY: Required",
+        /Environment validation failed: NOMIC_API_KEY:/,
       );
     });
 
