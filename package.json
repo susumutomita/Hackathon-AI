@@ -28,7 +28,7 @@
   "author": "Susumu Tomita <oyter880@gmail.com> (https://susumutomita.netlify.app/)",
   "license": "MIT",
   "dependencies": {
-    "@qdrant/js-client-rest": "^1.11.0",
+    "@qdrant/js-client-rest": "^1.16.2",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.1.0",
