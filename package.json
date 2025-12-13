@@ -43,7 +43,7 @@
     "groq-sdk": "^0.30.0",
     "isomorphic-dompurify": "^2.33.0",
     "lucide-react": "^0.555.0",
-    "next": "^16.0.9",
+    "next": "^16.0.10",
     "ollama": "^0.6.3",
     "react": "^18",
     "react-dom": "^18",
