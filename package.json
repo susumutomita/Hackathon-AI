@@ -22,7 +22,10 @@
     "typecheck": "tsc --noEmit",
     "mcp:build": "cd mcp-server && pnpm run build",
     "mcp:install": "cd mcp-server && pnpm install",
-    "remove-duplicates": "tsx src/scripts/removeDuplicates.ts"
+    "remove-duplicates": "tsx src/scripts/removeDuplicates.ts",
+    "agent:local": "tsx src/scripts/evaluateIdeaLocal.ts",
+    "data:export": "tsx src/scripts/exportProjectsToJson.ts",
+    "data:index-local": "tsx src/scripts/indexLocalProjects.ts"
   },
   "keywords": [],
   "author": "Susumu Tomita <oyter880@gmail.com> (https://susumutomita.netlify.app/)",
