@@ -1,6 +1,6 @@
 # Local Agent Workflow
 
-Hackathon-AI can run the idea generation and review loop entirely from the terminal with local data and Ollama.
+Hackathon-AI can run the idea generation and review loop entirely from the terminal with repository data and Ollama.
 
 ## Runtime architecture
 
@@ -17,15 +17,30 @@ prize JSON
 
 The `agent:local` command forces `LOCAL_ONLY_LLM=true` and `EMBEDDING_PROVIDER=ollama`. In this mode, LLM failures do not fall back to Groq or another cloud provider.
 
-## 1. Export the existing project corpus once
+## 1. Build or refresh the project corpus
 
-If the current Qdrant collection already contains the ETHGlobal project corpus, export it once:
+The repository JSON is the source of truth. Crawling writes directly to `data/projects.json`; Qdrant is not involved.
 
 ```bash
-pnpm data:export
+pnpm data:crawl
 ```
 
-This writes `data/projects.json`. Review the diff and commit the file. This export step is only needed when refreshing the corpus; normal evaluations do not crawl the web or query Qdrant.
+The crawler:
+
+- reads enabled event filters from `crawledEvents.json`
+- crawls ETHGlobal finalist projects
+- fetches each project detail page
+- merges new data into the existing corpus
+- deduplicates primarily by project link
+- checkpoints `data/projects.json` after every page
+
+To rebuild the corpus from scratch:
+
+```bash
+pnpm data:crawl -- --reset
+```
+
+Review and commit `data/projects.json` after refreshing it. Normal agent runs never crawl the web.
 
 ## 2. Build the local embedding cache
 
@@ -42,7 +57,7 @@ Create embeddings for committed project data:
 pnpm data:index-local
 ```
 
-This writes `data/project-embeddings.json`. The indexer checkpoints after each project and resumes from the existing cache, so interrupted runs do not restart from zero. Commit the resulting file if you want evaluations to require only one query embedding at runtime.
+This writes `data/project-embeddings.json`. The indexer checkpoints after each project and resumes from the existing cache, so interrupted runs do not restart from zero. Commit the resulting file so normal evaluations only need a query embedding at runtime.
 
 Optional model overrides:
 
@@ -70,12 +85,14 @@ The command prints the final Judge result and writes the complete generated idea
 
 ## Network boundary
 
-During `agent:local` execution, Hackathon-AI uses:
+`data:crawl` is the only workflow in this design that intentionally accesses the public web.
 
-- Ollama on the local machine for generation, criticism, judging, and query embeddings.
-- `data/projects.json` for historical project data.
-- `data/project-embeddings.json` for the local vector index.
+During `agent:local` execution, Hackathon-AI uses only:
 
-It does not need the crawler, Qdrant, Nomic, Groq, Claude, or other cloud LLM APIs.
+- Ollama on the local machine for generation, criticism, judging, and query embeddings
+- `data/projects.json` for historical project data
+- `data/project-embeddings.json` for the local vector index
 
-Ollama itself should point to a local host. Do not set `OLLAMA_HOST` to a remote server if the requirement is strict local-only execution.
+Normal evaluation does not require crawling, Qdrant, Nomic, Groq, Claude, or another cloud LLM API.
+
+Ollama itself should point to a local host. Do not set `OLLAMA_HOST` to a remote server if strict local-only execution is required.
