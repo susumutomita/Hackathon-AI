@@ -24,7 +24,7 @@
     "mcp:install": "cd mcp-server && pnpm install",
     "remove-duplicates": "tsx src/scripts/removeDuplicates.ts",
     "agent:local": "tsx src/scripts/evaluateIdeaLocal.ts",
-    "data:export": "tsx src/scripts/exportProjectsToJson.ts",
+    "data:crawl": "tsx src/scripts/crawlProjectsToJson.ts",
     "data:index-local": "tsx src/scripts/indexLocalProjects.ts"
   },
   "keywords": [],
@@ -81,7 +81,7 @@
     "textlint": "^14.0.5",
     "textlint-rule-ja-no-abusage": "^3.0.0",
     "textlint-rule-ja-no-inappropriate-words": "^2.0.0",
-    "textlint-rule-no-double-negative-ja": "^2.0.1",
+    "textlint-rule-no-double-negative-ja": "^3.0.0",
     "textlint-rule-no-dropping-the-ra": "^3.0.0",
     "textlint-rule-prefer-tari-tari": "^1.0.3",
     "textlint-rule-preset-ja-spacing": "^2.2.0",
