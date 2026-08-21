@@ -30,7 +30,7 @@ test_coverage:
 	pnpm run test:coverage
 
 crawl:
-	curl http://localhost:3000/api/crawl
+	pnpm data:crawl
 
 help:
 	@echo "Usage: make [target]"
@@ -48,6 +48,7 @@ help:
 	@echo "  dev             Start development server"
 	@echo "  build           Build the project"
 	@echo "  start           Start app"
+	@echo "  crawl           Refresh data/projects.json from ETHGlobal"
 	@echo "  test            Run tests"
 	@echo "  test_coverage   Run tests with coverage report"
 	@echo "  help            Show this help message"
