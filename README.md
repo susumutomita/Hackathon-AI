@@ -9,56 +9,42 @@
 
 ## Overview
 
-**Hackathon AI** is an AI-driven tool designed to help participants maximize their chances of success in hackathons by leveraging data from past events. Developed using TypeScript and Next.js, this web-based application provides insights to optimize project strategies by analyzing historical hackathon data.
+**Hackathon AI** is an AI-driven tool designed to help participants maximize their chances of success in hackathons by leveraging data from past events. Developed using TypeScript and Next.js, this application analyzes historical hackathon projects and uses local LLM workflows to generate and review project ideas.
 
 ## Key Features
 
 - Analysis of Past Hackathon Data: Analyze trends from finalist projects and requirements from prize-winning projects to identify key success factors.
 - Search for Similar Projects: Check the novelty of ideas and estimate the likelihood of success.
-- Idea Refinement Using LLM: Utilize a Language Learning Model (LLM) to refine and improve ideas based on similar past projects.
-- Trend Analysis and Prediction: Predict technological trends and identify project categories most likely to succeed.
-- Strategic Guidelines: Provide guidelines for optimizing presentations, team building, and analyzing judging criteria.
+- Idea Refinement Using LLM: Refine and improve ideas based on similar past projects.
+- Agentic Review Loop: Independently evaluate prize fit, novelty, and feasibility before a final judge step.
+- Local Execution: Run normal evaluation with committed JSON data and Ollama without cloud LLM APIs.
 
-## System Architecture
+## Local Agent Workflow
 
-This project is built using TypeScript and Next.js . Below is an overview of the system architecture.
+Historical project data is committed to the repository as JSON. Qdrant is not required by the local agent workflow.
 
-### System Context Diagram
+Refresh the corpus only when needed:
 
-```mermaid
-graph TB
-    A[Hackathon Participant] --> |Input Idea| B[Hackathon AI]
-    B --> |Analysis Results| A
-    B --> |Data Retrieval/Update| C[Database Server]
-    B --> |External API Calls| D[API Services]
-    B --> |Real-time Updates| E[Cloud Data Sources]
-
-    subgraph Hackathon AI
-        B1[Data Analysis Module]
-        B2[AI Model Module]
-        B3[Vector Database]
-        B4[Guideline Generation Module]
-    end
-
-    B --> B1
-    B --> B2
-    B --> B3
-    B --> B4
+```bash
+pnpm data:crawl
+pnpm data:index-local
 ```
 
-### Architecture Overview
+Then run an evaluation entirely from the terminal:
 
-- Hackathon Participant: The user who utilizes Hackathon AI to gain insights based on past data.
-- Hackathon AI: A web application integrating data analysis, AI models, a vector database, and guideline generation modules.
-- Database Server: Manages and stores data from past hackathons and projects.
+```bash
+pnpm agent:local examples/local-prize.json
+```
+
+For the full workflow, see [Local Agent Workflow](docs/LOCAL_AGENT.md).
 
 ## Installation and Setup
 
 ### Prerequisites
 
-- Node.js (version 14.x or above)
+- Node.js 18 or later
 - pnpm
-- Ollama (for running the LLM locally)
+- Ollama
 
 ### Installation Steps
 
@@ -80,49 +66,30 @@ graph TB
     make dev
     ```
 
-4. To create a production build:
+4. Create a production build:
 
     ```bash
     make build
     ```
 
-### Manual Execution of the Crawler
-
-To manually run the crawler after setting up your development environment or starting the server, use the following command:
-
-```bash
-curl http://localhost:3000/api/crawl
-```
-
-## Usage
-
-1. After launching the application, input your idea through the user interface.
-2. Hackathon AI will search for similar projects and display the results.
-3. Based on these results, the LLM will provide improvement suggestions for your idea in Japanese.
-4. Use these suggestions to further refine your project and enhance your chances of success in the hackathon.
-
 ## Development Environment
 
-- TypeScript: Used as the primary programming language.
-- Next.js: Provides an easy-to-use platform for building the web application.
-- React: Used to create UI components.
-- Qdrant: A vector database used for searching similar projects.
-- Ollama: A local LLM tool used to analyze ideas and generate improvement suggestions.
+- TypeScript
+- Next.js
+- React
+- Ollama
+- Repository-managed JSON corpus and local embedding cache for the agentic workflow
 
 ## Documentation
 
-For detailed documentation, see the following:
-
-- **[API Documentation](docs/API.md)** - Detailed specifications of API endpoints
+- **[Local Agent Workflow](docs/LOCAL_AGENT.md)** - Fully local generation and review workflow
+- **[API Documentation](docs/API.md)** - Remaining web API endpoints
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and architecture
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Development setup and coding conventions
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Component Catalog](docs/COMPONENTS.md)** - UI component usage
-
-Additional documents:
 - **[UX Spec](docs/UX_SPEC.md)** - User experience design
-- **[MCP Setup](docs/mcp-setup.md)** - How to set up the MCP server
-- **[Auto-Crawl Setup](docs/auto-crawl-setup.md)** - Data crawling configuration
+- **[MCP Setup](docs/mcp-setup.md)** - MCP server setup
 
 ## License
 
