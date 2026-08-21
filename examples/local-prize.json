@@ -1,0 +1,19 @@
+{
+  "prizeInfo": {
+    "sponsor": "Example Sponsor",
+    "prizeName": "Best Agentic Application",
+    "prizeAmount": "$5,000",
+    "requirements": "Build a working application that uses the sponsor SDK in the core user flow.",
+    "technologies": ["Ethereum", "TypeScript"],
+    "judgingCriteria": [
+      "technical execution",
+      "originality",
+      "demo quality"
+    ]
+  },
+  "constraints": [
+    "48時間で動くデモまで完成させる",
+    "外部のクラウドLLM APIを使わない"
+  ],
+  "preferredTech": ["TypeScript", "Next.js"]
+}
